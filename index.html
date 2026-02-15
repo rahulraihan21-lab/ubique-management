@@ -2,8 +2,7 @@
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UBIQUE Management System</title>
+    <title>UBIQUE Academy - Bulk Admission & Attendance</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -11,138 +10,123 @@
         body { font-family: 'Hind Siliguri', sans-serif; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen">
-
-    <header class="bg-indigo-900 text-white shadow-xl p-6">
-        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
-            <div>
-                <h1 class="text-2xl font-bold tracking-tight">UBIQUE Cadet & Defence Academy</h1>
-                <p class="text-indigo-200 text-sm italic">৫০১ উত্তর শাহজাহানপুর, ঢাকা-১২১৭</p>
+<body class="bg-slate-50 p-4">
+    <div class="max-w-6xl mx-auto space-y-6">
+        
+        <div class="bg-indigo-900 text-white p-6 rounded-3xl shadow-2xl flex flex-col md:flex-row justify-between items-center">
+            <div class="text-center md:text-left">
+                <h1 class="text-2xl font-bold">UBIQUE Cadet & Defence Academy</h1>
+                <p class="text-indigo-200">বাল্ক ভর্তি ও ব্যাচ ভিত্তিক হাজিরা সিস্টেম</p>
             </div>
-            <div class="mt-4 md:mt-0 bg-indigo-800 px-4 py-2 rounded-lg border border-indigo-700">
-                <span class="text-xs uppercase block text-indigo-300 font-semibold">প্রতিষ্ঠাতা ফোন</span>
-                <span class="text-lg font-mono">01913214795</span>
+            <div class="mt-4 md:mt-0">
+                <select id="batchFilter" onchange="loadStudents()" class="bg-indigo-800 text-white border border-indigo-700 p-3 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-400">
+                    <option value="All">সকল ব্যাচ</option>
+                    <option value="Cadet 2026">Cadet 2026</option>
+                    <option value="Cadet 2027">Cadet 2027</option>
+                    <option value="Defence Batch">Defence Batch</option>
+                </select>
             </div>
         </div>
-    </header>
 
-    <main class="container mx-auto p-4 mt-8">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
-            <div class="lg:col-span-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit">
-                <h3 class="text-lg font-bold text-slate-800 mb-6 flex items-center border-b pb-2">
-                    <span class="mr-2">📝</span> নতুন ছাত্র ভর্তি ফরম
-                </h3>
-                <div class="space-y-4">
-                    <div>
-                        <label class="text-sm font-semibold text-slate-600 block mb-1">ছাত্রের নাম</label>
-                        <input type="text" id="name" class="w-full border-slate-300 border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition" placeholder="নাম লিখুন">
-                    </div>
-                    <div>
-                        <label class="text-sm font-semibold text-slate-600 block mb-1">রোল নম্বর</label>
-                        <input type="number" id="roll" class="w-full border-slate-300 border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="রোল">
-                    </div>
-                    <div>
-                        <label class="text-sm font-semibold text-slate-600 block mb-1">ক্লাস</label>
-                        <input type="text" id="class" class="w-full border-slate-300 border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="উদা: ক্যাডেট ২০২৬">
-                    </div>
-                    <button onclick="saveStudent()" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-indigo-700 transition active:scale-95 mt-2">
-                        ডাটাবেজে সেভ করুন
-                    </button>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="space-y-6">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-lg mb-4 text-slate-800 border-b pb-2">📂 বাল্ক ভর্তি (CSV)</h3>
+                    <input type="file" id="csvInput" accept=".csv" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                    <button onclick="handleBulkUpload()" class="w-full mt-4 bg-slate-900 text-white py-3 rounded-2xl font-bold hover:bg-black transition shadow-lg">ফাইল আপলোড করুন</button>
+                    <p class="text-[10px] text-gray-400 mt-2 text-center italic">ফরম্যাট: name, roll, class, batch, phone</p>
                 </div>
-                <p id="status" class="mt-4 text-center text-sm font-bold"></p>
+
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-lg mb-4 text-slate-800 border-b pb-2">👤 একক ভর্তি</h3>
+                    <div class="space-y-3">
+                        <input type="text" id="s_name" placeholder="ছাত্রের নাম" class="w-full border-slate-200 border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <input type="number" id="s_roll" placeholder="রোল নম্বর" class="w-full border-slate-200 border p-3 rounded-xl">
+                        <input type="text" id="s_batch" placeholder="ব্যাচ (উদা: Cadet 2026)" class="w-full border-slate-200 border p-3 rounded-xl">
+                        <input type="text" id="s_phone" placeholder="ফোন নম্বর" class="w-full border-slate-200 border p-3 rounded-xl">
+                        <button onclick="saveOneStudent()" class="w-full bg-indigo-600 text-white py-3 rounded-2xl font-bold hover:bg-indigo-700 shadow-md">সেভ করুন</button>
+                    </div>
+                </div>
             </div>
 
-            <div class="lg:col-span-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <div class="lg:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-lg font-bold text-slate-800">ম্যানেজমেন্ট ড্যাশবোর্ড</h3>
-                    <div class="flex gap-2">
-                        <button onclick="fetchStudents()" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-slate-200">🔄 রিফ্রেশ</button>
-                    </div>
+                    <h3 class="font-bold text-xl text-slate-800">ম্যানেজমেন্ট ড্যাশবোর্ড</h3>
+                    <button onclick="loadStudents()" class="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-indigo-100">🔄 রিফ্রেশ</button>
                 </div>
-
-                <div class="overflow-hidden border rounded-xl">
+                <div class="overflow-x-auto">
                     <table class="w-full text-left">
-                        <thead class="bg-slate-50 border-b">
-                            <tr>
-                                <th class="p-4 text-xs font-bold text-slate-500 uppercase">ছাত্রের প্রোফাইল</th>
-                                <th class="p-4 text-xs font-bold text-slate-500 uppercase text-center">ক্লাস</th>
-                                <th class="p-4 text-xs font-bold text-slate-500 uppercase text-right">অ্যাকশন</th>
+                        <thead>
+                            <tr class="text-slate-400 text-xs uppercase tracking-wider border-b">
+                                <th class="pb-3 pl-2">ছাত্রের তথ্য</th>
+                                <th class="pb-3 text-center">ব্যাচ</th>
+                                <th class="pb-3 text-right">আজকের হাজিরা</th>
                             </tr>
                         </thead>
-                        <tbody id="studentList" class="divide-y divide-slate-100">
+                        <tbody id="stuList" class="divide-y divide-slate-50">
                             </tbody>
                     </table>
                 </div>
             </div>
-
         </div>
-    </main>
+    </div>
 
     <script>
-        // আপনার দেওয়া সঠিক API এবং URL ব্যবহার করা হয়েছে
         const SUPABASE_URL = 'https://sfsrtozgfethgdfrmskk.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_ds6DYMap76uRiquvQ9a0fQ_rctZqM61';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // ১. ডাটা সেভ করার ফাংশন
-        async function saveStudent() {
-            const name = document.getElementById('name').value;
-            const roll = document.getElementById('roll').value;
-            const className = document.getElementById('class').value;
-            const status = document.getElementById('status');
+        // ১. বাল্ক আপলোড ফাংশন
+        async function handleBulkUpload() {
+            const file = document.getElementById('csvInput').files[0];
+            if (!file) return alert("দয়া করে একটি CSV ফাইল সিলেক্ট করুন");
 
-            if(!name || !roll || !className) return alert("দয়া করে সব তথ্য দিন!");
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const rows = e.target.result.split('\n').slice(1);
+                const students = rows.filter(r => r.trim()).map(r => {
+                    const cols = r.split(',');
+                    return { 
+                        name: cols[0].trim(), 
+                        roll_no: parseInt(cols[1]), 
+                        class: cols[2].trim(), 
+                        batch: cols[3].trim(), 
+                        phone: cols[4].trim() 
+                    };
+                });
 
-            status.innerText = "⏳ ডাটা সেভ হচ্ছে...";
-            status.className = "mt-4 text-center text-blue-600";
-
-            const { error } = await _supabase
-                .from('students')
-                .insert([{ name: name, roll_no: parseInt(roll), class: className }]);
-
-            if (error) {
-                status.innerText = "❌ ভুল হয়েছে: " + error.message;
-                status.className = "mt-4 text-center text-red-600";
-            } else {
-                status.innerText = "✅ সফলভাবে সেভ হয়েছে!";
-                status.className = "mt-4 text-center text-green-600";
-                document.querySelectorAll('input').forEach(i => i.value = '');
-                fetchStudents();
-            }
+                const { error } = await _supabase.from('students').insert(students);
+                if (error) alert("এরর: " + error.message);
+                else { alert("সফলভাবে ভর্তি হয়েছে!"); loadStudents(); }
+            };
+            reader.readAsText(file, "UTF-8");
         }
 
-        // ২. ডাটাবেজ থেকে তালিকা লোড করার ফাংশন
-        async function fetchStudents() {
-            const listContainer = document.getElementById('studentList');
-            listContainer.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-slate-400 italic font-bold text-lg animate-pulse">ডাটাবেজ কানেক্ট হচ্ছে...</td></tr>';
+        // ২. ডাটা লোড ও ব্যাচ ফিল্টার
+        async function loadStudents() {
+            const selectedBatch = document.getElementById('batchFilter').value;
+            const list = document.getElementById('stuList');
+            list.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-slate-400 italic">ডাটাবেজ লোড হচ্ছে...</td></tr>';
 
-            const { data, error } = await _supabase
-                .from('students')
-                .select('*')
-                .order('roll_no', { ascending: true });
+            let query = _supabase.from('students').select('*');
+            if (selectedBatch !== "All") query = query.eq('batch', selectedBatch);
+
+            const { data } = await query.order('roll_no', { ascending: true });
 
             if (data) {
-                listContainer.innerHTML = data.map(s => `
-                    <tr class="hover:bg-indigo-50 transition-colors group">
-                        <td class="p-4">
-                            <div class="flex items-center">
-                                <div class="h-10 w-10 bg-indigo-100 text-indigo-700 flex items-center justify-center rounded-full font-bold mr-3 shadow-inner">
-                                    ${s.name.charAt(0)}
-                                </div>
-                                <div>
-                                    <div class="font-bold text-slate-800">${s.name}</div>
-                                    <div class="text-xs text-slate-400 font-mono tracking-tight">ID: #00${s.roll_no}</div>
-                                </div>
-                            </div>
+                list.innerHTML = data.map(s => `
+                    <tr class="group hover:bg-indigo-50/50 transition-all">
+                        <td class="py-4 pl-2">
+                            <div class="font-bold text-slate-800">${s.name}</div>
+                            <div class="text-[10px] text-slate-400 font-mono">Roll: ${s.roll_no} | ${s.phone || 'No Phone'}</div>
                         </td>
-                        <td class="p-4 text-center">
-                            <span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold">${s.class}</span>
+                        <td class="py-4 text-center">
+                            <span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">${s.batch}</span>
                         </td>
-                        <td class="p-4 text-right">
-                            <div class="flex justify-end gap-2">
-                                <button onclick="markAttend('${s.name}')" class="bg-green-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-green-600 shadow-sm transition">হাজিরা</button>
-                                <button class="bg-slate-100 text-slate-400 px-3 py-1.5 rounded-lg text-xs hover:text-red-600 transition">মুছুন</button>
+                        <td class="py-4 text-right">
+                            <div class="flex justify-end gap-1">
+                                <button onclick="markAttend('${s.name}', 'P')" class="bg-green-500 text-white w-8 h-8 rounded-lg text-xs font-bold shadow-sm hover:shadow-green-200 transition">P</button>
+                                <button onclick="markAttend('${s.name}', 'A')" class="bg-red-500 text-white w-8 h-8 rounded-lg text-xs font-bold shadow-sm hover:shadow-red-200 transition">A</button>
                             </div>
                         </td>
                     </tr>
@@ -150,12 +134,11 @@
             }
         }
 
-        function markAttend(name) {
-            alert(name + " এর আজকের হাজিরা সফল হয়েছে!");
+        function markAttend(name, status) {
+            alert(name + " কে " + (status === 'P' ? 'উপস্থিত' : 'অনুপস্থিত') + " করা হয়েছে।");
         }
 
-        // পেজ লোড হলে স্বয়ংক্রিয়ভাবে ডাটা দেখাবে
-        window.onload = fetchStudents;
+        window.onload = loadStudents;
     </script>
 </body>
 </html>
