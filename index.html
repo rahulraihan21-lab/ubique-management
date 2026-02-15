@@ -219,18 +219,38 @@
             loadStudents();
         }
 
-        function switchTab(t) {
-            ['daily', 'absent', 'report', 'settings', 'fee'].forEach(id => {
-                const sec = document.getElementById(id+'Section');
-                if(sec) sec.classList.add('hidden');
-                const mBtn = document.getElementById('m-'+id);
-                if(mBtn) mBtn.classList.replace('text-indigo-600', 'text-slate-400');
-            });
-            document.getElementById(t+'Section').classList.remove('hidden');
-            document.getElementById('m-'+t).classList.replace('text-slate-400', 'text-indigo-600');
-            if(t==='fee') loadFeeStudentsWithStatus();
-            if(t==='absent') loadAbsentStudents();
-        }
+       function switchTab(t) {
+    // ১. সব সেকশন হাইড করা
+    ['daily', 'absent', 'report', 'settings', 'fee'].forEach(id => {
+        const sec = document.getElementById(id + 'Section');
+        if (sec) sec.classList.add('hidden');
+
+        // ২. ডেক্সটপ বাটনের কালার রিসেট (সাদা করা)
+        const dBtn = document.getElementById('d-' + id);
+        if (dBtn) dBtn.classList.remove('active');
+
+        // ৩. মোবাইল বাটনের কালার রিসেট (ধূসর করা)
+        const mBtn = document.getElementById('m-' + id);
+        if (mBtn) mBtn.classList.replace('text-indigo-600', 'text-slate-400');
+    });
+
+    // ৪. সিলেক্টেড সেকশন শো করা
+    const targetSec = document.getElementById(t + 'Section');
+    if (targetSec) targetSec.classList.remove('hidden');
+
+    // ৫. ডেক্সটপ বাটনে নীল কালার দেয়া (active class)
+    const activeDBtn = document.getElementById('d-' + t);
+    if (activeDBtn) activeDBtn.classList.add('active');
+
+    // ৬. মোবাইল বাটনে নীল কালার দেয়া
+    const activeMBtn = document.getElementById('m-' + t);
+    if (activeMBtn) activeMBtn.classList.replace('text-slate-400', 'text-indigo-600');
+
+    // ৭. প্রয়োজনীয় ডাটা লোড করা
+    if (t === 'fee') loadFeeStudentsWithStatus();
+    if (t === 'absent') loadAbsentStudents();
+    if (t === 'daily') loadStudents();
+}
 
         // --- স্টুডেন্ট ও হাজিরা ---
         async function loadStudents() {
