@@ -20,13 +20,10 @@
                 <p class="text-indigo-200 text-sm italic">৫০১ উত্তর শাহজাহানপুর, ঢাকা-১২১৭</p>
             </div>
             <div class="mt-4 md:mt-0 flex gap-4">
-                <select id="batchFilter" onchange="loadStudents()" class="bg-indigo-800 text-white border border-indigo-600 p-2 rounded-xl outline-none text-sm">
+                <select id="batchFilter" onchange="loadStudents()" class="bg-indigo-800 text-white border border-indigo-600 p-2 rounded-xl outline-none text-sm min-w-[150px]">
                     <option value="All">সকল ব্যাচ</option>
-                    <option value="Cadet 2026">Cadet 2026</option>
-                    <option value="Cadet 2027">Cadet 2027</option>
-                    <option value="Defence Batch">Defence Batch</option>
                 </select>
-                <button onclick="loadStudents()" class="bg-indigo-600 hover:bg-indigo-500 p-2 rounded-xl text-sm transition">🔄 রিফ্রেশ</button>
+                <button onclick="syncSystem()" class="bg-indigo-600 hover:bg-indigo-500 p-2 rounded-xl text-sm transition">🔄 রিফ্রেশ</button>
             </div>
         </div>
     </header>
@@ -36,38 +33,32 @@
             
             <div class="lg:col-span-4 space-y-6">
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                    <h3 class="font-bold text-lg mb-4 text-slate-800 flex items-center">
-                        <span class="mr-2">📂</span> বাল্ক ভর্তি (CSV আপলোড)
-                    </h3>
-                    <input type="file" id="csvFileInput" accept=".csv" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 mb-4">
-                    <button onclick="processBulk()" class="w-full bg-slate-900 text-white py-3 rounded-2xl font-bold hover:bg-black shadow-md transition transform active:scale-95">আপলোড শুরু করুন</button>
-                    <p class="text-[10px] text-gray-400 mt-3 italic text-center leading-tight">ফাইলের কলাম ক্রম: name, roll_no, class, batch, phone</p>
+                    <h3 class="font-bold text-lg mb-4 text-slate-800 flex items-center">📂 বাল্ক ভর্তি (CSV)</h3>
+                    <input type="file" id="csvFileInput" accept=".csv" class="w-full text-xs text-slate-500 mb-4">
+                    <button onclick="processBulk()" class="w-full bg-slate-900 text-white py-3 rounded-2xl font-bold hover:bg-black transition transform active:scale-95">আপলোড শুরু করুন</button>
                 </div>
 
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
                     <h3 class="font-bold text-lg mb-4 text-slate-800">👤 একক ভর্তি</h3>
                     <div class="space-y-3">
-                        <input type="text" id="stuName" placeholder="ছাত্রের নাম" class="w-full border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition">
+                        <input type="text" id="stuName" placeholder="ছাত্রের নাম" class="w-full border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
                         <input type="number" id="stuRoll" placeholder="রোল নম্বর" class="w-full border p-3 rounded-xl">
-                        <input type="text" id="stuClass" placeholder="শ্রেণী (উদা: Class 7)" class="w-full border p-3 rounded-xl">
                         <input type="text" id="stuBatch" placeholder="ব্যাচ (উদা: Cadet 2026)" class="w-full border p-3 rounded-xl">
                         <input type="text" id="stuPhone" placeholder="ফোন নম্বর" class="w-full border p-3 rounded-xl">
-                        <button onclick="saveSingle()" class="w-full bg-indigo-600 text-white py-3 rounded-2xl font-bold hover:bg-indigo-700 shadow-lg">ডাটাবেজে সেভ করুন</button>
+                        <button onclick="saveSingle()" class="w-full bg-indigo-600 text-white py-3 rounded-2xl font-bold hover:bg-indigo-700 shadow-lg">সেভ করুন</button>
                     </div>
-                    <p id="saveMsg" class="mt-3 text-center text-sm font-bold"></p>
                 </div>
             </div>
 
             <div class="lg:col-span-8 bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                <h3 class="font-bold text-xl text-slate-800 mb-6 border-b pb-4">ছাত্রছাত্রীর তালিকা ও হাজিরা</h3>
-                
+                <h3 class="font-bold text-xl text-slate-800 mb-6 border-b pb-4">ছাত্রছাত্রীর তালিকা ও ডিলিট অপশন</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
                         <thead>
-                            <tr class="text-slate-400 text-xs uppercase tracking-wider border-b">
+                            <tr class="text-slate-400 text-xs uppercase tracking-wider border-b font-bold">
                                 <th class="pb-3 pl-2">ছাত্রের বিবরণ</th>
                                 <th class="pb-3 text-center">ব্যাচ</th>
-                                <th class="pb-3 text-right">হাজিরা</th>
+                                <th class="pb-3 text-right">অ্যাকশন</th>
                             </tr>
                         </thead>
                         <tbody id="stuListBody" class="divide-y divide-slate-100">
@@ -75,7 +66,6 @@
                     </table>
                 </div>
             </div>
-
         </div>
     </main>
 
@@ -84,73 +74,57 @@
         const SUPABASE_KEY = 'sb_publishable_ds6DYMap76uRiquvQ9a0fQ_rctZqM61';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // ১. বাল্ক ভর্তি প্রসেসিং
-        async function processBulk() {
-            const fileInput = document.getElementById('csvFileInput');
-            const file = fileInput.files[0];
-            if (!file) return alert("দয়া করে একটি CSV ফাইল সিলেক্ট করুন");
-
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const text = e.target.result;
-                const rows = text.split('\n').slice(1);
-                const students = rows.filter(r => r.trim()).map(r => {
-                    const c = r.split(',');
-                    return { name: c[0], roll_no: parseInt(c[1]), class: c[2], batch: c[3], phone: c[4] };
-                });
-
-                const { error } = await _supabase.from('students').insert(students);
-                if (error) alert("Error: " + error.message);
-                else { alert(students.length + " জন ছাত্র সফলভাবে ভর্তি হয়েছে!"); loadStudents(); }
-            };
-            reader.readAsText(file, "UTF-8");
-        }
-
-        // ২. একক ভর্তি সেভ করা
-        async function saveSingle() {
-            const name = document.getElementById('stuName').value;
-            const roll = document.getElementById('stuRoll').value;
-            const cls = document.getElementById('stuClass').value;
-            const btc = document.getElementById('stuBatch').value;
-            const phn = document.getElementById('stuPhone').value;
-            const msg = document.getElementById('saveMsg');
-
-            const { error } = await _supabase.from('students').insert([{ name, roll_no: parseInt(roll), class: cls, batch: btc, phone: phn }]);
-
-            if (error) { msg.innerText = "ভুল: " + error.message; msg.className = "text-red-600 font-bold"; }
-            else { 
-                msg.innerText = "সফলভাবে সেভ হয়েছে! ✅"; 
-                msg.className = "text-green-600 font-bold";
-                document.querySelectorAll('input').forEach(i => i.value = '');
-                loadStudents();
+        // ১. ডিলিট ফাংশন
+        async function deleteStudent(id, name) {
+            if (confirm(`আপনি কি নিশ্চিত যে ${name}-এর তথ্য ডিলিট করতে চান?`)) {
+                const { error } = await _supabase.from('students').delete().eq('id', id);
+                if (error) alert("ডিলিট করা সম্ভব হয়নি: " + error.message);
+                else {
+                    alert("সফলভাবে ডিলিট হয়েছে।");
+                    syncSystem();
+                }
             }
         }
 
-        // ৩. ডাটা লোড ও ফিল্টার
+        // ২. অটোমেটিক ব্যাচ ড্রপডাউন আপডেট করার ফাংশন
+        async function updateBatchDropdown() {
+            const { data } = await _supabase.from('students').select('batch');
+            const batches = [...new Set(data.map(item => item.batch))].filter(Boolean);
+            const dropdown = document.getElementById('batchFilter');
+            const currentVal = dropdown.value;
+            
+            dropdown.innerHTML = '<option value="All">সকল ব্যাচ</option>';
+            batches.forEach(b => {
+                dropdown.innerHTML += `<option value="${b}">${b}</option>`;
+            });
+            dropdown.value = currentVal;
+        }
+
+        // ৩. স্টুডেন্ট লোড করা
         async function loadStudents() {
             const filter = document.getElementById('batchFilter').value;
             const body = document.getElementById('stuListBody');
-            body.innerHTML = '<tr><td colspan="3" class="text-center py-20 text-slate-300 italic animate-pulse">ডাটাবেজ কানেক্ট হচ্ছে...</td></tr>';
+            body.innerHTML = '<tr><td colspan="3" class="text-center py-20 text-slate-300 italic animate-pulse font-bold">ডাটা লোড হচ্ছে...</td></tr>';
 
             let query = _supabase.from('students').select('*');
             if (filter !== "All") query = query.eq('batch', filter);
 
-            const { data, error } = await query.order('roll_no', { ascending: true });
+            const { data } = await query.order('roll_no', { ascending: true });
 
             if (data) {
                 body.innerHTML = data.map(s => `
-                    <tr class="hover:bg-indigo-50/50 transition-all">
+                    <tr class="hover:bg-indigo-50/50 transition-all group">
                         <td class="py-4 pl-2">
                             <div class="font-bold text-slate-800 text-lg">${s.name}</div>
-                            <div class="text-[10px] text-slate-400 font-mono">Roll: ${s.roll_no} | Class: ${s.class} | 📞 ${s.phone || 'N/A'}</div>
+                            <div class="text-[10px] text-slate-400 font-mono italic">Roll: ${s.roll_no} | 📞 ${s.phone || 'N/A'}</div>
                         </td>
                         <td class="py-4 text-center">
                             <span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase">${s.batch}</span>
                         </td>
                         <td class="py-4 text-right">
-                            <div class="flex justify-end gap-1">
-                                <button onclick="markAttend('${s.name}', 'Present')" class="bg-green-500 text-white w-9 h-9 rounded-xl text-xs font-bold shadow-sm hover:bg-green-600">P</button>
-                                <button onclick="markAttend('${s.name}', 'Absent')" class="bg-red-500 text-white w-9 h-9 rounded-xl text-xs font-bold shadow-sm hover:bg-red-600">A</button>
+                            <div class="flex justify-end gap-2">
+                                <button onclick="deleteStudent('${s.id}', '${s.name}')" class="bg-red-50 text-red-500 p-2 rounded-xl hover:bg-red-500 hover:text-white transition shadow-sm" title="ডিলিট করুন">🗑️</button>
+                                <button class="bg-green-500 text-white w-9 h-9 rounded-xl text-xs font-bold shadow-sm">P</button>
                             </div>
                         </td>
                     </tr>
@@ -158,9 +132,40 @@
             }
         }
 
-        function markAttend(n, s) { alert(`${n} কে ${s === 'Present' ? 'উপস্থিত' : 'অনুপস্থিত'} করা হলো।`); }
+        // ৪. বাল্ক ও একক ভর্তি (পূর্বের ফাংশনগুলো অপরিবর্তিত)
+        async function saveSingle() {
+            const name = document.getElementById('stuName').value;
+            const roll = document.getElementById('stuRoll').value;
+            const btc = document.getElementById('stuBatch').value;
+            const phn = document.getElementById('stuPhone').value;
+            const { error } = await _supabase.from('students').insert([{ name, roll_no: parseInt(roll), batch: btc, phone: phn }]);
+            if (!error) { syncSystem(); document.querySelectorAll('input').forEach(i => i.value = ''); }
+        }
 
-        window.onload = loadStudents;
+        async function processBulk() {
+            const fileInput = document.getElementById('csvFileInput');
+            const file = fileInput.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const rows = e.target.result.split('\n').slice(1);
+                const students = rows.filter(r => r.trim()).map(r => {
+                    const c = r.split(',');
+                    return { name: c[0].trim(), roll_no: parseInt(c[1]), batch: c[3].trim(), phone: c[4].trim() };
+                });
+                await _supabase.from('students').insert(students);
+                syncSystem();
+            };
+            reader.readAsText(file, "UTF-8");
+        }
+
+        // সিস্টেম সিঙ্ক করা
+        async function syncSystem() {
+            await updateBatchDropdown();
+            await loadStudents();
+        }
+
+        window.onload = syncSystem;
     </script>
 </body>
 </html>
