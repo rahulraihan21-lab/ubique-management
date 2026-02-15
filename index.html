@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UBIQUE Cadet & Defence Academy | Fixed Reports</title>
+    <title>UBIQUE Academy | Admin Panel</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -16,12 +16,12 @@
 <body class="bg-slate-50 min-h-screen">
 
     <header class="bg-indigo-900 text-white shadow-xl p-6 sticky top-0 z-50">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold italic">UBIQUE Academy Admin</h1>
-            <div class="flex gap-4">
-                <button onclick="switchTab('daily')" id="tabDaily" class="px-3 py-1 font-bold tab-active">হাজিরা</button>
-                <button onclick="switchTab('report')" id="tabReport" class="px-3 py-1 font-bold">রিপোর্ট</button>
-                <button onclick="switchTab('settings')" id="tabSettings" class="px-3 py-1 font-bold text-indigo-300">⚙️</button>
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
+            <h1 class="text-2xl font-bold italic">UBIQUE Academy Admin</h1>
+            <div class="flex gap-4 mt-4 md:mt-0">
+                <button onclick="switchTab('daily')" id="tabDaily" class="px-4 py-1 font-bold tab-active">হাজিরা</button>
+                <button onclick="switchTab('report')" id="tabReport" class="px-4 py-1 font-bold">রিপোর্ট</button>
+                <button onclick="switchTab('settings')" id="tabSettings" class="px-4 py-1 font-bold text-indigo-300">⚙️ সেটিংস</button>
             </div>
         </div>
     </header>
@@ -29,95 +29,103 @@
     <main class="container mx-auto p-4 mt-6">
         
         <div id="dailySection" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div class="lg:col-span-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-200 h-fit">
-                <h3 id="formTitle" class="font-bold text-lg mb-4 border-b pb-2">ভর্তি ও তথ্য সংশোধন</h3>
+            <div class="lg:col-span-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-200 h-fit sticky top-28">
+                <h3 id="formTitle" class="font-bold text-lg mb-4 border-b pb-2 text-indigo-800">👤 স্টুডেন্ট ডাটা</h3>
                 <input type="hidden" id="editStuId">
                 <div class="space-y-3">
                     <input type="text" id="stuName" placeholder="নাম" class="w-full border p-3 rounded-xl outline-none">
-                    <input type="number" id="stuRoll" placeholder="রোল" class="w-full border p-3 rounded-xl">
+                    <input type="number" id="stuRoll" placeholder="রোল নম্বর" class="w-full border p-3 rounded-xl">
                     <select id="stuClass" class="w-full border p-3 rounded-xl dynamic-class-list"></select>
                     <select id="stuBatch" class="w-full border p-3 rounded-xl dynamic-batch-list"></select>
                     <input type="text" id="stuPhone" placeholder="ফোন নম্বর" class="w-full border p-3 rounded-xl">
-                    <button onclick="saveSingleStudent()" class="w-full bg-indigo-600 text-white py-3 rounded-2xl font-bold">সেভ করুন</button>
+                    <div class="flex gap-2">
+                        <button id="saveBtn" onclick="saveSingleStudent()" class="flex-1 bg-indigo-600 text-white py-3 rounded-2xl font-bold shadow-lg">সেভ করুন</button>
+                        <button id="cancelBtn" onclick="resetForm()" class="hidden bg-slate-200 text-slate-700 px-4 py-3 rounded-2xl font-bold">X</button>
+                    </div>
                 </div>
             </div>
 
             <div class="lg:col-span-8 bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
                 <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 border-b pb-4">
                     <h3 class="font-bold text-xl">আজকের হাজিরা</h3>
-                    <div class="flex gap-2">
-                        <select id="classFilter" onchange="toggleBatchDropdown()" class="border p-2 rounded-xl text-sm dynamic-class-list outline-none"></select>
-                        <div id="batchFilterContainer" class="hidden">
-                            <select id="batchFilter" onchange="loadStudents()" class="border p-2 rounded-xl text-sm bg-indigo-50 dynamic-batch-list outline-none"></select>
+                    <div class="flex gap-2 w-full md:w-auto">
+                        <select id="classFilter" onchange="toggleBatchDropdown()" class="border p-2 rounded-xl text-sm bg-slate-50 dynamic-class-list outline-none flex-1 md:flex-none"></select>
+                        <div id="batchFilterContainer" class="hidden flex-1 md:flex-none">
+                            <select id="batchFilter" onchange="loadStudents()" class="border p-2 rounded-xl text-sm bg-indigo-50 dynamic-batch-list outline-none w-full"></select>
                         </div>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left"><tbody id="stuListBody" class="divide-y divide-slate-100"></tbody></table>
+                    <table class="w-full text-left">
+                        <tbody id="stuListBody" class="divide-y divide-slate-100">
+                            <tr><td class="text-center py-10 text-slate-400">প্রথমে ক্লাস সিলেক্ট করুন...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
-                <button onclick="submitFinalAttendance()" class="w-full mt-8 bg-indigo-700 text-white py-4 rounded-2xl font-bold shadow-lg">হাজিরা জমা দিন ✅</button>
+                <button onclick="submitFinalAttendance()" class="w-full mt-8 bg-indigo-700 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-black transition">আজকের হাজিরা জমা দিন ✅</button>
             </div>
         </div>
 
         <div id="reportSection" class="hidden space-y-6">
             <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
-                <h3 class="font-bold text-xl mb-6 text-indigo-800 border-b pb-4 text-center">📊 রিপোর্ট ফিল্টার বোর্ড</h3>
-                
-                <div class="bg-slate-50 p-6 rounded-2xl mb-8 border border-slate-200">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                        <div>
-                            <label class="text-[10px] font-bold text-slate-500 uppercase">ক্লাস</label>
-                            <select id="reportClass" class="w-full border p-2 rounded-xl text-sm outline-none dynamic-class-list"></select>
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-slate-500 uppercase">ব্যাচ</label>
-                            <select id="reportBatch" class="w-full border p-2 rounded-xl text-sm outline-none dynamic-batch-list"></select>
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-slate-500 uppercase">মাস (মান্থলি রিপোর্ট)</label>
-                            <select id="reportMonth" class="w-full border p-2 rounded-xl text-sm outline-none">
-                                <option value="01">জানুয়ারি</option><option value="02">ফেব্রুয়ারি</option><option value="03">মার্চ</option>
-                                <option value="04">এপ্রিল</option><option value="05">মে</option><option value="06">জুন</option>
-                                <option value="07">জুলাই</option><option value="08">আগস্ট</option><option value="09">সেপ্টেম্বর</option>
-                                <option value="10">অক্টোবর</option><option value="11">নভেম্বর</option><option value="12">ডিসেম্বর</option>
-                            </select>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="fetchMonthlyReport()" class="flex-1 bg-indigo-600 text-white py-2 rounded-xl font-bold text-xs hover:bg-indigo-700">মাসিক রিপোর্ট</button>
-                        </div>
+                <h3 class="font-bold text-xl mb-6 text-indigo-800 border-b pb-4">📊 রিপোর্ট দেখার বোর্ড</h3>
+                <div class="bg-slate-50 p-6 rounded-2xl mb-8 border border-slate-200 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase">ক্লাস</label>
+                        <select id="reportClass" class="w-full border p-2 rounded-xl text-sm dynamic-class-list"></select>
                     </div>
-                    <div class="mt-4 border-t pt-4 grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-                        <div>
-                            <label class="text-[10px] font-bold text-slate-500 uppercase">নির্দিষ্ট তারিখ (ডেইলি রিপোর্ট)</label>
-                            <input type="date" id="reportDate" class="w-full border p-2 rounded-xl text-sm outline-none">
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="fetchDailyReport()" class="flex-1 bg-slate-800 text-white py-2 rounded-xl font-bold text-xs hover:bg-black">দৈনিক রিপোর্ট দেখুন</button>
-                            <button onclick="downloadExcel()" class="bg-green-600 text-white px-6 py-2 rounded-xl shadow-md font-bold text-xs">📊 Excel</button>
-                        </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase">ব্যাচ</label>
+                        <select id="reportBatch" class="w-full border p-2 rounded-xl text-sm dynamic-batch-list"></select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase">মাস (মাসিক রিপোর্ট)</label>
+                        <select id="reportMonth" class="w-full border p-2 rounded-xl text-sm">
+                            <option value="01">জানুয়ারি</option><option value="02">ফেব্রুয়ারি</option><option value="03">মার্চ</option>
+                            <option value="04">এপ্রিল</option><option value="05">মে</option><option value="06">জুন</option>
+                            <option value="07">জুলাই</option><option value="08">আগস্ট</option><option value="09">সেপ্টেম্বর</option>
+                            <option value="10">অক্টোবর</option><option value="11">নভেম্বর</option><option value="12">ডিসেম্বর</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase">নির্দিষ্ট দিন (ডেইলি রিপোর্ট)</label>
+                        <input type="date" id="reportDate" class="w-full border p-2 rounded-xl text-sm">
+                    </div>
+                    <div class="lg:col-span-4 flex gap-2 justify-center mt-2">
+                        <button onclick="fetchMonthlyReport()" class="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold text-xs">মান্থলি রিপোর্ট</button>
+                        <button onclick="fetchDailyReport()" class="bg-slate-800 text-white px-6 py-2 rounded-xl font-bold text-xs">ডেইলি রিপোর্ট</button>
+                        <button onclick="downloadExcel()" class="bg-green-600 text-white px-4 py-2 rounded-xl font-bold text-xs">📊 এক্সেল ডাউনলোড</button>
                     </div>
                 </div>
-
                 <div class="overflow-x-auto">
                     <table id="reportTable" class="w-full text-left text-sm border-collapse">
-                        <thead class="bg-indigo-50 text-indigo-900">
-                            <tr>
-                                <th class="p-4 border-b">ছাত্রের নাম ও ফোন</th>
-                                <th class="p-4 border-b">রোল/ক্লাস/ব্যাচ</th>
-                                <th class="p-4 border-b text-center">উপস্থিতি</th>
-                                <th class="p-4 border-b text-right">কল</th>
-                            </tr>
+                        <thead class="bg-indigo-50">
+                            <tr><th class="p-4 border-b">ছাত্র</th><th class="p-4 border-b">রোল/ব্যাচ</th><th class="p-4 border-b text-center">উপস্থিতি</th><th class="p-4 border-b text-right">কল</th></tr>
                         </thead>
-                        <tbody id="reportTableBody" class="divide-y divide-slate-100">
-                            <tr><td colspan="4" class="p-10 text-center text-slate-400">ফিল্টার সিলেক্ট করে রিপোর্ট দেখুন</td></tr>
-                        </tbody>
+                        <tbody id="reportTableBody" class="divide-y divide-slate-100"></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
         <div id="settingsSection" class="hidden grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                <h3 class="font-bold text-lg mb-4 border-b pb-2 text-green-600 uppercase text-xs">📂 ব্যাচ ম্যানেজমেন্ট</h3>
+                <div class="flex gap-2 mb-4">
+                    <input type="text" id="newBatchName" placeholder="নতুন ব্যাচ..." class="flex-1 border p-2 rounded-lg outline-none">
+                    <button onclick="addConfigToDB('batch')" class="bg-green-600 text-white px-4 py-2 rounded-lg font-bold">+</button>
+                </div>
+                <ul id="configBatchList" class="space-y-2"></ul>
             </div>
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                <h3 class="font-bold text-lg mb-4 border-b pb-2 text-blue-600 uppercase text-xs">🏫 ক্লাস ম্যানেজমেন্ট</h3>
+                <div class="flex gap-2 mb-4">
+                    <input type="text" id="newClassName" placeholder="নতুন ক্লাস..." class="flex-1 border p-2 rounded-lg outline-none">
+                    <button onclick="addConfigToDB('class')" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">+</button>
+                </div>
+                <ul id="configClassList" class="space-y-2"></ul>
+            </div>
+        </div>
     </main>
 
     <script>
@@ -139,112 +147,153 @@
             if (settings) {
                 const batches = settings.filter(i => i.type === 'batch').map(i => i.value);
                 const classes = settings.filter(i => i.type === 'class').map(i => i.value);
+
                 document.querySelectorAll('.dynamic-batch-list').forEach(p => p.innerHTML = '<option value="All">সকল ব্যাচ</option>' + batches.map(b => `<option value="${b}">${b}</option>`).join(''));
                 document.querySelectorAll('.dynamic-class-list').forEach(p => p.innerHTML = '<option value="Select">ক্লাস সিলেক্ট</option><option value="All">All Class</option>' + classes.map(c => `<option value="${c}">${c}</option>`).join(''));
+
+                document.getElementById('configBatchList').innerHTML = batches.map(b => `<li class="flex justify-between items-center bg-slate-50 p-2 rounded-lg text-xs font-bold">${b} <button onclick="deleteConfigFromDB('${b}')" class="text-red-500">✖</button></li>`).join('');
+                document.getElementById('configClassList').innerHTML = classes.map(c => `<li class="flex justify-between items-center bg-slate-50 p-2 rounded-lg text-xs font-bold">${c} <button onclick="deleteConfigFromDB('${c}')" class="text-red-500">✖</button></li>`).join('');
             }
         }
 
-        // ডেইলি রিপোর্ট ফিক্সড লজিক
+        function toggleBatchDropdown() {
+            const cls = document.getElementById('classFilter').value;
+            const container = document.getElementById('batchFilterContainer');
+            if(cls !== "Select") { container.classList.remove('hidden'); loadStudents(); } 
+            else { container.classList.add('hidden'); document.getElementById('stuListBody').innerHTML = '<tr><td class="text-center py-10 text-slate-400">প্রথমে ক্লাস সিলেক্ট করুন...</td></tr>'; }
+        }
+
+        async function loadStudents() {
+            const cls = document.getElementById('classFilter').value;
+            const btc = document.getElementById('batchFilter').value;
+            const body = document.getElementById('stuListBody');
+            body.innerHTML = '<tr><td class="text-center py-10 italic">ডাটা লোড হচ্ছে...</td></tr>';
+            
+            let query = _supabase.from('students').select('*');
+            if (cls !== "All" && cls !== "Select") query = query.eq('class', cls);
+            if (btc !== "All") query = query.eq('batch', btc);
+            
+            const { data, error } = await query.order('roll_no', { ascending: true });
+            if (data) {
+                if(data.length === 0) { body.innerHTML = '<tr><td class="text-center py-10">কোনো স্টুডেন্ট পাওয়া যায়নি।</td></tr>'; return; }
+                body.innerHTML = data.map(s => `
+                    <tr class="hover:bg-indigo-50">
+                        <td class="py-4 pl-2"><div class="font-bold text-slate-800">${s.name}</div><div class="text-[10px] text-slate-500">Roll: ${s.roll_no} | ${s.phone}</div></td>
+                        <td class="py-4 text-right flex justify-end gap-2 pr-2">
+                            <button onclick='editStudent(${JSON.stringify(s)})' class="text-blue-500 text-lg">✎</button>
+                            <button onclick="deleteStudent(${s.id}, '${s.name}')" class="text-red-400 text-lg">🗑</button>
+                            <div class="h-8 w-[1px] bg-slate-200 mx-1"></div>
+                            <button id="p-${s.id}" onclick="setAttendance('${s.id}', 'Present')" class="w-9 h-9 rounded-lg font-bold border-2 border-green-500 text-green-600">P</button>
+                            <button id="a-${s.id}" onclick="setAttendance('${s.id}', 'Absent')" class="w-9 h-9 rounded-lg font-bold border-2 border-red-500 text-red-600">A</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function editStudent(s) {
+            document.getElementById('formTitle').innerText = "📝 তথ্য সংশোধন";
+            document.getElementById('editStuId').value = s.id;
+            document.getElementById('stuName').value = s.name;
+            document.getElementById('stuRoll').value = s.roll_no;
+            document.getElementById('stuClass').value = s.class;
+            document.getElementById('stuBatch').value = s.batch;
+            document.getElementById('stuPhone').value = s.phone;
+            document.getElementById('saveBtn').innerText = "আপডেট করুন";
+            document.getElementById('cancelBtn').classList.remove('hidden');
+        }
+
+        async function saveSingleStudent() {
+            const id = document.getElementById('editStuId').value;
+            const data = {
+                name: document.getElementById('stuName').value,
+                roll_no: parseInt(document.getElementById('stuRoll').value),
+                class: document.getElementById('stuClass').value,
+                batch: document.getElementById('stuBatch').value,
+                phone: document.getElementById('stuPhone').value
+            };
+            if(id) await _supabase.from('students').update(data).eq('id', id);
+            else await _supabase.from('students').insert([data]);
+            alert("সফল হয়েছে!"); resetForm(); loadStudents();
+        }
+
+        function resetForm() {
+            document.getElementById('formTitle').innerText = "👤 স্টুডেন্ট ডাটা";
+            document.getElementById('editStuId').value = "";
+            document.getElementById('stuName').value = "";
+            document.getElementById('stuRoll').value = "";
+            document.getElementById('stuPhone').value = "";
+            document.getElementById('saveBtn').innerText = "সেভ করুন";
+            document.getElementById('cancelBtn').classList.add('hidden');
+        }
+
+        function setAttendance(id, status) {
+            document.getElementById(`p-${id}`).className = status === 'Present' ? "w-9 h-9 rounded-lg font-bold bg-green-500 text-white shadow-md" : "w-9 h-9 rounded-lg font-bold border-2 border-green-500 text-green-600";
+            document.getElementById(`a-${id}`).className = status === 'Absent' ? "w-9 h-9 rounded-lg font-bold bg-red-500 text-white shadow-md" : "w-9 h-9 rounded-lg font-bold border-2 border-red-500 text-red-600";
+            attendanceData[id] = status;
+        }
+
+        async function submitFinalAttendance() {
+            const records = Object.keys(attendanceData).map(id => ({ student_id: parseInt(id), status: attendanceData[id], attendance_date: new Date().toISOString().split('T')[0] }));
+            if (records.length === 0) return alert("হাজিরা মার্ক করুন!");
+            await _supabase.from('attendance').upsert(records, { onConflict: 'student_id, attendance_date' });
+            alert("হাজিরা সেভ হয়েছে!"); attendanceData = {};
+        }
+
+        // --- রিপোর্ট লজিক ---
+
         async function fetchDailyReport() {
             const date = document.getElementById('reportDate').value;
+            if(!date) return alert("তারিখ সিলেক্ট করুন");
             const cls = document.getElementById('reportClass').value;
             const btc = document.getElementById('reportBatch').value;
-            if(!date) return alert("দয়া করে তারিখ সিলেক্ট করুন!");
-
             const body = document.getElementById('reportTableBody');
-            body.innerHTML = '<tr><td colspan="4" class="text-center py-20 text-indigo-500 font-bold">সার্ভার থেকে তথ্য আনা হচ্ছে...</td></tr>';
+            body.innerHTML = '<tr><td colspan="4" class="text-center py-10">লোড হচ্ছে...</td></tr>';
             
-            const { data, error } = await _supabase.from('attendance')
-                .select(`status, students!inner(name, roll_no, class, batch, phone)`)
-                .eq('attendance_date', date);
-
+            const { data } = await _supabase.from('attendance').select(`status, students!inner(name, roll_no, class, batch, phone)`).eq('attendance_date', date);
             if(data) {
                 const filtered = data.filter(r => (cls === "All" || r.students.class === cls) && (btc === "All" || r.students.batch === btc));
-                if(filtered.length === 0) {
-                    body.innerHTML = '<tr><td colspan="4" class="text-center py-20 text-red-400">এই তারিখে কোনো হাজিরার রেকর্ড নেই।</td></tr>';
-                    return;
-                }
-                body.innerHTML = filtered.map(r => `
-                    <tr class="hover:bg-slate-50">
-                        <td class="p-4 font-bold text-slate-800">${r.students.name}<br><span class="text-[10px] text-indigo-500">📞 ${r.students.phone || 'N/A'}</span></td>
-                        <td class="p-4 text-xs font-semibold text-slate-500">${r.students.roll_no}<br>${r.students.class} | ${r.students.batch}</td>
-                        <td class="p-4 text-center">
-                            <span class="px-3 py-1 rounded-full text-[10px] font-bold ${r.status === 'Present' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${r.status}</span>
-                        </td>
-                        <td class="p-4 text-right"><a href="tel:${r.students.phone}" class="bg-indigo-600 text-white px-4 py-1 rounded text-[10px] font-bold">Call</a></td>
-                    </tr>
-                `).join('');
+                body.innerHTML = filtered.map(r => `<tr><td class="p-4 font-bold">${r.students.name}<br><span class="text-[9px] italic text-indigo-500">${r.students.phone}</span></td><td class="p-4 text-[10px]">${r.students.roll_no}<br>${r.students.class}</td><td class="p-4 text-center"><span class="px-2 py-1 rounded text-[10px] font-bold ${r.status === 'Present' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">${r.status}</span></td><td class="p-4 text-right"><a href="tel:${r.students.phone}" class="bg-indigo-600 text-white px-3 py-1 rounded text-[10px] font-bold">Call</a></td></tr>`).join('');
             }
         }
 
-        // মান্থলি রিপোর্ট ফিক্সড লজিক
         async function fetchMonthlyReport() {
             const month = document.getElementById('reportMonth').value;
-            const year = new Date().getFullYear().toString();
             const cls = document.getElementById('reportClass').value;
             const btc = document.getElementById('reportBatch').value;
             const body = document.getElementById('reportTableBody');
+            body.innerHTML = '<tr><td colspan="4" class="text-center py-10">তৈরি হচ্ছে...</td></tr>';
             
-            body.innerHTML = '<tr><td colspan="4" class="text-center py-20 text-indigo-500 font-bold">মাসিক রিপোর্ট জেনারেট হচ্ছে...</td></tr>';
-            
-            const { data } = await _supabase.from('attendance')
-                .select(`status, attendance_date, students!inner(name, roll_no, class, batch, phone)`);
-
+            const { data } = await _supabase.from('attendance').select(`status, attendance_date, students!inner(name, roll_no, class, batch, phone)`);
             if(data) {
-                // তারিখ এবং ফিল্টার অনুযায়ী ম্যাচ করা
-                const filtered = data.filter(r => 
-                    r.attendance_date.startsWith(`${year}-${month}`) && 
-                    (cls === "All" || r.students.class === cls) && 
-                    (btc === "All" || r.students.batch === btc)
-                );
-
-                if(filtered.length === 0) {
-                    body.innerHTML = '<tr><td colspan="4" class="text-center py-20 text-red-400">এই মাসে কোনো রেকর্ড পাওয়া যায়নি।</td></tr>';
-                    return;
-                }
-
+                const filtered = data.filter(r => r.attendance_date.startsWith(`2026-${month}`) && (cls === "All" || r.students.class === cls) && (btc === "All" || r.students.batch === btc));
                 const summary = {};
                 filtered.forEach(r => {
-                    const studentKey = r.students.name + r.students.roll_no;
-                    if(!summary[studentKey]) {
-                        summary[studentKey] = { 
-                            name: r.students.name, 
-                            roll: r.students.roll_no, 
-                            cls: r.students.class, 
-                            btc: r.students.batch, 
-                            phone: r.students.phone, 
-                            p: 0, 
-                            total: 0 
-                        };
-                    }
-                    summary[studentKey].total++;
-                    if(r.status === 'Present') summary[studentKey].p++;
+                    const k = r.students.name + r.students.roll_no;
+                    if(!summary[k]) summary[k] = { n: r.students.name, r: r.students.roll_no, c: r.students.class, p: r.students.phone, present: 0, total: 0 };
+                    summary[k].total++; if(r.status === 'Present') summary[k].present++;
                 });
-
-                body.innerHTML = Object.values(summary).map(s => `
-                    <tr class="hover:bg-slate-50">
-                        <td class="p-4 font-bold text-slate-800">${s.name}<br><span class="text-[10px] text-indigo-500">📞 ${s.phone}</span></td>
-                        <td class="p-4 text-xs font-semibold text-slate-500">${s.roll}<br>${s.cls} | ${s.btc}</td>
-                        <td class="p-4 text-center">
-                            <div class="font-bold text-indigo-700">${((s.p/s.total)*100).toFixed(1)}%</div>
-                            <div class="text-[9px] text-slate-400">(${s.p}/${s.total} দিন)</div>
-                        </td>
-                        <td class="p-4 text-right"><a href="tel:${s.phone}" class="bg-indigo-600 text-white px-4 py-1 rounded text-[10px] font-bold">Call</a></td>
-                    </tr>
-                `).join('');
+                body.innerHTML = Object.values(summary).map(s => `<tr><td class="p-4 font-bold">${s.n}<br><span class="text-[9px] italic text-indigo-500">${s.p}</span></td><td class="p-4 text-[10px]">${s.r}<br>${s.c}</td><td class="p-4 text-center font-bold text-indigo-600">${((s.present/s.total)*100).toFixed(1)}%</td><td class="p-4 text-right"><a href="tel:${s.p}" class="bg-indigo-600 text-white px-3 py-1 rounded text-[10px] font-bold">Call</a></td></tr>`).join('');
             }
         }
 
-        // এক্সেল ডাউনলোড ফিক্স
-        function downloadExcel() {
-            const table = document.getElementById("reportTable");
-            const wb = XLSX.utils.table_to_book(table, { sheet: "Attendance_Report" });
-            XLSX.writeFile(wb, "UBIQUE_Academy_Report.xlsx");
+        function downloadExcel() { XLSX.utils.writeFile(XLSX.utils.table_to_book(document.getElementById("reportTable")), "UBIQUE_Report.xlsx"); }
+
+        async function addConfigToDB(type) {
+            const val = document.getElementById(type === 'batch' ? 'newBatchName' : 'newClassName').value.trim();
+            if(!val) return;
+            await _supabase.from('academy_settings').insert([{ type, value: val }]);
+            document.getElementById(type === 'batch' ? 'newBatchName' : 'newClassName').value = ''; syncSystem();
         }
 
-        // অন্যান্য ফাংশন (loadStudents, submitFinalAttendance, saveSingleStudent) আপনার আগের কোড অনুযায়ী ঠিক থাকবে।
-        // শুধু syncSystem এবং রিপোর্ট ফাংশনগুলো উপরে রিপ্লেস করে নিন।
-        
+        async function deleteConfigFromDB(val) {
+            if(confirm(`'${val}' ডিলিট করবেন?`)) { await _supabase.from('academy_settings').delete().eq('value', val); syncSystem(); }
+        }
+
+        async function deleteStudent(id, name) {
+            if(confirm(`${name}-কে ডিলিট করবেন?`)) { await _supabase.from('attendance').delete().eq('student_id', id); await _supabase.from('students').delete().eq('id', id); loadStudents(); }
+        }
+
         window.onload = syncSystem;
     </script>
 </body>
