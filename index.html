@@ -1,171 +1,90 @@
-<!DOCTYPE html>
-<html lang="bn">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UBIQUE Management | Live Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
-        body { font-family: 'Hind Siliguri', sans-serif; }
-    </style>
-</head>
-<body class="bg-slate-50 min-h-screen">
+<script>
+    // আপনার Supabase কনফিগারেশন (আগের মতোই থাকবে)
+    const SUPABASE_URL = 'https://sfsrtozgfethgdfrmskk.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_ds6DYMap76uRiquvQ9a0fQ_rctZqM61';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    <header class="bg-indigo-900 text-white shadow-xl p-6">
-        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
-            <div>
-                <h1 class="text-2xl font-bold tracking-tight">UBIQUE Cadet & Defence Academy</h1>
-                <p class="text-indigo-200 text-sm italic">৫০১ উত্তর শাহজাহানপুর, ঢাকা-১২১৭</p>
-            </div>
-            <div class="mt-4 md:mt-0 flex gap-4">
-                <select id="batchFilter" onchange="loadStudents()" class="bg-indigo-800 text-white border border-indigo-600 p-2 rounded-xl outline-none text-sm min-w-[150px]">
-                    <option value="All">সকল ব্যাচ</option>
-                </select>
-                <button onclick="syncSystem()" class="bg-indigo-600 hover:bg-indigo-500 p-2 rounded-xl text-sm transition">🔄 রিফ্রেশ</button>
-            </div>
-        </div>
-    </header>
+    // ১. এই অবজেক্টটি সব হাজিরার ডাটা সাময়িকভাবে ধরে রাখবে
+    let attendanceData = {}; 
 
-    <main class="container mx-auto p-4 mt-8">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
-            <div class="lg:col-span-4 space-y-6">
-                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                    <h3 class="font-bold text-lg mb-4 text-slate-800 flex items-center">📂 বাল্ক ভর্তি (CSV)</h3>
-                    <input type="file" id="csvFileInput" accept=".csv" class="w-full text-xs text-slate-500 mb-4">
-                    <button onclick="processBulk()" class="w-full bg-slate-900 text-white py-3 rounded-2xl font-bold hover:bg-black transition transform active:scale-95">আপলোড শুরু করুন</button>
-                </div>
+    // ২. স্টুডেন্ট লিস্ট লোড করার ফাংশন (আপডেটেড)
+    async function loadStudents() {
+        const batch = document.getElementById('batchFilter').value;
+        const listBody = document.getElementById('stuListBody');
+        listBody.innerHTML = '<tr><td colspan="3" class="text-center py-10">লোড হচ্ছে...</td></tr>';
 
-                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                    <h3 class="font-bold text-lg mb-4 text-slate-800">👤 একক ভর্তি</h3>
-                    <div class="space-y-3">
-                        <input type="text" id="stuName" placeholder="ছাত্রের নাম" class="w-full border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
-                        <input type="number" id="stuRoll" placeholder="রোল নম্বর" class="w-full border p-3 rounded-xl">
-                        <input type="text" id="stuBatch" placeholder="ব্যাচ (উদা: Cadet 2026)" class="w-full border p-3 rounded-xl">
-                        <input type="text" id="stuPhone" placeholder="ফোন নম্বর" class="w-full border p-3 rounded-xl">
-                        <button onclick="saveSingle()" class="w-full bg-indigo-600 text-white py-3 rounded-2xl font-bold hover:bg-indigo-700 shadow-lg">সেভ করুন</button>
-                    </div>
-                </div>
-            </div>
+        let query = _supabase.from('students').select('*');
+        if (batch !== "All") query = query.eq('batch', batch);
 
-            <div class="lg:col-span-8 bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                <h3 class="font-bold text-xl text-slate-800 mb-6 border-b pb-4">ছাত্রছাত্রীর তালিকা ও ডিলিট অপশন</h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead>
-                            <tr class="text-slate-400 text-xs uppercase tracking-wider border-b font-bold">
-                                <th class="pb-3 pl-2">ছাত্রের বিবরণ</th>
-                                <th class="pb-3 text-center">ব্যাচ</th>
-                                <th class="pb-3 text-right">অ্যাকশন</th>
-                            </tr>
-                        </thead>
-                        <tbody id="stuListBody" class="divide-y divide-slate-100">
-                            </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </main>
+        const { data, error } = await query.order('roll_no', { ascending: true });
 
-    <script>
-        const SUPABASE_URL = 'https://sfsrtozgfethgdfrmskk.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_ds6DYMap76uRiquvQ9a0fQ_rctZqM61';
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        // ১. ডিলিট ফাংশন
-        async function deleteStudent(id, name) {
-            if (confirm(`আপনি কি নিশ্চিত যে ${name}-এর তথ্য ডিলিট করতে চান?`)) {
-                const { error } = await _supabase.from('students').delete().eq('id', id);
-                if (error) alert("ডিলিট করা সম্ভব হয়নি: " + error.message);
-                else {
-                    alert("সফলভাবে ডিলিট হয়েছে।");
-                    syncSystem();
-                }
-            }
+        if (data) {
+            listBody.innerHTML = data.map(s => `
+                <tr class="border-b hover:bg-slate-50">
+                    <td class="py-4 pl-2">
+                        <div class="font-bold text-slate-800">${s.name}</div>
+                        <div class="text-[10px] text-slate-400">রোল: ${s.roll_no} | 📞 ${s.phone || 'N/A'}</div>
+                    </td>
+                    <td class="text-center font-semibold text-indigo-600">${s.batch}</td>
+                    <td class="py-4 text-right">
+                        <div class="flex justify-end gap-2 pr-2">
+                            <button id="p-${s.id}" onclick="setAttendance('${s.id}', 'Present')" 
+                                class="w-10 h-10 rounded-xl font-bold border-2 border-green-500 text-green-500 transition-all">P</button>
+                            <button id="a-${s.id}" onclick="setAttendance('${s.id}', 'Absent')" 
+                                class="w-10 h-10 rounded-xl font-bold border-2 border-red-500 text-red-500 transition-all">A</button>
+                            <a href="sms:${s.phone}?body=অভিভাবক, আপনার সন্তান আজ ইউবিক একাডেমিতে অনুপস্থিত।" 
+                               class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">✉️</a>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
         }
+    }
 
-        // ২. অটোমেটিক ব্যাচ ড্রপডাউন আপডেট করার ফাংশন
-        async function updateBatchDropdown() {
-            const { data } = await _supabase.from('students').select('batch');
-            const batches = [...new Set(data.map(item => item.batch))].filter(Boolean);
-            const dropdown = document.getElementById('batchFilter');
-            const currentVal = dropdown.value;
-            
-            dropdown.innerHTML = '<option value="All">সকল ব্যাচ</option>';
-            batches.forEach(b => {
-                dropdown.innerHTML += `<option value="${b}">${b}</option>`;
-            });
-            dropdown.value = currentVal;
+    // ৩. পপ-আপ ছাড়া কালার চেঞ্জ করার লজিক
+    function setAttendance(id, status) {
+        const pBtn = document.getElementById(`p-${id}`);
+        const aBtn = document.getElementById(`a-${id}`);
+
+        if (status === 'Present') {
+            // P বাটন সবুজ হবে, A বাটন সাদা থাকবে
+            pBtn.className = "w-10 h-10 rounded-xl font-bold bg-green-500 text-white shadow-lg scale-110";
+            aBtn.className = "w-10 h-10 rounded-xl font-bold border-2 border-red-500 text-red-500";
+            attendanceData[id] = 'Present';
+        } else {
+            // A বাটন লাল হবে, P বাটন সাদা থাকবে
+            aBtn.className = "w-10 h-10 rounded-xl font-bold bg-red-500 text-white shadow-lg scale-110";
+            pBtn.className = "w-10 h-10 rounded-xl font-bold border-2 border-green-500 text-green-500";
+            attendanceData[id] = 'Absent';
         }
+    }
 
-        // ৩. স্টুডেন্ট লোড করা
-        async function loadStudents() {
-            const filter = document.getElementById('batchFilter').value;
-            const body = document.getElementById('stuListBody');
-            body.innerHTML = '<tr><td colspan="3" class="text-center py-20 text-slate-300 italic animate-pulse font-bold">ডাটা লোড হচ্ছে...</td></tr>';
+    // ৪. এক ক্লিকে পুরো ব্যাচের হাজিরা ডাটাবেজে পাঠানো
+    async function submitFinalAttendance() {
+        const records = Object.keys(attendanceData).map(studentId => ({
+            student_id: parseInt(studentId),
+            status: attendanceData[studentId],
+            attendance_date: new Date().toISOString().split('T')[0]
+        }));
 
-            let query = _supabase.from('students').select('*');
-            if (filter !== "All") query = query.eq('batch', filter);
+        if (records.length === 0) return alert("আগে অন্তত একজনের হাজিরা মার্ক করুন!");
 
-            const { data } = await query.order('roll_no', { ascending: true });
+        const { error } = await _supabase
+            .from('attendance')
+            .upsert(records, { onConflict: 'student_id, attendance_date' });
 
-            if (data) {
-                body.innerHTML = data.map(s => `
-                    <tr class="hover:bg-indigo-50/50 transition-all group">
-                        <td class="py-4 pl-2">
-                            <div class="font-bold text-slate-800 text-lg">${s.name}</div>
-                            <div class="text-[10px] text-slate-400 font-mono italic">Roll: ${s.roll_no} | 📞 ${s.phone || 'N/A'}</div>
-                        </td>
-                        <td class="py-4 text-center">
-                            <span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase">${s.batch}</span>
-                        </td>
-                        <td class="py-4 text-right">
-                            <div class="flex justify-end gap-2">
-                                <button onclick="deleteStudent('${s.id}', '${s.name}')" class="bg-red-50 text-red-500 p-2 rounded-xl hover:bg-red-500 hover:text-white transition shadow-sm" title="ডিলিট করুন">🗑️</button>
-                                <button class="bg-green-500 text-white w-9 h-9 rounded-xl text-xs font-bold shadow-sm">P</button>
-                            </div>
-                        </td>
-                    </tr>
-                `).join('');
-            }
+        if (error) {
+            alert("সেভ হয়নি: " + error.message);
+        } else {
+            alert("সব হাজিরা সফলভাবে ডাটাবেজে সেভ হয়েছে! ✅");
+            attendanceData = {}; // ডাটা রিসেট
+            loadStudents(); // লিস্ট রিফ্রেশ
         }
+    }
+</script>
 
-        // ৪. বাল্ক ও একক ভর্তি (পূর্বের ফাংশনগুলো অপরিবর্তিত)
-        async function saveSingle() {
-            const name = document.getElementById('stuName').value;
-            const roll = document.getElementById('stuRoll').value;
-            const btc = document.getElementById('stuBatch').value;
-            const phn = document.getElementById('stuPhone').value;
-            const { error } = await _supabase.from('students').insert([{ name, roll_no: parseInt(roll), batch: btc, phone: phn }]);
-            if (!error) { syncSystem(); document.querySelectorAll('input').forEach(i => i.value = ''); }
-        }
-
-        async function processBulk() {
-            const fileInput = document.getElementById('csvFileInput');
-            const file = fileInput.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const rows = e.target.result.split('\n').slice(1);
-                const students = rows.filter(r => r.trim()).map(r => {
-                    const c = r.split(',');
-                    return { name: c[0].trim(), roll_no: parseInt(c[1]), batch: c[3].trim(), phone: c[4].trim() };
-                });
-                await _supabase.from('students').insert(students);
-                syncSystem();
-            };
-            reader.readAsText(file, "UTF-8");
-        }
-
-        // সিস্টেম সিঙ্ক করা
-        async function syncSystem() {
-            await updateBatchDropdown();
-            await loadStudents();
-        }
-
-        window.onload = syncSystem;
-    </script>
-</body>
-</html>
+<div class="mt-8 text-center pb-10">
+    <button onclick="submitFinalAttendance()" class="bg-indigo-700 text-white px-12 py-4 rounded-2xl font-bold shadow-2xl hover:bg-black transition-all">
+        আজকের হাজিরা সাবমিট করুন
+    </button>
+</div>
