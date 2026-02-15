@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UBIQUE Academy | Full Dashboard</title>
+    <title>UBIQUE Academy | Attendance System</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -16,9 +16,12 @@
 <body class="bg-slate-50 min-h-screen">
 
     <header class="bg-indigo-900 text-white shadow-xl p-6 sticky top-0 z-50">
-        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
-            <h1 class="text-2xl font-bold">UBIQUE Academy Dashboard</h1>
-            <div class="flex gap-4 mt-4 md:mt-0 overflow-x-auto w-full md:w-auto">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center text-center md:text-left">
+            <div>
+                <h1 class="text-2xl font-bold italic">UBIQUE Academy Dashboard</h1>
+                <p class="text-indigo-200 text-[10px]">উত্তর শাহজাহানপুর, ঢাকা-১২১৭</p>
+            </div>
+            <div class="flex gap-4 mt-4 md:mt-0 overflow-x-auto w-full md:w-auto justify-center">
                 <button onclick="switchTab('daily')" id="tabDaily" class="px-3 py-1 font-bold tab-active whitespace-nowrap">হাজিরা</button>
                 <button onclick="switchTab('report')" id="tabReport" class="px-3 py-1 font-bold whitespace-nowrap">রিপোর্ট</button>
                 <button onclick="switchTab('settings')" id="tabSettings" class="px-3 py-1 font-bold whitespace-nowrap">⚙️ সেটিংস</button>
@@ -30,28 +33,28 @@
         
         <div id="dailySection" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div class="lg:col-span-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-200 h-fit sticky top-28">
-                <h3 id="formTitle" class="font-bold text-lg mb-4 border-b pb-2 text-indigo-800">👤 নতুন ভর্তি / এডিট</h3>
+                <h3 id="formTitle" class="font-bold text-lg mb-4 border-b pb-2 text-indigo-800">👤 স্টুডেন্ট ম্যানেজমেন্ট</h3>
                 <input type="hidden" id="editStuId">
                 <div class="space-y-3">
-                    <input type="text" id="stuName" placeholder="ছাত্রের নাম" class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="text" id="stuName" placeholder="নাম" class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
                     <input type="number" id="stuRoll" placeholder="রোল" class="w-full border p-3 rounded-xl">
                     <select id="stuClass" class="w-full border p-3 rounded-xl dynamic-class-list"></select>
                     <select id="stuBatch" class="w-full border p-3 rounded-xl dynamic-batch-list"></select>
                     <input type="text" id="stuPhone" placeholder="ফোন নম্বর" class="w-full border p-3 rounded-xl">
                     <div class="flex gap-2">
-                        <button id="saveBtn" onclick="saveSingleStudent()" class="flex-1 bg-indigo-600 text-white py-3 rounded-2xl font-bold shadow-lg">ভর্তি করুন</button>
-                        <button id="cancelBtn" onclick="resetForm()" class="hidden bg-slate-200 text-slate-700 px-4 py-3 rounded-2xl font-bold">বাতিল</button>
+                        <button id="saveBtn" onclick="saveSingleStudent()" class="flex-1 bg-indigo-600 text-white py-3 rounded-2xl font-bold shadow-lg">ভর্তি/আপডেট</button>
+                        <button id="cancelBtn" onclick="resetForm()" class="hidden bg-slate-200 text-slate-700 px-4 py-3 rounded-2xl font-bold">X</button>
                     </div>
                 </div>
             </div>
 
             <div class="lg:col-span-8 bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
                 <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 border-b pb-4">
-                    <h3 class="font-bold text-xl text-indigo-900">ছাত্র তালিকা</h3>
+                    <h3 class="font-bold text-xl text-indigo-900">হাজিরা লিস্ট</h3>
                     <div class="flex flex-wrap gap-2 w-full md:w-auto">
-                        <select id="classFilter" onchange="toggleBatchDropdown()" class="border p-2 rounded-xl text-sm bg-slate-50 dynamic-class-list min-w-[120px]"></select>
+                        <select id="classFilter" onchange="toggleBatchDropdown()" class="border p-2 rounded-xl text-sm bg-slate-50 dynamic-class-list min-w-[120px] outline-none"></select>
                         <div id="batchFilterContainer" class="hidden">
-                            <select id="batchFilter" onchange="loadStudents()" class="border p-2 rounded-xl text-sm bg-indigo-50 dynamic-batch-list min-w-[120px]"></select>
+                            <select id="batchFilter" onchange="loadStudents()" class="border p-2 rounded-xl text-sm bg-indigo-50 dynamic-batch-list min-w-[120px] outline-none"></select>
                         </div>
                     </div>
                 </div>
@@ -60,16 +63,16 @@
                         <tbody id="stuListBody" class="divide-y divide-slate-100"></tbody>
                     </table>
                 </div>
-                <button onclick="submitFinalAttendance()" class="w-full mt-8 bg-indigo-700 text-white py-4 rounded-2xl font-bold shadow-lg">হাজিরা সেভ করুন</button>
+                <button onclick="submitFinalAttendance()" class="w-full mt-8 bg-indigo-700 text-white py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition">হাজিরা সেভ করুন ✅</button>
             </div>
         </div>
 
         <div id="reportSection" class="hidden space-y-6">
             <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
-                <h3 class="font-bold text-xl mb-6 text-indigo-800 border-b pb-4">📊 অ্যাডভান্সড হাজিরা রিপোর্ট</h3>
+                <h3 class="font-bold text-xl mb-6 text-indigo-800 border-b pb-4">📊 রিপোর্ট ফিল্টার</h3>
                 
-                <div class="bg-slate-50 p-6 rounded-2xl mb-8 space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-slate-50 p-6 rounded-2xl mb-8">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                         <div>
                             <label class="text-[10px] font-bold text-slate-500 uppercase">ক্লাস</label>
                             <select id="reportClass" class="w-full border p-2 rounded-xl text-sm outline-none dynamic-class-list"></select>
@@ -87,23 +90,24 @@
                                 <option value="10">অক্টোবর</option><option value="11">নভেম্বর</option><option value="12">ডিসেম্বর</option>
                             </select>
                         </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-slate-500 uppercase">নির্দিষ্ট তারিখ (ডেইলি রিপোর্টের জন্য)</label>
-                            <input type="date" id="reportDate" class="w-full border p-2 rounded-xl text-sm outline-none">
+                        <div class="flex gap-2">
+                            <button onclick="fetchMonthlyReport()" class="flex-1 bg-indigo-600 text-white py-2 rounded-xl font-bold text-xs">মান্থলি রিপোর্ট</button>
+                            <button onclick="downloadExcel()" class="bg-green-600 text-white px-4 py-2 rounded-xl shadow-md font-bold text-xs">📊 এক্সেল</button>
                         </div>
                     </div>
-                    
-                    <div class="flex flex-wrap gap-2 justify-center border-t pt-4">
-                        <button onclick="fetchMonthlyReport()" class="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold text-xs shadow-md">Show Monthly Report</button>
-                        <button onclick="fetchDailyReport()" class="bg-slate-800 text-white px-6 py-2 rounded-xl font-bold text-xs shadow-md">Show Daily Report</button>
-                        <button onclick="downloadExcel()" class="bg-green-600 text-white px-4 py-2 rounded-xl shadow-md font-bold text-xs flex items-center gap-2">📊 Download Excel</button>
+                    <div class="mt-4 border-t pt-4 flex flex-col md:flex-row gap-4 items-end">
+                        <div class="flex-1 w-full">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase">ডেইলি রিপোর্টের তারিখ</label>
+                            <input type="date" id="reportDate" class="w-full border p-2 rounded-xl text-sm outline-none">
+                        </div>
+                        <button onclick="fetchDailyReport()" class="w-full md:w-auto bg-slate-800 text-white px-8 py-2 rounded-xl font-bold text-xs">ডেইলি রিপোর্ট দেখুন</button>
                     </div>
                 </div>
 
                 <div class="overflow-x-auto">
                     <table id="reportTable" class="w-full text-left text-sm">
                         <thead class="bg-indigo-50 border-b">
-                            <tr><th class="p-4">ছাত্রের তথ্য</th><th class="p-4">রোল/ক্লাস/ব্যাচ</th><th class="p-4 text-center">উপস্থিতি / (%)</th><th class="p-4 text-right">কল</th></tr>
+                            <tr><th class="p-4">ছাত্র</th><th class="p-4">রোল/ব্যাচ</th><th class="p-4 text-center">উপস্থিতি</th><th class="p-4 text-right">কল</th></tr>
                         </thead>
                         <tbody id="reportTableBody" class="divide-y divide-slate-100"></tbody>
                     </table>
@@ -113,20 +117,20 @@
 
         <div id="settingsSection" class="hidden grid grid-cols-1 md:grid-cols-2 gap-8">
             <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                <h3 class="font-bold text-lg mb-4 border-b pb-2 text-green-600">📂 ব্যাচ ম্যানেজমেন্ট</h3>
+                <h3 class="font-bold text-lg mb-4 border-b pb-2 text-green-600 uppercase text-xs">📂 ব্যাচ লিস্ট</h3>
                 <div class="flex gap-2 mb-4">
                     <input type="text" id="newBatchName" placeholder="নতুন ব্যাচ..." class="flex-1 border p-2 rounded-lg outline-none">
                     <button onclick="addConfigToDB('batch')" class="bg-green-600 text-white px-4 py-2 rounded-lg font-bold">+</button>
                 </div>
-                <ul id="configBatchList" class="space-y-2"></ul>
+                <ul id="configBatchList" class="space-y-2 max-h-60 overflow-y-auto"></ul>
             </div>
             <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                <h3 class="font-bold text-lg mb-4 border-b pb-2 text-blue-600">🏫 ক্লাস ম্যানেজমেন্ট</h3>
+                <h3 class="font-bold text-lg mb-4 border-b pb-2 text-blue-600 uppercase text-xs">🏫 ক্লাস লিস্ট</h3>
                 <div class="flex gap-2 mb-4">
                     <input type="text" id="newClassName" placeholder="নতুন ক্লাস..." class="flex-1 border p-2 rounded-lg outline-none">
                     <button onclick="addConfigToDB('class')" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">+</button>
                 </div>
-                <ul id="configClassList" class="space-y-2"></ul>
+                <ul id="configClassList" class="space-y-2 max-h-60 overflow-y-auto"></ul>
             </div>
         </div>
     </main>
@@ -151,18 +155,14 @@
                 const batches = settings.filter(i => i.type === 'batch').map(i => i.value);
                 const classes = settings.filter(i => i.type === 'class').map(i => i.value);
 
-                document.querySelectorAll('.dynamic-batch-list').forEach(p => {
-                    p.innerHTML = '<option value="All">সকল ব্যাচ</option>' + batches.filter(b => b !== 'All').map(b => `<option value="${b}">${b}</option>`).join('');
-                });
-                document.querySelectorAll('.dynamic-class-list').forEach(p => {
-                    p.innerHTML = '<option value="All">সকল ক্লাস</option>' + classes.filter(c => c !== 'All').map(c => `<option value="${c}">${c}</option>`).join('');
-                });
+                document.querySelectorAll('.dynamic-batch-list').forEach(p => p.innerHTML = '<option value="All">সকল ব্যাচ</option>' + batches.filter(b => b !== 'All').map(b => `<option value="${b}">${b}</option>`).join(''));
+                document.querySelectorAll('.dynamic-class-list').forEach(p => p.innerHTML = '<option value="Select">ক্লাস সিলেক্ট</option><option value="All">All Class</option>' + classes.filter(c => c !== 'All').map(c => `<option value="${c}">${c}</option>`).join(''));
 
                 document.getElementById('configBatchList').innerHTML = batches.filter(b => b !== 'All').map(b => `
-                    <li class="flex justify-between items-center bg-slate-50 p-2 rounded-lg text-xs font-bold">${b} <button onclick="deleteConfigFromDB('${b}')" class="text-red-500">✖</button></li>
+                    <li class="flex justify-between items-center bg-slate-50 p-2 rounded-lg text-[11px] font-bold">${b} <button onclick="deleteConfigFromDB('${b}')" class="text-red-500">✖</button></li>
                 `).join('');
                 document.getElementById('configClassList').innerHTML = classes.filter(c => c !== 'All').map(c => `
-                    <li class="flex justify-between items-center bg-slate-50 p-2 rounded-lg text-xs font-bold">${c} <button onclick="deleteConfigFromDB('${c}')" class="text-red-500">✖</button></li>
+                    <li class="flex justify-between items-center bg-slate-50 p-2 rounded-lg text-[11px] font-bold">${c} <button onclick="deleteConfigFromDB('${c}')" class="text-red-500">✖</button></li>
                 `).join('');
             }
         }
@@ -178,7 +178,7 @@
             const cls = document.getElementById('classFilter').value;
             const btc = document.getElementById('batchFilter').value;
             const body = document.getElementById('stuListBody');
-            body.innerHTML = '<tr><td class="text-center py-10">লোড হচ্ছে...</td></tr>';
+            body.innerHTML = '<tr><td class="text-center py-10 italic text-slate-400 text-xs">লোড হচ্ছে...</td></tr>';
             
             let query = _supabase.from('students').select('*');
             if (cls !== "All" && cls !== "Select") query = query.eq('class', cls);
@@ -187,11 +187,14 @@
             const { data } = await query.order('roll_no', { ascending: true });
             if (data) {
                 body.innerHTML = data.map(s => `
-                    <tr class="hover:bg-indigo-50 transition">
-                        <td class="py-4 pl-2 font-bold">${s.name}<br><span class="text-[10px] text-slate-400">Roll: ${s.roll_no} | ${s.class} | 📞 ${s.phone}</span></td>
+                    <tr class="hover:bg-indigo-50">
+                        <td class="py-4 pl-2">
+                            <div class="font-bold text-slate-800 text-sm">${s.name}</div>
+                            <div class="text-[10px] text-slate-500">Roll: ${s.roll_no} | ${s.phone}</div>
+                        </td>
                         <td class="py-4 text-right flex justify-end gap-2 pr-2">
-                            <button onclick='editStudent(${JSON.stringify(s)})' class="text-blue-500 p-2 hover:bg-blue-100 rounded-lg">✎</button>
-                            <button onclick="deleteStudent(${s.id}, '${s.name}')" class="text-red-400 p-2 hover:bg-red-100 rounded-lg">🗑</button>
+                            <button onclick='editStudent(${JSON.stringify(s)})' class="text-blue-500 text-lg">✎</button>
+                            <button onclick="deleteStudent(${s.id}, '${s.name}')" class="text-red-400 text-lg">🗑</button>
                             <div class="h-8 w-[1px] bg-slate-200 mx-1"></div>
                             <button id="p-${s.id}" onclick="setAttendance('${s.id}', 'Present')" class="w-9 h-9 rounded-lg font-bold border-2 border-green-500 text-green-500">P</button>
                             <button id="a-${s.id}" onclick="setAttendance('${s.id}', 'Absent')" class="w-9 h-9 rounded-lg font-bold border-2 border-red-500 text-red-500">A</button>
@@ -200,85 +203,6 @@
                 `).join('');
             }
         }
-
-        function setAttendance(id, status) {
-            document.getElementById(`p-${id}`).className = status === 'Present' ? "w-9 h-9 rounded-lg font-bold bg-green-500 text-white shadow-md" : "w-9 h-9 rounded-lg font-bold border-2 border-green-500 text-green-500";
-            document.getElementById(`a-${id}`).className = status === 'Absent' ? "w-9 h-9 rounded-lg font-bold bg-red-500 text-white shadow-md" : "w-9 h-9 rounded-lg font-bold border-2 border-red-500 text-red-500";
-            attendanceData[id] = status;
-        }
-
-        async function submitFinalAttendance() {
-            const records = Object.keys(attendanceData).map(id => ({ student_id: parseInt(id), status: attendanceData[id], attendance_date: new Date().toISOString().split('T')[0] }));
-            if (records.length === 0) return alert("হাজিরা মার্ক করুন!");
-            await _supabase.from('attendance').upsert(records, { onConflict: 'student_id, attendance_date' });
-            alert("সফলভাবে সেভ হয়েছে! ✅");
-        }
-
-        // --- রিপোর্ট ফাংশন (ক্লাস ও ব্যাচ ফিল্টারসহ) ---
-        
-        async function fetchMonthlyReport() {
-            const month = document.getElementById('reportMonth').value;
-            const year = "2026"; 
-            const cls = document.getElementById('reportClass').value;
-            const btc = document.getElementById('reportBatch').value;
-            const body = document.getElementById('reportTableBody');
-            
-            body.innerHTML = '<tr><td colspan="4" class="text-center py-10">রিপোর্ট তৈরি হচ্ছে...</td></tr>';
-            
-            const { data, error } = await _supabase.from('attendance').select(`status, attendance_date, students!inner(name, roll_no, class, batch, phone)`);
-            
-            if(data) {
-                const filtered = data.filter(r => {
-                    const matchDate = r.attendance_date.startsWith(`${year}-${month}`);
-                    const matchClass = (cls === "All" || r.students.class === cls);
-                    const matchBatch = (btc === "All" || r.students.batch === btc);
-                    return matchDate && matchClass && matchBatch;
-                });
-
-                const summary = {};
-                filtered.forEach(r => {
-                    const key = r.students.name + r.students.roll_no;
-                    if(!summary[key]) summary[key] = { name: r.students.name, roll: r.students.roll_no, cls: r.students.class, btc: r.students.batch, phone: r.students.phone, p: 0, total: 0 };
-                    summary[key].total++;
-                    if(r.status === 'Present') summary[key].p++;
-                });
-
-                body.innerHTML = Object.values(summary).map(s => `
-                    <tr class="hover:bg-slate-50">
-                        <td class="p-4 font-bold">${s.name}<br><span class="text-[10px] text-indigo-500">📞 ${s.phone}</span></td>
-                        <td class="p-4 text-xs font-semibold">Roll: ${s.roll}<br>${s.cls} | ${s.btc}</td>
-                        <td class="p-4 text-center font-bold text-indigo-600">${((s.p/s.total)*100).toFixed(1)}% <br><span class="text-[9px] text-slate-400 font-normal">(${s.p}/${s.total} দিন)</span></td>
-                        <td class="p-4 text-right"><a href="tel:${s.phone}" class="bg-indigo-600 text-white px-3 py-1 rounded text-[10px] font-bold">Call</a></td>
-                    </tr>
-                `).join('');
-            }
-        }
-
-        async function fetchDailyReport() {
-            const date = document.getElementById('reportDate').value;
-            const cls = document.getElementById('reportClass').value;
-            const btc = document.getElementById('reportBatch').value;
-            if(!date) return alert("তারিখ দিন");
-            
-            const body = document.getElementById('reportTableBody');
-            body.innerHTML = '<tr><td colspan="4" class="text-center py-10">লোড হচ্ছে...</td></tr>';
-            
-            const { data } = await _supabase.from('attendance').select(`status, students!inner(name, roll_no, class, batch, phone)`).eq('attendance_date', date);
-            
-            if(data) {
-                const filtered = data.filter(r => (cls === "All" || r.students.class === cls) && (btc === "All" || r.students.batch === btc));
-                body.innerHTML = filtered.map(r => `
-                    <tr>
-                        <td class="p-4 font-bold">${r.students.name}<br><span class="text-[10px] text-indigo-500">📞 ${r.students.phone}</span></td>
-                        <td class="p-4 text-xs">Roll: ${r.students.roll_no}<br>${r.students.class} | ${r.students.batch}</td>
-                        <td class="p-4 text-center"><span class="px-3 py-1 rounded-full text-[10px] font-bold ${r.status === 'Present' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">${r.status}</span></td>
-                        <td class="p-4 text-right"><a href="tel:${r.students.phone}" class="bg-indigo-600 text-white px-3 py-1 rounded text-[10px] font-bold">Call</a></td>
-                    </tr>
-                `).join('');
-            }
-        }
-
-        // --- এডিট ও ম্যানেজমেন্ট ফাংশন ---
 
         function editStudent(s) {
             document.getElementById('formTitle').innerText = "📝 তথ্য সংশোধন";
@@ -301,27 +225,106 @@
                 batch: document.getElementById('stuBatch').value,
                 phone: document.getElementById('stuPhone').value
             };
-            if(id) { await _supabase.from('students').update(data).eq('id', id); alert("সফলভাবে আপডেট হয়েছে!"); }
-            else { await _supabase.from('students').insert([data]); alert("ভর্তি সম্পন্ন!"); }
+            if(id) await _supabase.from('students').update(data).eq('id', id);
+            else await _supabase.from('students').insert([data]);
+            alert("সফল হয়েছে! ✅");
             resetForm(); loadStudents();
         }
 
         function resetForm() {
-            document.getElementById('formTitle').innerText = "👤 নতুন ভর্তি / এডিট";
+            document.getElementById('formTitle').innerText = "👤 স্টুডেন্ট ম্যানেজমেন্ট";
             document.getElementById('editStuId').value = "";
             document.getElementById('stuName').value = "";
             document.getElementById('stuRoll').value = "";
             document.getElementById('stuPhone').value = "";
-            document.getElementById('saveBtn').innerText = "ভর্তি করুন";
+            document.getElementById('saveBtn').innerText = "ভর্তি/আপডেট";
             document.getElementById('cancelBtn').classList.add('hidden');
         }
 
-        async function deleteStudent(id, name) {
-            if(confirm(`আপনি কি নিশ্চিতভাবে ${name}-কে ডিলিট করতে চান?`)) {
-                await _supabase.from('attendance').delete().eq('student_id', id);
-                await _supabase.from('students').delete().eq('id', id);
-                loadStudents();
+        function setAttendance(id, status) {
+            document.getElementById(`p-${id}`).className = status === 'Present' ? "w-9 h-9 rounded-lg font-bold bg-green-500 text-white shadow-md" : "w-9 h-9 rounded-lg font-bold border-2 border-green-500 text-green-500";
+            document.getElementById(`a-${id}`).className = status === 'Absent' ? "w-9 h-9 rounded-lg font-bold bg-red-500 text-white shadow-md" : "w-9 h-9 rounded-lg font-bold border-2 border-red-500 text-red-500";
+            attendanceData[id] = status;
+        }
+
+        async function submitFinalAttendance() {
+            const records = Object.keys(attendanceData).map(id => ({ student_id: parseInt(id), status: attendanceData[id], attendance_date: new Date().toISOString().split('T')[0] }));
+            if (records.length === 0) return alert("হাজিরা মার্ক করুন!");
+            await _supabase.from('attendance').upsert(records, { onConflict: 'student_id, attendance_date' });
+            alert("হাজিরা সেভ হয়েছে! ✅");
+            attendanceData = {};
+        }
+
+        // --- রিপোর্ট লজিক ---
+
+        async function fetchMonthlyReport() {
+            const month = document.getElementById('reportMonth').value;
+            const cls = document.getElementById('reportClass').value;
+            const btc = document.getElementById('reportBatch').value;
+            const body = document.getElementById('reportTableBody');
+            body.innerHTML = '<tr><td colspan="4" class="text-center py-10">তৈরি হচ্ছে...</td></tr>';
+            
+            const { data } = await _supabase.from('attendance').select(`status, attendance_date, students!inner(name, roll_no, class, batch, phone)`);
+            if(data) {
+                const year = "2026";
+                const filtered = data.filter(r => r.attendance_date.startsWith(`${year}-${month}`) && (cls === "All" || r.students.class === cls) && (btc === "All" || r.students.batch === btc));
+                
+                const summary = {};
+                filtered.forEach(r => {
+                    const k = r.students.name + r.students.roll_no;
+                    if(!summary[k]) summary[k] = { n: r.students.name, r: r.students.roll_no, c: r.students.class, b: r.students.batch, p: r.students.phone, present: 0, total: 0 };
+                    summary[k].total++;
+                    if(r.status === 'Present') summary[k].present++;
+                });
+
+                body.innerHTML = Object.values(summary).map(s => `
+                    <tr>
+                        <td class="p-4 font-bold">${s.n}<br><span class="text-[9px] text-indigo-500 italic">${s.p}</span></td>
+                        <td class="p-4 text-[10px]">${s.r}<br>${s.c} | ${s.b}</td>
+                        <td class="p-4 text-center font-bold text-indigo-600">${((s.present/s.total)*100).toFixed(1)}%</td>
+                        <td class="p-4 text-right"><a href="tel:${s.p}" class="bg-indigo-600 text-white px-3 py-1 rounded text-[10px] font-bold">Call</a></td>
+                    </tr>
+                `).join('');
             }
+        }
+
+        async function fetchDailyReport() {
+            const date = document.getElementById('reportDate').value;
+            const cls = document.getElementById('reportClass').value;
+            const btc = document.getElementById('reportBatch').value;
+            if(!date) return alert("তারিখ দিন");
+            const body = document.getElementById('reportTableBody');
+            body.innerHTML = '<tr><td colspan="4" class="text-center py-10 text-xs">লোড হচ্ছে...</td></tr>';
+            const { data } = await _supabase.from('attendance').select(`status, students!inner(name, roll_no, class, batch, phone)`).eq('attendance_date', date);
+            if(data) {
+                const filtered = data.filter(r => (cls === "All" || r.students.class === cls) && (btc === "All" || r.students.batch === btc));
+                body.innerHTML = filtered.map(r => `
+                    <tr>
+                        <td class="p-4 font-bold">${r.students.name}<br><span class="text-[9px] text-indigo-500 italic">${r.students.phone}</span></td>
+                        <td class="p-4 text-[10px]">${r.students.roll_no}<br>${r.students.class}</td>
+                        <td class="p-4 text-center"><span class="px-2 py-1 rounded-md text-[9px] font-bold ${r.status === 'Present' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">${r.status}</span></td>
+                        <td class="p-4 text-right"><a href="tel:${r.students.phone}" class="bg-indigo-600 text-white px-3 py-1 rounded text-[10px] font-bold">Call</a></td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // --- এক্সেল ফিক্স ---
+        function downloadExcel() {
+            const table = document.getElementById("reportTable");
+            if (!table || table.rows.length <= 1) return alert("টেবিলে কোনো ডাটা নেই!");
+            
+            try {
+                const wb = XLSX.utils.table_to_book(table, { sheet: "Attendance_Report" });
+                XLSX.writeFile(wb, "UBIQUE_Attendance_Report.xlsx");
+            } catch (e) {
+                console.error("Excel Error:", e);
+                alert("এক্সেল ফাইল তৈরিতে সমস্যা হয়েছে। লাইব্রেরি লোড হয়েছে কি না নিশ্চিত হোন।");
+            }
+        }
+
+        async function deleteStudent(id, name) {
+            if(confirm(`${name}-কে ডিলিট করবেন?`)) { await _supabase.from('attendance').delete().eq('student_id', id); await _supabase.from('students').delete().eq('id', id); loadStudents(); }
         }
 
         async function addConfigToDB(type) {
@@ -333,10 +336,8 @@
         }
 
         async function deleteConfigFromDB(val) {
-            if(confirm(`'${val}' মুছে ফেলবেন?`)) { await _supabase.from('academy_settings').delete().eq('value', val); syncSystem(); }
+            if(confirm(`'${val}' ডিলিট করবেন?`)) { await _supabase.from('academy_settings').delete().eq('value', val); syncSystem(); }
         }
-
-        function downloadExcel() { XLSX.utils.writeFile(XLSX.utils.table_to_book(document.getElementById("reportTable")), "UBIQUE_Academy_Report.xlsx"); }
 
         window.onload = syncSystem;
     </script>
