@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>UBIQUE Admin | Advanced</title>
+    <title>UBIQUE Admin | Hybrid</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
-        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f1f5f9; padding-bottom: 80px; }
+        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f8fafc; padding-bottom: 90px; }
         .glass-card { background: white; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .tab-btn.active { background: #4f46e5; color: white; }
-        .stat-card { background: white; padding: 10px; border-radius: 15px; text-align: center; border-bottom: 4px solid #4f46e5; }
+        .tab-btn.active { background: #4f46e5; color: white; box-shadow: 0 8px 15px -5px rgba(79, 70, 229, 0.4); }
+        .stat-card { background: white; border-bottom: 4px solid #4f46e5; border-radius: 15px; }
         @media (max-width: 768px) {
-            .mobile-bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 12px; z-index: 1000; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); border-radius: 20px 20px 0 0; }
+            .mobile-bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 12px; z-index: 1000; box-shadow: 0 -4px 15px rgba(0,0,0,0.1); border-radius: 20px 20px 0 0; }
             .desktop-header { display: none; }
         }
     </style>
@@ -23,68 +23,108 @@
 
     <header class="desktop-header bg-white shadow-sm p-4 sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-black text-indigo-700">UBIQUE</h1>
+            <h1 class="text-2xl font-black text-indigo-700 italic">UBIQUE</h1>
             <nav class="flex gap-2">
-                <button onclick="switchTab('daily')" class="tab-btn px-4 py-2 rounded-lg font-bold active" id="d-daily">হাজিরা</button>
-                <button onclick="switchTab('absent')" class="tab-btn px-4 py-2 rounded-lg font-bold" id="d-absent">এবসেন্ট কল</button>
-                <button onclick="switchTab('report')" class="tab-btn px-4 py-2 rounded-lg font-bold" id="d-report">রিপোর্ট</button>
-                <button onclick="switchTab('settings')" class="tab-btn px-4 py-2 rounded-lg font-bold" id="d-settings">সেটিংস</button>
+                <button onclick="switchTab('daily')" class="tab-btn px-5 py-2 rounded-xl font-bold active" id="d-daily">হাজিরা</button>
+                <button onclick="switchTab('absent')" class="tab-btn px-5 py-2 rounded-xl font-bold" id="d-absent">কল লিস্ট</button>
+                <button onclick="switchTab('report')" class="tab-btn px-5 py-2 rounded-xl font-bold" id="d-report">রিপোর্ট</button>
+                <button onclick="switchTab('settings')" class="tab-btn px-5 py-2 rounded-xl font-bold" id="d-settings">সেটিংস</button>
             </nav>
         </div>
     </header>
 
     <main class="container mx-auto p-4 lg:mt-6">
         
-        <div id="statsRow" class="grid grid-cols-3 gap-3 mb-6">
-            <div class="stat-card">
-                <p class="text-[10px] text-slate-500 font-bold uppercase">মোট</p>
+        <div id="statsBar" class="grid grid-cols-3 gap-3 mb-6">
+            <div class="stat-card p-4 text-center">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">মোট স্টুডেন্ট</p>
                 <p id="totalCount" class="text-xl font-black text-slate-800">0</p>
             </div>
-            <div class="stat-card !border-green-500">
-                <p class="text-[10px] text-slate-500 font-bold uppercase">উপস্থিত</p>
+            <div class="stat-card p-4 text-center !border-green-500">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">উপস্থিত</p>
                 <p id="presentCount" class="text-xl font-black text-green-600">0</p>
             </div>
-            <div class="stat-card !border-red-500">
-                <p class="text-[10px] text-slate-500 font-bold uppercase">অনুপস্থিত</p>
+            <div class="stat-card p-4 text-center !border-red-500">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">অনুপস্থিত</p>
                 <p id="absentCount" class="text-xl font-black text-red-600">0</p>
             </div>
         </div>
 
         <div id="dailySection" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div class="lg:col-span-8">
-                <div class="glass-card p-4 mb-6">
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
-                        <select id="classFilter" onchange="loadStudents()" class="p-3 rounded-xl bg-indigo-50 text-indigo-700 font-bold dynamic-class-list outline-none"></select>
-                        <select id="batchFilter" onchange="loadStudents()" class="p-3 rounded-xl bg-slate-100 font-bold dynamic-batch-list outline-none"></select>
-                        <input type="text" id="searchName" oninput="loadStudents()" placeholder="নাম..." class="col-span-2 md:col-span-2 p-3 rounded-xl bg-slate-100 outline-none">
+                <div class="glass-card p-5 mb-6">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">
+                        <select id="classFilter" onchange="loadStudents()" class="p-3 rounded-xl bg-indigo-50 text-indigo-700 font-bold dynamic-class-list"></select>
+                        <select id="batchFilter" onchange="loadStudents()" class="p-3 rounded-xl bg-slate-100 font-bold dynamic-batch-list"></select>
+                        <input type="text" id="searchName" oninput="loadStudents()" placeholder="নাম দিয়ে খুঁজুন..." class="col-span-2 p-3 rounded-xl bg-slate-100 outline-none">
                     </div>
-                    <div id="stuListBody" class="space-y-3 min-h-[200px]"></div>
-                    <button onclick="submitFinalAttendance()" id="submitBtn" class="w-full mt-6 bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg">আজকের হাজিরা জমা দিন ✅</button>
+                    <div id="stuListBody" class="space-y-3 min-h-[300px]"></div>
+                    <button onclick="submitFinalAttendance()" id="submitBtn" class="w-full mt-6 bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-xl hover:bg-indigo-700 transition-all">আজকের হাজিরা জমা দিন ✅</button>
                 </div>
             </div>
 
             <div class="hidden lg:block lg:col-span-4">
                 <div class="glass-card p-6 sticky top-24">
-                    <h3 class="font-bold text-indigo-900 mb-4">দ্রুত স্টুডেন্ট এন্ট্রি</h3>
+                    <h3 class="font-bold text-indigo-900 mb-4 border-b pb-2">👤 স্টুডেন্ট এন্ট্রি/এডিট</h3>
+                    <input type="hidden" id="editStuId">
                     <div class="space-y-3">
                         <input type="text" id="stuName" placeholder="নাম" class="w-full p-3 rounded-xl bg-slate-50 border outline-none">
                         <input type="number" id="stuRoll" placeholder="রোল" class="w-full p-3 rounded-xl bg-slate-50 border outline-none">
-                        <select id="stuClass" class="w-full p-3 rounded-xl bg-slate-50 border dynamic-class-list"></select>
-                        <select id="stuBatch" class="w-full p-3 rounded-xl bg-slate-50 border dynamic-batch-list"></select>
+                        <div class="grid grid-cols-2 gap-2">
+                            <select id="stuClass" class="p-3 rounded-xl bg-slate-50 border dynamic-class-list"></select>
+                            <select id="stuBatch" class="p-3 rounded-xl bg-slate-50 border dynamic-batch-list"></select>
+                        </div>
                         <input type="text" id="stuPhone" placeholder="ফোন নম্বর" class="w-full p-3 rounded-xl bg-slate-50 border outline-none">
-                        <button onclick="saveSingleStudent()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">সেভ করুন</button>
+                        <button onclick="saveSingleStudent()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-md">সেভ করুন</button>
+                        <button id="cancelBtn" onclick="resetForm()" class="hidden w-full bg-slate-200 text-slate-600 py-2 rounded-xl font-bold mt-2">বাতিল</button>
                     </div>
                 </div>
             </div>
         </div>
 
         <div id="absentSection" class="hidden space-y-4">
-            <h2 class="text-center font-black text-red-600 text-lg">🚨 আজকের অনুপস্থিত তালিকা</h2>
             <div id="absentListGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
 
-        <div id="reportSection" class="hidden glass-card p-6">... রিপোর্ট লোডার ...</div>
-        <div id="settingsSection" class="hidden space-y-6">... বাল্ক আপলোড ও সেটিংস ...</div>
+        <div id="reportSection" class="hidden glass-card p-6">
+            <h3 class="font-bold text-indigo-900 mb-4">📊 মাসিক ব্যাচ রিপোর্ট</h3>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-6">
+                <select id="reportClass" class="p-3 bg-slate-100 rounded-xl dynamic-class-list"></select>
+                <select id="reportBatch" class="p-3 bg-slate-100 rounded-xl dynamic-batch-list"></select>
+                <input type="month" id="reportMonth" class="p-3 bg-slate-100 rounded-xl col-span-2 md:col-span-1">
+                <button onclick="fetchMonthlyReport()" class="bg-indigo-600 text-white p-3 rounded-xl font-bold">লোড 🔄</button>
+                <button onclick="downloadReportExcel()" class="bg-green-600 text-white p-3 rounded-xl font-bold">Excel 📥</button>
+            </div>
+            <div class="overflow-x-auto rounded-xl border">
+                <table class="w-full"><thead id="reportHead" class="bg-indigo-950 text-white"></thead><tbody id="reportTableBody" class="bg-white"></tbody></table>
+            </div>
+        </div>
+
+        <div id="settingsSection" class="hidden space-y-6">
+            <div class="glass-card p-8 text-center border-2 border-dashed border-indigo-200">
+                <h3 class="font-bold text-indigo-900 mb-2">📥 বাল্ক স্টুডেন্ট আপলোড (Excel)</h3>
+                <input type="file" id="bulkExcel" accept=".xlsx, .xls" class="hidden" onchange="handleBulkUpload(event)">
+                <button onclick="document.getElementById('bulkExcel').click()" class="bg-indigo-600 text-white px-10 py-4 rounded-2xl font-black shadow-lg">ফাইল আপলোড করুন</button>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="glass-card p-6">
+                    <h3 class="font-bold text-indigo-900 mb-4">🏫 ক্লাস ও ব্যাচ সেটিংস</h3>
+                    <div class="flex gap-2 mb-4">
+                        <input type="text" id="newClassInput" class="flex-grow p-3 bg-slate-100 rounded-xl outline-none" placeholder="ক্লাস...">
+                        <button onclick="addSetting('class')" class="bg-indigo-600 text-white px-6 rounded-xl font-bold">+</button>
+                    </div>
+                    <ul id="classListUI" class="space-y-2"></ul>
+                </div>
+                <div class="glass-card p-6">
+                    <h3 class="font-bold text-indigo-900 mb-4">⏰ ব্যাচ সেটিংস</h3>
+                    <div class="flex gap-2 mb-4">
+                        <input type="text" id="newBatchInput" class="flex-grow p-3 bg-slate-100 rounded-xl outline-none" placeholder="ব্যাচ...">
+                        <button onclick="addSetting('batch')" class="bg-indigo-600 text-white px-6 rounded-xl font-bold">+</button>
+                    </div>
+                    <ul id="batchListUI" class="space-y-2"></ul>
+                </div>
+            </div>
+        </div>
 
     </main>
 
@@ -101,7 +141,6 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let attendanceData = {};
 
-        // সিঙ্কিং ফাংশন (পরিসংখ্যান আপডেট করবে)
         async function syncSystem() {
             const { data: settings } = await _supabase.from('academy_settings').select('*');
             if (settings) {
@@ -109,6 +148,8 @@
                 const bOpts = '<option value="All">All Batch</option>' + settings.filter(i=>i.type==='batch').map(x => `<option value="${x.value}">${x.value}</option>`).join('');
                 document.querySelectorAll('.dynamic-class-list').forEach(el => el.innerHTML = cOpts);
                 document.querySelectorAll('.dynamic-batch-list').forEach(el => el.innerHTML = bOpts);
+                document.getElementById('classListUI').innerHTML = settings.filter(i=>i.type==='class').map(i => `<li class="flex justify-between bg-slate-50 p-2 rounded-xl"><span>${i.value}</span><button onclick="deleteSetting('${i.id}')" class="text-red-500">×</button></li>`).join('');
+                document.getElementById('batchListUI').innerHTML = settings.filter(i=>i.type==='batch').map(i => `<li class="flex justify-between bg-slate-50 p-2 rounded-xl"><span>${i.value}</span><button onclick="deleteSetting('${i.id}')" class="text-red-500">×</button></li>`).join('');
             }
             loadStudents();
         }
@@ -130,46 +171,52 @@
                 const filtered = students.filter(s => s.name.toLowerCase().includes(sn));
                 document.getElementById('totalCount').innerText = filtered.length;
                 
-                let pCount = 0;
-                let aCount = 0;
-
+                let pCount = 0; let aCount = 0;
                 document.getElementById('stuListBody').innerHTML = filtered.map(s => {
                     const record = attendance ? attendance.find(a => a.student_id === s.id) : null;
                     if(record) record.status === 'Present' ? pCount++ : aCount++;
                     
                     return `
-                    <div class="bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center">
-                        <div><h4 class="font-bold">${s.name}</h4><p class="text-[10px] text-slate-400 font-bold uppercase">রোল: ${s.roll_no} | ${s.batch}</p></div>
+                    <div class="bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm">
+                        <div><h4 class="font-bold text-slate-800">${s.name}</h4><p class="text-[10px] text-slate-400 font-bold uppercase">রোল: ${s.roll_no} | ${s.batch}</p></div>
                         <div class="flex gap-2">
-                            <button id="p-${s.id}" onclick="mark('${s.id}', 'Present')" class="w-11 h-11 rounded-xl border-2 ${record?.status === 'Present' ? 'bg-green-500 text-white' : 'border-green-500 text-green-600'} font-bold">P</button>
-                            <button id="a-${s.id}" onclick="mark('${s.id}', 'Absent')" class="w-11 h-11 rounded-xl border-2 ${record?.status === 'Absent' ? 'bg-red-500 text-white' : 'border-red-500 text-red-600'} font-bold">A</button>
+                            <button id="p-${s.id}" onclick="mark('${s.id}', 'Present')" class="w-12 h-12 rounded-xl border-2 ${record?.status === 'Present' ? 'bg-green-500 text-white border-green-500' : 'border-green-500 text-green-600'} font-bold">P</button>
+                            <button id="a-${s.id}" onclick="mark('${s.id}', 'Absent')" class="w-12 h-12 rounded-xl border-2 ${record?.status === 'Absent' ? 'bg-red-500 text-white border-red-500' : 'border-red-500 text-red-600'} font-bold">A</button>
                         </div>
                     </div>`;
                 }).join('');
-
                 document.getElementById('presentCount').innerText = pCount;
                 document.getElementById('absentCount').innerText = aCount;
             }
         }
 
+        function mark(id, status) {
+            attendanceData[id] = status;
+            // ইউজার ইন্টারফেস সাথে সাথে আপডেট
+            document.getElementById(`p-${id}`).className = status === 'Present' ? "w-12 h-12 rounded-xl bg-green-500 text-white font-bold" : "w-12 h-12 rounded-xl border-2 border-green-500 text-green-600 font-bold";
+            document.getElementById(`a-${id}`).className = status === 'Absent' ? "w-12 h-12 rounded-xl bg-red-500 text-white font-bold" : "w-12 h-12 rounded-xl border-2 border-red-500 text-red-600 font-bold";
+        }
+
         async function submitFinalAttendance() {
             const btn = document.getElementById('submitBtn');
-            btn.innerText = "লোডিং..."; btn.disabled = true;
-            
             const records = Object.keys(attendanceData).map(id => ({ 
                 student_id: parseInt(id), 
                 status: attendanceData[id], 
                 attendance_date: new Date().toISOString().split('T')[0] 
             }));
 
-            if(records.length === 0) { alert("হাজিরা দিন!"); btn.innerText = "আজকের হাজিরা জমা দিন ✅"; btn.disabled = false; return; }
-
+            if(records.length === 0) return alert("দয়া করে হাজিরা মার্ক করুন!");
+            
+            btn.innerText = "সেভ হচ্ছে..."; btn.disabled = true;
             const { error } = await _supabase.from('attendance').upsert(records);
+            
             if (!error) {
-                alert("হাজিরা সফলভাবে ডাটাবেজে সেভ হয়েছে!");
-                attendanceData = {}; // ক্লিয়ার লোকাল ডাটা
-                loadStudents(); // পরিসংখ্যান আপডেট
-                loadAbsentStudents(); // কল লিস্ট আপডেট
+                alert("আজকের হাজিরা সফলভাবে জমা হয়েছে!");
+                attendanceData = {}; // লোকাল ডাটা রিসেট
+                await loadStudents(); // স্ট্যাটাস আপডেট
+                await loadAbsentStudents(); // কল লিস্ট আপডেট
+            } else {
+                alert("ভুল হয়েছে: " + error.message);
             }
             btn.innerText = "আজকের হাজিরা জমা দিন ✅"; btn.disabled = false;
         }
@@ -180,21 +227,57 @@
             const grid = document.getElementById('absentListGrid');
             if (data) {
                 grid.innerHTML = data.map(r => `
-                    <div class="bg-white p-5 rounded-3xl shadow-md border-l-8 border-red-500 flex justify-between items-center">
-                        <div>
-                            <h4 class="font-bold text-slate-800">${r.students.name}</h4>
-                            <p class="text-[10px] font-bold text-slate-500 uppercase">রোল: ${r.students.roll_no} | ${r.students.batch} | ${r.students.class}</p>
-                            <p class="text-indigo-600 font-bold mt-1">📞 ${r.students.phone}</p>
-                        </div>
-                        <a href="tel:${r.students.phone}" class="bg-red-600 text-white w-12 h-12 rounded-2xl flex items-center justify-center">📞</a>
+                    <div class="bg-white p-5 rounded-3xl shadow-md border-l-8 border-red-500 flex justify-between items-center transform transition hover:scale-[1.02]">
+                        <div><h4 class="font-bold text-slate-800">${r.students.name}</h4><p class="text-[10px] font-bold text-slate-400">রোল: ${r.students.roll_no} | ${r.students.batch}</p><p class="text-indigo-600 font-bold mt-1">📞 ${r.students.phone}</p></div>
+                        <a href="tel:${r.students.phone}" class="bg-red-600 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg">📞</a>
                     </div>`).join('');
+                if(data.length === 0) grid.innerHTML = '<p class="col-span-full text-center py-10 text-slate-400 font-bold">আজকে এখনো কেউ এবসেন্ট নেই।</p>';
             }
         }
 
-        function mark(id, s) {
-            document.getElementById(`p-${id}`).className = s === 'Present' ? "w-11 h-11 rounded-xl bg-green-500 text-white font-bold" : "w-11 h-11 rounded-xl border-2 border-green-500 text-green-600 font-bold";
-            document.getElementById(`a-${id}`).className = s === 'Absent' ? "w-11 h-11 rounded-xl bg-red-500 text-white font-bold" : "w-11 h-11 rounded-xl border-2 border-red-500 text-red-600 font-bold";
-            attendanceData[id] = s;
+        async function handleBulkUpload(e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const workbook = XLSX.read(new Uint8Array(event.target.result), { type: 'array' });
+                const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                const formatted = json.map(s => ({ name: s.name, roll_no: parseInt(s.roll_no), class: String(s.class), batch: String(s.batch), phone: String(s.phone) }));
+                const { error } = await _supabase.from('students').insert(formatted);
+                if (!error) { alert("সফলভাবে আপলোড হয়েছে!"); syncSystem(); }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        async function fetchMonthlyReport() {
+            const monthVal = document.getElementById('reportMonth').value;
+            if(!monthVal) return alert("মাস সিলেক্ট করুন!");
+            const [year, month] = monthVal.split('-');
+            const days = new Date(year, month, 0).getDate();
+            const body = document.getElementById('reportTableBody');
+            body.innerHTML = '<tr><td colspan="40" class="text-center p-10">লোড হচ্ছে...</td></tr>';
+            
+            const cls = document.getElementById('reportClass').value;
+            const bth = document.getElementById('reportBatch').value;
+            let stuQ = _supabase.from('students').select('*');
+            if(cls!=="All") stuQ = stuQ.eq('class', cls);
+            if(bth!=="All") stuQ = stuQ.eq('batch', bth);
+            const { data: students } = await stuQ.order('roll_no', {ascending: true});
+            const { data: records } = await _supabase.from('attendance').select('*').gte('attendance_date', `${year}-${month}-01`).lte('attendance_date', `${year}-${month}-${days}`);
+
+            let h = `<tr><th class="p-3 border-r">রোল</th><th class="p-3 border-r min-w-[120px]">নাম</th>`;
+            for(let i=1; i<=days; i++) h += `<th class="p-2 border font-normal text-[10px] text-center">${i}</th>`;
+            document.getElementById('reportHead').innerHTML = h + `</tr>`;
+
+            body.innerHTML = students.map(s => {
+                let r = `<tr><td class="p-2 border-r font-bold text-center">${s.roll_no}</td><td class="p-2 border-r truncate font-bold text-sm">${s.name}</td>`;
+                for(let d=1; d<=days; d++) {
+                    const ds = `${year}-${month}-${d.toString().padStart(2, '0')}`;
+                    const f = records ? records.find(x => x.student_id === s.id && x.attendance_date === ds) : null;
+                    const st = f ? (f.status === 'Present' ? 'P' : 'A') : '-';
+                    r += `<td class="p-2 border text-center text-[10px] font-bold ${st==='P'?'bg-green-100 text-green-700':(st==='A'?'bg-red-100 text-red-700':'')}">${st}</td>`;
+                }
+                return r + `</tr>`;
+            }).join('');
         }
 
         function switchTab(t) {
@@ -209,6 +292,19 @@
             if(t==='absent') loadAbsentStudents();
             if(t==='daily') loadStudents();
         }
+
+        async function saveSingleStudent() {
+            const p = { name: document.getElementById('stuName').value, roll_no: parseInt(document.getElementById('stuRoll').value), class: document.getElementById('stuClass').value, batch: document.getElementById('stuBatch').value, phone: document.getElementById('stuPhone').value };
+            await _supabase.from('students').insert([p]);
+            alert("সেভ হয়েছে!"); syncSystem();
+        }
+
+        async function addSetting(type) {
+            const v = type==='class'?document.getElementById('newClassInput').value:document.getElementById('newBatchInput').value;
+            await _supabase.from('academy_settings').insert([{type, value:v}]); syncSystem();
+        }
+        async function deleteSetting(id) { await _supabase.from('academy_settings').delete().eq('id', id); syncSystem(); }
+        function downloadReportExcel() { XLSX.writeFile(XLSX.utils.table_to_book(document.querySelector("#reportSection table")), `Report.xlsx`); }
 
         window.onload = syncSystem;
     </script>
