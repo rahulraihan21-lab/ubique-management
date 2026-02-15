@@ -74,26 +74,35 @@
         </div>
 
         <div id="feeSection" class="hidden space-y-4">
-            <div class="glass-card p-6">
-                <h2 class="text-xl font-black text-green-700 mb-4">💰 ফি সংগ্রহ (Monthly)</h2>
-                <div class="space-y-4">
-                    <select id="feeStuSelect" class="w-full p-4 bg-slate-100 rounded-2xl outline-none font-bold text-slate-700"></select>
-                    <div class="grid grid-cols-2 gap-3">
-                        <select id="feeMonth" class="p-4 bg-slate-100 rounded-2xl font-bold outline-none">
-                            <option value="January">January</option><option value="February" selected>February</option>
-                            <option value="March">March</option><option value="April">April</option>
-                            <option value="May">May</option><option value="June">June</option>
-                            <option value="July">July</option><option value="August">August</option>
-                            <option value="September">September</option><option value="October">October</option>
-                            <option value="November">November</option><option value="December">December</option>
-                        </select>
-                        <input type="number" id="feeAmount" placeholder="টাকার পরিমাণ" class="p-4 bg-slate-100 rounded-2xl font-bold outline-none">
-                    </div>
-                    <button onclick="saveFee()" class="w-full bg-green-600 text-white py-5 rounded-2xl font-black shadow-lg">ফি জমা নিন 📥</button>
-                </div>
-            </div>
-            <div class="glass-card p-5"><h3 class="font-bold text-slate-500 mb-3 text-sm uppercase">সাম্প্রতিক পেমেন্ট</h3><div id="feeHistory" class="space-y-2"></div></div>
+    <div class="glass-card p-5">
+        <h2 class="text-xl font-black text-indigo-700 mb-4">💰 ফি কালেকশন ফিল্টার</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+            <select id="feeClassFilter" onchange="loadFeeStudentsWithStatus()" class="p-3 rounded-xl bg-slate-100 font-bold dynamic-class-list"></select>
+            <select id="feeBatchFilter" onchange="loadFeeStudentsWithStatus()" class="p-3 rounded-xl bg-slate-100 font-bold dynamic-batch-list"></select>
+            <select id="feeMonthFilter" onchange="loadFeeStudentsWithStatus()" class="p-3 rounded-xl bg-indigo-50 text-indigo-700 font-bold">
+                <option value="January">January</option><option value="February" selected>February</option>
+                <option value="March">March</option><option value="April">April</option>
+                <option value="May">May</option><option value="June">June</option>
+                <option value="July">July</option><option value="August">August</option>
+                <option value="September">September</option><option value="October">October</option>
+                <option value="November">November</option><option value="December">December</option>
+            </select>
         </div>
+
+        <div id="feeStuStatusList" class="space-y-3 min-h-[200px]">
+            <p class="text-center text-slate-400 py-10">ফিল্টার সিলেক্ট করুন...</p>
+        </div>
+    </div>
+
+    <div id="feeActionForm" class="hidden glass-card p-6 border-2 border-indigo-500">
+        <h3 id="targetStuName" class="font-bold text-lg mb-2">স্টুডেন্ট নাম</h3>
+        <div class="flex gap-2">
+            <input type="number" id="feeInputAmount" placeholder="টাকার পরিমাণ" class="flex-grow p-4 bg-slate-100 rounded-xl font-bold">
+            <button onclick="submitFee()" class="bg-indigo-600 text-white px-6 rounded-xl font-bold">জমা</button>
+            <button onclick="document.getElementById('feeActionForm').classList.add('hidden')" class="bg-slate-200 p-4 rounded-xl">X</button>
+        </div>
+    </div>
+</div>
 
         <div id="absentSection" class="hidden space-y-4">
             <div class="glass-card p-4">
@@ -300,6 +309,82 @@
             await _supabase.from('academy_settings').delete().eq('id', id);
             syncSystem();
         }
+        let selectedStudentId = null;
+
+async function loadFeeStudentsWithStatus() {
+    const cls = document.getElementById('feeClassFilter').value;
+    const bth = document.getElementById('feeBatchFilter').value;
+    const mon = document.getElementById('feeMonthFilter').value;
+    const year = new Date().getFullYear().toString();
+
+    // ১. স্টুডেন্ট লিস্ট আনা
+    let q = _supabase.from('students').select('*');
+    if (cls !== "All") q = q.eq('class', cls);
+    if (bth !== "All") q = q.eq('batch', bth);
+    const { data: students } = await q.order('roll_no');
+
+    // ২. পেমেন্ট রেকর্ড আনা
+    const { data: payments } = await _supabase.from('fees_collection')
+        .select('student_id, amount')
+        .eq('payment_month', mon)
+        .eq('payment_year', year);
+
+    const listDiv = document.getElementById('feeStuStatusList');
+    
+    if (students) {
+        listDiv.innerHTML = students.map(s => {
+            const payRecord = payments?.find(p => p.student_id === s.id);
+            const isPaid = !!payRecord;
+            
+            return `
+            <div class="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm border-l-4 ${isPaid ? 'border-green-500' : 'border-red-500'}">
+                <div>
+                    <h4 class="font-bold text-slate-800">${s.name}</h4>
+                    <p class="text-[10px] text-slate-400 font-bold">রোল: ${s.roll_no} | ${isPaid ? 'পরিশোধিত: ' + payRecord.amount + '৳' : 'বাকি'}</p>
+                </div>
+                ${isPaid ? 
+                    '<span class="text-green-600 font-bold text-sm">✅ PAID</span>' : 
+                    `<button onclick="openFeeForm('${s.id}', '${s.name}')" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-bold text-xs">টাকা নিন 💰</button>`
+                }
+            </div>`;
+        }).join('');
+    }
+}
+
+function openFeeForm(id, name) {
+    selectedStudentId = id;
+    document.getElementById('targetStuName').innerText = name + " - এর ফি জমা দিন";
+    document.getElementById('feeActionForm').classList.remove('hidden');
+    document.getElementById('feeInputAmount').focus();
+}
+
+async function submitFee() {
+    const amt = document.getElementById('feeInputAmount').value;
+    const mon = document.getElementById('feeMonthFilter').value;
+    const year = new Date().getFullYear().toString();
+
+    if(!amt) return alert("পরিমাণ লিখুন");
+
+    const { error } = await _supabase.from('fees_collection').insert([{ 
+        student_id: selectedStudentId, 
+        amount: amt, 
+        payment_month: mon, 
+        payment_year: year, 
+        fee_type: 'Monthly' 
+    }]);
+
+    if(!error) {
+        alert("ফি জমা হয়েছে!");
+        document.getElementById('feeActionForm').classList.add('hidden');
+        document.getElementById('feeInputAmount').value = "";
+        loadFeeStudentsWithStatus();
+    } else {
+        alert("সমস্যা হয়েছে!");
+    }
+}
+
+// switchTab ফাংশনে আপডেট:
+// যদি t === 'fee' হয় তবে loadFeeStudentsWithStatus() কল করবেন।
 
         window.onload = syncSystem;
     </script>
