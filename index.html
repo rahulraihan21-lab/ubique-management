@@ -165,35 +165,70 @@
         }
 
         async function fetchMonthlyReport() {
-            const batch = document.getElementById('reportBatch').value;
-            const month = document.getElementById('reportMonth').value;
-            const year = document.getElementById('reportYear').value;
-            const body = document.getElementById('reportTableBody');
-            body.innerHTML = '<tr><td colspan="3" class="text-center py-10">রিপোর্ট তৈরি হচ্ছে...</td></tr>';
+    const batch = document.getElementById('reportBatch').value;
+    const month = document.getElementById('reportMonth').value;
+    const year = document.getElementById('reportYear').value;
+    const body = document.getElementById('reportTableBody');
+    body.innerHTML = '<tr><td colspan="4" class="text-center py-10">রিপোর্ট তৈরি হচ্ছে...</td></tr>';
 
-            const { data: attendance } = await _supabase.from('attendance').select(`status, attendance_date, students!inner(name, roll_no, batch)`);
-            
-            const filtered = attendance.filter(r => {
-                const d = r.attendance_date.split('-');
-                return d[0] === year && d[1] === month && (batch === "All" || r.students.batch === batch);
-            });
+    // ১. ডাটাবেজ থেকে হাজিরা এবং স্টুডেন্টের ফোন নম্বরসহ ডাটা আনা
+    const { data: attendance, error } = await _supabase
+        .from('attendance')
+        .select(`
+            status, 
+            attendance_date, 
+            students!inner(name, roll_no, batch, phone)
+        `);
+    
+    if (error) {
+        body.innerHTML = '<tr><td colspan="4" class="text-center py-10 text-red-500">ডাটা আনতে সমস্যা হয়েছে।</td></tr>';
+        return;
+    }
 
-            const summary = {};
-            filtered.forEach(r => {
-                const name = r.students.name;
-                if(!summary[name]) summary[name] = { name, roll: r.students.roll_no, p: 0, total: 0 };
-                summary[name].total++;
-                if(r.status === 'Present') summary[name].p++;
-            });
+    const filtered = attendance.filter(r => {
+        const d = r.attendance_date.split('-');
+        return d[0] === year && d[1] === month && (batch === "All" || r.students.batch === batch);
+    });
 
-            body.innerHTML = Object.values(summary).map(s => `
-                <tr>
-                    <td class="p-4 font-bold text-slate-700">${s.name}</td>
-                    <td class="p-4">${s.roll}</td>
-                    <td class="p-4 text-center font-bold text-indigo-600">${((s.p/s.total)*100).toFixed(1)}%</td>
-                </tr>
-            `).join('');
+    const summary = {};
+    filtered.forEach(r => {
+        const studentId = r.students.roll_no + r.students.name; // Unique key
+        if(!summary[studentId]) {
+            summary[studentId] = { 
+                name: r.students.name, 
+                roll: r.students.roll_no, 
+                phone: r.students.phone || 'নেই', 
+                p: 0, 
+                total: 0 
+            };
         }
+        summary[studentId].total++;
+        if(r.status === 'Present') summary[studentId].p++;
+    });
+
+    // ২. টেবিলে ডাটা দেখানো (ফোন নম্বরসহ)
+    const summaryList = Object.values(summary);
+    if (summaryList.length > 0) {
+        body.innerHTML = summaryList.map(s => `
+            <tr class="hover:bg-slate-50">
+                <td class="p-4">
+                    <div class="font-bold text-slate-700">${s.name}</div>
+                    <div class="text-[10px] text-indigo-500 italic">📞 ${s.phone}</div>
+                </td>
+                <td class="p-4 text-slate-600">${s.roll}</td>
+                <td class="p-4 text-center font-bold text-indigo-600">
+                    ${((s.p/s.total)*100).toFixed(1)}%
+                    <div class="text-[9px] text-slate-400 font-normal">(${s.p}/${s.total} দিন)</div>
+                </td>
+                <td class="p-4 text-right">
+                    <a href="tel:${s.phone}" class="bg-green-100 text-green-600 px-3 py-1 rounded-lg text-xs font-bold shadow-sm">Call</a>
+                </td>
+            </tr>
+        `).join('');
+    } else {
+        body.innerHTML = '<tr><td colspan="4" class="text-center py-10 text-slate-400">এই মাসে কোনো হাজিরার রেকর্ড নেই।</td></tr>';
+    }
+}
 
         function downloadExcel() {
             const table = document.getElementById("monthlyTable");
