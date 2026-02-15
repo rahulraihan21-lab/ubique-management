@@ -381,6 +381,88 @@
             XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById("mainReportTable")), `Report.xlsx`);
         }
 
+        // ১. ফি জমা দেওয়ার মূল লজিক
+async function saveFee() {
+    const sid = document.getElementById('feeStuSelect').value;
+    const amt = document.getElementById('feeAmount').value;
+    const mon = document.getElementById('feeMonth').value;
+    const year = new Date().getFullYear().toString();
+    
+    if(!sid || !amt) return alert("অনুগ্রহ করে স্টুডেন্ট এবং টাকার পরিমাণ দিন!");
+
+    const { error } = await _supabase.from('fees_collection').insert([
+        { 
+            student_id: sid, 
+            amount: amt, 
+            payment_month: mon, 
+            payment_year: year,
+            fee_type: 'Monthly'
+        }
+    ]);
+
+    if(error) {
+        if(error.code === '23505') alert("এই স্টুডেন্টের এই মাসের ফি আগেই জমা দেওয়া হয়েছে!");
+        else alert("ভুল হয়েছে: " + error.message);
+    } else {
+        alert("ফি সফলভাবে জমা হয়েছে! ✅");
+        document.getElementById('feeAmount').value = ""; // বক্স খালি করা
+        loadFeeHistory(); // হিস্ট্রি আপডেট করা
+    }
+}
+
+// ২. ফি সেকশনের জন্য স্টুডেন্ট লিস্ট ড্রপডাউনে আনা
+async function loadFeeStudents() {
+    const { data } = await _supabase.from('students').select('id, name, roll_no').order('roll_no', {ascending: true});
+    if(data) {
+        const select = document.getElementById('feeStuSelect');
+        select.innerHTML = '<option value="">স্টুডেন্ট সিলেক্ট করুন...</option>' + 
+        data.map(s => `<option value="${s.id}">${s.roll_no} - ${s.name}</option>`).join('');
+    }
+}
+
+// ৩. সাম্প্রতিক পেমেন্টের তালিকা দেখানো
+async function loadFeeHistory() {
+    const { data } = await _supabase.from('fees_collection').select('*, students(name, roll_no)').order('id', {ascending: false}).limit(5);
+    if(data) {
+        const historyDiv = document.getElementById('feeHistory');
+        historyDiv.innerHTML = data.map(f => `
+            <div class="flex justify-between bg-white p-3 rounded-lg shadow-sm border-l-4 border-green-500 text-sm font-bold">
+                <span>${f.students.name} (${f.payment_month})</span>
+                <span class="text-green-600">${f.amount}৳</span>
+            </div>`).join('');
+    }
+}
+
+// ৪. ট্যাব সুইচ ফাংশন আপডেট (ফি ট্যাব সাপোর্ট করার জন্য)
+// আপনার আগের switchTab ফাংশনটি নিচে এভাবে রিপ্লেস করে দিন:
+function switchTab(t) {
+    const sections = ['daily', 'absent', 'report', 'settings', 'fee'];
+    sections.forEach(id => {
+        const sec = document.getElementById(id+'Section');
+        if(sec) sec.classList.add('hidden');
+        
+        // ডেস্কটপ ও মোবাইল বাটন কালার রিসেট
+        const dBtn = document.getElementById('d-'+id);
+        const mBtn = document.getElementById('m-'+id);
+        if(dBtn) dBtn.classList.remove('active');
+        if(mBtn) mBtn.classList.replace('text-indigo-600', 'text-slate-400');
+    });
+
+    const targetSec = document.getElementById(t+'Section');
+    if(targetSec) targetSec.classList.remove('hidden');
+    
+    const targetDBtn = document.getElementById('d-'+t);
+    const targetMBtn = document.getElementById('m-'+t);
+    if(targetDBtn) targetDBtn.classList.add('active');
+    if(targetMBtn) targetMBtn.classList.replace('text-slate-400', 'text-indigo-600');
+
+    // ফি ট্যাবে গেলে ডাটা লোড করা
+    if(t === 'fee') {
+        loadFeeStudents();
+        loadFeeHistory();
+    }
+}
+
         window.onload = syncSystem;
     </script>
 </body>
