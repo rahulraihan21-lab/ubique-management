@@ -22,7 +22,33 @@
     </style>
 </head>
 <body>
+    
+<div id="feeSection" class="hidden space-y-4">
+    <div class="glass-card p-6">
+        <h2 class="text-xl font-black text-green-700 mb-4">💰 ফি সংগ্রহ (Monthly)</h2>
+        <div class="space-y-4">
+            <select id="feeStuSelect" class="w-full p-4 bg-slate-100 rounded-2xl outline-none font-bold text-slate-700"></select>
+            <div class="grid grid-cols-2 gap-3">
+                <select id="feeMonth" class="p-4 bg-slate-100 rounded-2xl font-bold outline-none">
+                    <option value="January">January</option><option value="February" selected>February</option>
+                    <option value="March">March</option><option value="April">April</option>
+                    <option value="May">May</option><option value="June">June</option>
+                    <option value="July">July</option><option value="August">August</option>
+                    <option value="September">September</option><option value="October">October</option>
+                    <option value="November">November</option><option value="December">December</option>
+                </select>
+                <input type="number" id="feeAmount" placeholder="টাকার পরিমাণ" class="p-4 bg-slate-100 rounded-2xl font-bold outline-none">
+            </div>
+            <button onclick="saveFee()" class="w-full bg-green-600 text-white py-5 rounded-2xl font-black shadow-lg active:scale-95 transition-all">ফি জমা নিন 📥</button>
+        </div>
+    </div>
 
+    <div class="glass-card p-5">
+        <h3 class="font-bold text-slate-500 mb-3 text-sm uppercase">সাম্প্রতিক পেমেন্ট</h3>
+        <div id="feeHistory" class="space-y-2"></div>
+    </div>
+</div>
+    
     <header class="desktop-header bg-white shadow-sm p-4 sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-black text-indigo-700 italic">UBIQUE</h1>
@@ -138,6 +164,7 @@
     </main>
 
     <nav class="mobile-bottom-nav">
+        <button onclick="switchTab('fee')" id="m-fee" class="flex flex-col items-center text-slate-400"> <span>💰</span><span class="text-[10px] font-bold">ফি</span></button>
         <button onclick="switchTab('daily')" id="m-daily" class="flex flex-col items-center text-indigo-600"><span>📋</span><span class="text-[10px] font-bold">হাজিরা</span></button>
         <button onclick="switchTab('absent')" id="m-absent" class="flex flex-col items-center text-slate-400"><span>📞</span><span class="text-[10px] font-bold">কল</span></button>
         <button onclick="switchTab('report')" id="m-report" class="flex flex-col items-center text-slate-400"><span>📊</span><span class="text-[10px] font-bold">রিপোর্ট</span></button>
