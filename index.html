@@ -3,96 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>UBIQUE Admin App</title>
+    <title>UBIQUE Admin | Hybrid System</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
-        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f8fafc; }
+        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f1f5f9; padding-bottom: 70px; }
         
-        /* অ্যাপের মতো নিচের নেভিগেশন */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 10px; box-shadow: 0 -5px 20px rgba(0,0,0,0.05); z-index: 1000; border-radius: 20px 20px 0 0; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: #64748b; font-weight: 600; }
-        .nav-active { color: #4f46e5; }
+        /* ডেস্কটপ ও মোবাইলের জন্য কমন স্টাইল */
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.05); }
+        .tab-btn { padding: 10px 18px; border-radius: 14px; font-weight: 700; font-size: 14px; transition: 0.3s; color: #64748b; }
+        .tab-btn.active { background: #4f46e5; color: white; shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4); }
         
-        /* কার্ড স্টাইল */
-        .stu-card { background: white; border-radius: 20px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #f1f5f9; }
-        .input-style { width: 100%; border: 1px solid #e2e8f0; padding: 12px; border-radius: 12px; outline: none; transition: 0.3s; background: #fdfdfd; }
-        .input-style:focus { border-color: #6366f1; background: white; }
+        /* ফোনের জন্য নিচে নেভিগেশন */
+        @media (max-width: 768px) {
+            .mobile-bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 12px; z-index: 1000; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); border-radius: 24px 24px 0 0; }
+            .desktop-header { display: none; }
+        }
+        @media (min-width: 769px) {
+            .mobile-bottom-nav { display: none; }
+            body { padding-bottom: 20px; }
+        }
 
-        .btn-p { width: 45px; height: 45px; border-radius: 12px; border: 2px solid #22c55e; color: #22c55e; font-weight: 800; transition: 0.2s; }
-        .btn-a { width: 45px; height: 45px; border-radius: 12px; border: 2px solid #ef4444; color: #ef4444; font-weight: 800; transition: 0.2s; }
-        .active-p { background: #22c55e !important; color: white !important; transform: scale(0.9); }
-        .active-a { background: #ef4444 !important; color: white !important; transform: scale(0.9); }
+        .report-cell { min-width: 40px; text-align: center; border: 1px solid #e2e8f0; font-size: 11px; padding: 8px; }
+        .p-mark { background: #dcfce7; color: #166534; font-weight: bold; }
+        .a-mark { background: #fee2e2; color: #991b1b; font-weight: bold; }
     </style>
 </head>
-<body class="pb-24">
+<body>
 
-    <div class="bg-indigo-700 text-white p-5 rounded-b-[30px] shadow-lg mb-6">
-        <div class="flex justify-between items-center">
-            <h1 class="text-xl font-black italic">UBIQUE</h1>
-            <span class="bg-indigo-500 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Admin Panel</span>
+    <header class="desktop-header bg-white shadow-sm p-4 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-black text-indigo-700 italic">UBIQUE</h1>
+            <nav class="flex gap-2">
+                <button onclick="switchTab('daily')" class="tab-btn active" id="d-daily">হাজিরা</button>
+                <button onclick="switchTab('absent')" class="tab-btn" id="d-absent">এবসেন্ট কল</button>
+                <button onclick="switchTab('report')" class="tab-btn" id="d-report">রিপোর্ট</button>
+                <button onclick="switchTab('settings')" class="tab-btn" id="d-settings">সেটিংস</button>
+            </nav>
         </div>
-    </div>
+    </header>
 
-    <main class="px-4">
+    <main class="container mx-auto p-4 lg:mt-6">
         
-        <div id="dailySection">
-            <div class="space-y-3 mb-6">
-                <div class="flex gap-2">
-                    <input type="text" id="searchName" oninput="loadStudents()" placeholder="নাম দিয়ে খুঁজুন..." class="input-style flex-grow">
-                    <input type="number" id="searchRoll" oninput="loadStudents()" placeholder="রোল" class="input-style w-24">
-                </div>
-                <select id="classFilter" onchange="loadStudents()" class="input-style font-bold text-indigo-700 dynamic-class-list"></select>
-            </div>
-
-            <div id="stuListBody">
-                </div>
-            
-            <button onclick="submitFinalAttendance()" class="fixed bottom-24 right-4 bg-indigo-600 text-white p-4 rounded-2xl shadow-2xl font-bold flex items-center gap-2 z-50">
-                <span>জমা দিন</span> ✅
-            </button>
-        </div>
-
-        <div id="absentSection" class="hidden">
-            <div class="bg-red-50 p-4 rounded-2xl border border-red-100 mb-4 text-center">
-                <h2 class="font-bold text-red-600">আজকের অনুপস্থিত তালিকা</h2>
-                <select id="absentClassFilter" onchange="loadAbsentStudents()" class="mt-2 input-style text-sm dynamic-class-list"></select>
-            </div>
-            <div id="absentListGrid" class="space-y-3"></div>
-        </div>
-
-        <div id="settingsSection" class="hidden space-y-6">
-            <div class="bg-white p-5 rounded-[25px] shadow-sm border">
-                <h3 class="font-bold text-indigo-900 mb-4">নতুন স্টুডেন্ট যোগ করুন</h3>
-                <input type="hidden" id="editStuId">
-                <div class="space-y-3">
-                    <input type="text" id="stuName" placeholder="নাম" class="input-style">
-                    <input type="number" id="stuRoll" placeholder="রোল" class="input-style">
-                    <select id="stuClass" class="input-style dynamic-class-list"></select>
-                    <select id="stuBatch" class="input-style dynamic-batch-list"></select>
-                    <input type="text" id="stuPhone" placeholder="ফোন নম্বর" class="input-style">
-                    <button onclick="saveSingleStudent()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">সেভ করুন</button>
+        <div id="dailySection" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-8">
+                <div class="glass-card p-5 mb-6">
+                    <div class="flex flex-col md:flex-row gap-3 mb-6">
+                        <input type="text" id="searchName" oninput="loadStudents()" placeholder="নাম..." class="flex-grow p-3 rounded-xl border-none bg-slate-100 outline-none">
+                        <input type="number" id="searchRoll" oninput="loadStudents()" placeholder="রোল" class="w-full md:w-24 p-3 rounded-xl border-none bg-slate-100 outline-none">
+                        <select id="classFilter" onchange="loadStudents()" class="p-3 rounded-xl bg-indigo-50 text-indigo-700 font-bold outline-none dynamic-class-list"></select>
+                        <select id="batchFilter" onchange="loadStudents()" class="p-3 rounded-xl bg-slate-100 font-bold outline-none dynamic-batch-list"></select>
+                    </div>
+                    <div id="stuListBody" class="space-y-3 min-h-[400px]"></div>
+                    <button onclick="submitFinalAttendance()" class="w-full mt-6 bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg">আজকের হাজিরা জমা দিন ✅</button>
                 </div>
             </div>
-            <div class="p-4 bg-slate-100 rounded-2xl">
-                <p class="text-[10px] text-center text-slate-500 font-bold uppercase tracking-widest">Database Settings & Batch Control</p>
+
+            <div class="hidden lg:block lg:col-span-4">
+                <div class="glass-card p-6 sticky top-24">
+                    <h3 class="font-bold text-indigo-900 mb-4">দ্রুত স্টুডেন্ট এন্ট্রি</h3>
+                    <div class="space-y-3">
+                        <input type="text" id="stuName" placeholder="নাম" class="w-full p-3 rounded-xl bg-slate-100 outline-none">
+                        <input type="number" id="stuRoll" placeholder="রোল" class="w-full p-3 rounded-xl bg-slate-100 outline-none">
+                        <select id="stuClass" class="w-full p-3 rounded-xl bg-slate-100 dynamic-class-list"></select>
+                        <select id="stuBatch" class="w-full p-3 rounded-xl bg-slate-100 dynamic-batch-list"></select>
+                        <input type="text" id="stuPhone" placeholder="ফোন নম্বর" class="w-full p-3 rounded-xl bg-slate-100 outline-none">
+                        <button onclick="saveSingleStudent()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">সেভ করুন</button>
+                    </div>
+                </div>
             </div>
         </div>
+
+        <div id="absentSection" class="hidden space-y-4">
+            <div class="glass-card p-6 text-center border-l-8 border-red-500">
+                <h2 class="text-xl font-black text-red-600">🚨 অনুপস্থিত স্টুডেন্টদের তালিকা</h2>
+                <div class="flex flex-wrap justify-center gap-2 mt-4">
+                    <select id="absentClassFilter" onchange="loadAbsentStudents()" class="p-2 border rounded-xl dynamic-class-list text-sm"></select>
+                    <select id="absentBatchFilter" onchange="loadAbsentStudents()" class="p-2 border rounded-xl dynamic-batch-list text-sm"></select>
+                </div>
+            </div>
+            <div id="absentListGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+
+        <div id="reportSection" class="hidden space-y-6">
+            <div class="glass-card p-6">
+                <h3 class="font-bold text-indigo-900 mb-4">📊 মাসিক হাজিরা রিপোর্ট</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mb-6">
+                    <select id="reportClass" class="p-3 bg-slate-100 rounded-xl dynamic-class-list"></select>
+                    <input type="month" id="reportMonth" class="p-3 bg-slate-100 rounded-xl outline-none">
+                    <button onclick="fetchMonthlyReport()" class="bg-indigo-600 text-white p-3 rounded-xl font-bold">রিপোর্ট লোড</button>
+                    <button onclick="downloadExcel()" class="bg-green-600 text-white p-3 rounded-xl font-bold">Excel 📥</button>
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="w-full">
+                        <thead id="reportHead" class="bg-indigo-950 text-white"></thead>
+                        <tbody id="reportTableBody" class="bg-white"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="settingsSection" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="glass-card p-6 lg:hidden">
+                <h3 class="font-bold text-indigo-900 mb-4">স্টুডেন্ট এন্ট্রি</h3>
+                <div class="space-y-3" id="mobileEntry"></div> 
+            </div>
+            <div class="glass-card p-6">
+                <h3 class="font-bold text-indigo-900 mb-4">এক্সেল থেকে বাল্ক আপলোড</h3>
+                <input type="file" id="excelInput" accept=".xlsx, .xls" class="hidden" onchange="handleExcel(event)">
+                <button onclick="document.getElementById('excelInput').click()" class="w-full p-4 border-2 border-dashed border-indigo-200 text-indigo-600 font-bold rounded-2xl">ফাইল সিলেক্ট করুন</button>
+            </div>
+            <div class="glass-card p-6">
+                <h3 class="font-bold text-indigo-900 mb-4">ক্লাস ও ব্যাচ ম্যানেজমেন্ট</h3>
+                <div class="space-y-4">
+                    <div class="flex gap-2"><input type="text" id="nClass" class="flex-1 p-2 bg-slate-50 border rounded-xl" placeholder="নতুন ক্লাস"><button onclick="addSet('class')" class="bg-indigo-600 text-white px-4 rounded-xl">+</button></div>
+                    <ul id="cList" class="text-sm bg-slate-50 p-2 rounded-xl"></ul>
+                </div>
+            </div>
+        </div>
+
     </main>
 
-    <nav class="bottom-nav">
-        <button onclick="switchTab('daily')" id="tabDaily" class="nav-item nav-active">
-            <span class="text-xl">📋</span>
-            <span>হাজিরা</span>
+    <nav class="mobile-bottom-nav">
+        <button onclick="switchTab('daily')" id="m-daily" class="nav-item flex flex-col items-center text-indigo-600">
+            <span class="text-xl">📋</span><span class="text-[10px] font-bold">হাজিরা</span>
         </button>
-        <button onclick="switchTab('absent')" id="tabAbsent" class="nav-item">
-            <span class="text-xl">📞</span>
-            <span>কল</span>
+        <button onclick="switchTab('absent')" id="m-absent" class="nav-item flex flex-col items-center text-slate-400">
+            <span class="text-xl">📞</span><span class="text-[10px] font-bold">কল</span>
         </button>
-        <button onclick="switchTab('settings')" id="tabSettings" class="nav-item">
-            <span class="text-xl">⚙️</span>
-            <span>সেটিংস</span>
+        <button onclick="switchTab('report')" id="m-report" class="nav-item flex flex-col items-center text-slate-400">
+            <span class="text-xl">📊</span><span class="text-[10px] font-bold">রিপোর্ট</span>
+        </button>
+        <button onclick="switchTab('settings')" id="m-settings" class="nav-item flex flex-col items-center text-slate-400">
+            <span class="text-xl">⚙️</span><span class="text-[10px] font-bold">সেটিংস</span>
         </button>
     </nav>
 
@@ -108,109 +153,117 @@
             if (data) {
                 const classes = data.filter(i => i.type === 'class');
                 const batches = data.filter(i => i.type === 'batch');
-                const cOpts = '<option value="All">সকল ক্লাস</option>' + classes.map(x => `<option value="${x.value}">${x.value}</option>`).join('');
-                const bOpts = batches.map(x => `<option value="${x.value}">${x.value}</option>`).join('');
+                const cOpts = '<option value="All">All Class</option>' + classes.map(x => `<option value="${x.value}">${x.value}</option>`).join('');
+                const bOpts = '<option value="All">All Batch</option>' + batches.map(x => `<option value="${x.value}">${x.value}</option>`).join('');
+                
                 document.querySelectorAll('.dynamic-class-list').forEach(el => el.innerHTML = cOpts);
                 document.querySelectorAll('.dynamic-batch-list').forEach(el => el.innerHTML = bOpts);
+                
+                document.getElementById('cList').innerHTML = classes.map(i => `<li class="flex justify-between p-1"><span>${i.value}</span><button onclick="delSet('${i.id}')" class="text-red-500">×</button></li>`).join('');
             }
             loadStudents();
         }
 
         async function loadStudents() {
             const cls = document.getElementById('classFilter').value;
-            const sName = document.getElementById('searchName').value.trim().toLowerCase();
-            const sRoll = document.getElementById('searchRoll').value.trim();
+            const bth = document.getElementById('batchFilter').value;
+            const sn = document.getElementById('searchName').value.trim().toLowerCase();
+            const sr = document.getElementById('searchRoll').value.trim();
             const container = document.getElementById('stuListBody');
             
             let query = _supabase.from('students').select('*');
             if (cls !== "All") query = query.eq('class', cls);
+            if (bth !== "All") query = query.eq('batch', bth);
             const { data } = await query.order('roll_no', { ascending: true });
             
             if (data) {
-                const filtered = data.filter(s => (sName==="" || s.name.toLowerCase().includes(sName)) && (sRoll==="" || s.roll_no.toString()===sRoll));
+                const filtered = data.filter(s => (sn==="" || s.name.toLowerCase().includes(sn)) && (sr==="" || s.roll_no.toString()===sr));
                 container.innerHTML = filtered.map(s => `
-                    <div class="stu-card flex justify-between items-center">
-                        <div>
-                            <h4 class="font-bold text-slate-800 text-[15px]">${s.name}</h4>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase mt-0.5">রোল: <span class="text-indigo-600">${s.roll_no}</span> | ${s.class}</p>
-                            <div class="flex gap-4 mt-2">
-                                <button onclick='startEdit(${JSON.stringify(s)})' class="text-indigo-400 text-[10px] font-bold">✎ এডিট</button>
-                                <button onclick="deleteStudent('${s.id}')" class="text-red-300 text-[10px] font-bold">🗑️ ডিলিট</button>
-                            </div>
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center">
+                        <div class="flex-grow">
+                            <h4 class="font-bold text-slate-800">${s.name}</h4>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">রোল: <span class="text-indigo-600">${s.roll_no}</span> | ${s.class} | ${s.batch}</p>
+                            <button onclick='startEdit(${JSON.stringify(s)})' class="text-indigo-400 text-[10px] font-bold mt-1">✎ এডিট</button>
                         </div>
                         <div class="flex gap-2">
-                            <button id="p-${s.id}" onclick="mark('${s.id}', 'Present')" class="btn-p">P</button>
-                            <button id="a-${s.id}" onclick="mark('${s.id}', 'Absent')" class="btn-a">A</button>
+                            <button id="p-${s.id}" onclick="mark('${s.id}', 'Present')" class="w-11 h-11 rounded-xl border-2 border-green-500 text-green-600 font-bold">P</button>
+                            <button id="a-${s.id}" onclick="mark('${s.id}', 'Absent')" class="w-11 h-11 rounded-xl border-2 border-red-500 text-red-600 font-bold">A</button>
                         </div>
                     </div>`).join('');
             }
         }
 
-        function mark(id, status) {
-            document.getElementById(`p-${id}`).className = status === 'Present' ? "btn-p active-p" : "btn-p";
-            document.getElementById(`a-${id}`).className = status === 'Absent' ? "btn-a active-a" : "btn-a";
-            attendanceData[id] = status;
-        }
-
-        async function submitFinalAttendance() {
-            const records = Object.keys(attendanceData).map(id => ({ 
-                student_id: parseInt(id), 
-                status: attendanceData[id], 
-                attendance_date: new Date().toISOString().split('T')[0] 
-            }));
-            if(records.length === 0) return alert("কিছু সিলেক্ট করুন!");
-            await _supabase.from('attendance').upsert(records);
-            alert("হাজিরা সফল! ✅");
-        }
-
         async function loadAbsentStudents() {
             const cls = document.getElementById('absentClassFilter').value;
+            const bth = document.getElementById('absentBatchFilter').value;
             const date = new Date().toISOString().split('T')[0];
             const { data } = await _supabase.from('attendance').select('student_id, students!inner(*)').eq('attendance_date', date).eq('status', 'Absent');
             const grid = document.getElementById('absentListGrid');
 
             if (data) {
-                const filtered = data.filter(r => cls === "All" || r.students.class === cls);
+                let filtered = data;
+                if(cls !== "All") filtered = filtered.filter(r => r.students.class === cls);
+                if(bth !== "All") filtered = filtered.filter(r => r.students.batch === bth);
+                
                 grid.innerHTML = filtered.map(r => `
-                    <div class="stu-card flex justify-between items-center border-l-4 border-l-red-500">
-                        <div>
-                            <h4 class="font-bold text-slate-800">${r.students.name}</h4>
-                            <p class="text-[10px] text-slate-400 font-bold">রোল: ${r.students.roll_no} | ${r.students.class}</p>
-                        </div>
-                        <a href="tel:${r.students.phone}" class="bg-red-500 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-lg">📞</a>
+                    <div class="bg-white p-5 rounded-2xl shadow-md border-l-8 border-red-500 flex justify-between items-center">
+                        <div><h4 class="font-bold text-slate-800">${r.students.name}</h4><p class="text-[10px] font-bold text-slate-400 uppercase">রোল: ${r.students.roll_no} | ${r.students.batch}</p></div>
+                        <a href="tel:${r.students.phone}" class="bg-red-500 text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-lg text-xl">📞</a>
                     </div>`).join('');
             }
         }
 
+        async function fetchMonthlyReport() {
+            const monthVal = document.getElementById('reportMonth').value;
+            const cls = document.getElementById('reportClass').value;
+            if(!monthVal) return alert("মাস সিলেক্ট করুন!");
+            const [year, month] = monthVal.split('-');
+            const days = new Date(year, month, 0).getDate();
+
+            const { data: stu } = await _supabase.from('students').select('*').eq(cls!=="All"?'class':'', cls!=="All"?cls:'').order('roll_no', {ascending: true});
+            const { data: rec } = await _supabase.from('attendance').select('*').gte('attendance_date', `${year}-${month}-01`).lte('attendance_date', `${year}-${month}-${days}`);
+
+            let h = `<tr><th class="p-3 border">রোল</th><th class="p-3 border">নাম</th>`;
+            for(let i=1; i<=days; i++) h += `<th class="report-cell">${i}</th>`;
+            document.getElementById('reportHead').innerHTML = h + `</tr>`;
+
+            document.getElementById('reportTableBody').innerHTML = stu.map(s => {
+                let r = `<tr><td class="p-2 border font-bold text-center">${s.roll_no}</td><td class="p-2 border truncate font-bold" style="max-width:110px">${s.name}</td>`;
+                for(let d=1; d<=days; d++) {
+                    const ds = `${year}-${month}-${d.toString().padStart(2, '0')}`;
+                    const f = rec.find(x => x.student_id === s.id && x.attendance_date === ds);
+                    const st = f ? (f.status === 'Present' ? 'P' : 'A') : '-';
+                    r += `<td class="report-cell ${st==='P'?'p-mark':(st==='A'?'a-mark':'')}">${st}</td>`;
+                }
+                return r + `</tr>`;
+            }).join('');
+        }
+
         function switchTab(t) {
-            ['daily', 'absent', 'settings'].forEach(id => {
+            ['daily', 'absent', 'report', 'settings'].forEach(id => {
                 document.getElementById(id+'Section').classList.add('hidden');
-                document.getElementById('tab'+id.charAt(0).toUpperCase()+id.slice(1)).classList.remove('nav-active');
+                document.getElementById('d-'+id).classList.remove('active');
+                document.getElementById('m-'+id).classList.replace('text-indigo-600', 'text-slate-400');
             });
             document.getElementById(t+'Section').classList.remove('hidden');
-            document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.add('nav-active');
+            document.getElementById('d-'+t).classList.add('active');
+            document.getElementById('m-'+t).classList.replace('text-slate-400', 'text-indigo-600');
             if(t === 'absent') loadAbsentStudents();
         }
 
-        function startEdit(s) {
-            switchTab('settings');
-            document.getElementById('editStuId').value = s.id;
-            document.getElementById('stuName').value = s.name;
-            document.getElementById('stuRoll').value = s.roll_no;
-            document.getElementById('stuClass').value = s.class;
-            document.getElementById('stuBatch').value = s.batch;
-            document.getElementById('stuPhone').value = s.phone;
+        function mark(id, s) {
+            document.getElementById(`p-${id}`).className = s === 'Present' ? "w-11 h-11 rounded-xl bg-green-500 text-white font-bold" : "w-11 h-11 rounded-xl border-2 border-green-500 text-green-600 font-bold";
+            document.getElementById(`a-${id}`).className = s === 'Absent' ? "w-11 h-11 rounded-xl bg-red-500 text-white font-bold" : "w-11 h-11 rounded-xl border-2 border-red-500 text-red-600 font-bold";
+            attendanceData[id] = s;
         }
 
-        async function deleteStudent(id) {
-            if(confirm("ডিলিট করবেন?")) {
-                await _supabase.from('students').delete().eq('id', id);
-                loadStudents();
-            }
+        async function submitFinalAttendance() {
+            const records = Object.keys(attendanceData).map(id => ({ student_id: parseInt(id), status: attendanceData[id], attendance_date: new Date().toISOString().split('T')[0] }));
+            await _supabase.from('attendance').upsert(records);
+            alert("সফলভাবে জমা হয়েছে!");
         }
 
         async function saveSingleStudent() {
-            const id = document.getElementById('editStuId').value;
             const payload = { 
                 name: document.getElementById('stuName').value, 
                 roll_no: parseInt(document.getElementById('stuRoll').value), 
@@ -218,9 +271,8 @@
                 batch: document.getElementById('stuBatch').value, 
                 phone: document.getElementById('stuPhone').value 
             };
-            if(id) await _supabase.from('students').update(payload).eq('id', id);
-            else await _supabase.from('students').insert([payload]);
-            alert("সফল!"); switchTab('daily'); init();
+            await _supabase.from('students').insert([payload]);
+            alert("সফল!"); init();
         }
 
         window.onload = init;
