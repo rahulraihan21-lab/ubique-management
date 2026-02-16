@@ -513,6 +513,22 @@ ${s.name}
     // ডাটাবেস থেকে ক্লাসগুলো লোড করার ফাংশন এখানে কল করুন
     loadStudentClasses(); 
 };
+    async function checkStudentAuth() {
+    const roll = document.getElementById('stuRollInp').value;
+    const phone = document.getElementById('stuPhoneInp').value;
+    const sClass = document.getElementById('stuClassInp').value; // নতুন যোগ করা
+
+    if(!roll || !phone || !sClass) return alert("রোল, ফোন এবং ক্লাস সিলেক্ট করুন!");
+
+    const { data: student } = await _supabase.from('students')
+        .select('*')
+        .eq('roll_no', roll)
+        .eq('phone', phone)
+        .eq('class', sClass) // ডাটাবেসের ক্লাসের সাথে মিলানো হচ্ছে
+        .single();
+
+    if(student) {
+        // ... বাকি কোড আগের মতোই থাকবে
         async function checkStudentAuth() {
     const roll = document.getElementById('stuRollInp').value;
     const phone = document.getElementById('stuPhoneInp').value;
