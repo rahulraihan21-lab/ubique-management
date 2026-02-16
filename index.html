@@ -519,7 +519,13 @@ ${s.name}
         document.getElementById('studentDashboard').classList.remove('hidden');
         document.getElementById('dsName').innerText = student.name;
         document.getElementById('dsInfo').innerText = `Class: ${student.class} | Roll: ${student.roll_no}`;
+// অটোমেটিক বকেয়া বেতন চেক
+const curMonth = new Date().toLocaleString('default', { month: 'long' });
+const { data: pay } = await _supabase.from('fees_collection').select('*').eq('student_id', student.id).eq('payment_month', curMonth);
 
+if (!pay || pay.length === 0) {
+    alert("⚠️ নোটিশ: আপনার " + curMonth + " মাসের বেতন এখনো বকেয়া আছে!");
+}
         // বেতন চেক
         const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         const curMon = monthNames[new Date().getMonth()];
