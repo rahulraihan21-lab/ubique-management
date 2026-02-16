@@ -299,7 +299,12 @@
                     const record = attendance?.find(x => x.student_id === s.id);
                     if(record) record.status === 'Present' ? p++ : a++;
                     return `<div class="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm">
-                        <div onclick='startEdit(${JSON.stringify(s)})' class="cursor-pointer font-bold">${s.name}<p class="text-[10px] text-slate-400">${s.roll_no} | ${s.batch}</p></div>
+                        <div onclick='startEdit(${JSON.stringify(s)})' class="cursor-pointer font-bold">
+${s.name}
+    <p class="text-[10px] text-slate-500 font-bold">
+        রোল: ${s.roll_no} | ব্যাচ: ${s.batch} | ফোন: ${s.phone || 'নেই'}
+    </p>
+</div>
                         <div class="flex gap-2">
                             <button id="p-${s.id}" onclick="mark('${s.id}', 'Present')" class="w-10 h-10 rounded-lg border-2 ${record?.status === 'Present' ? 'p-btn-active' : 'border-green-500 text-green-600'}">P</button>
                             <button id="a-${s.id}" onclick="mark('${s.id}', 'Absent')" class="w-10 h-10 rounded-lg border-2 ${record?.status === 'Absent' ? 'a-btn-active' : 'border-red-500 text-red-600'}">A</button>
