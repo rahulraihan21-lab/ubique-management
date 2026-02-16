@@ -40,6 +40,9 @@
 
 <div id="studentFields" class="hidden mt-4 space-y-2">
     <input type="number" id="stuRollInp" placeholder="রোল নম্বর" class="w-full p-3 rounded-xl bg-slate-50 border outline-none font-bold">
+    <select id="stuClassInp" class="w-full p-3 bg-slate-100 rounded-xl mb-3 font-bold text-sm outline-none">
+    <option value="">আপনার ক্লাস সিলেক্ট করুন</option>
+</select>
     <input type="text" id="stuPhoneInp" placeholder="ফোন নম্বর" class="w-full p-3 rounded-xl bg-slate-50 border outline-none font-bold">
     <button onclick="checkStudentAuth()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold shadow-lg">ড্যাশবোর্ড প্রবেশ</button>
 </div>
@@ -504,9 +507,12 @@ ${s.name}
             syncSystem();
         }
 
-        window.onload = () => {
-            if(localStorage.getItem('ubique_auth') === 'true') showApp();
-        };
+       window.onload = () => {
+    if(localStorage.getItem('ubique_auth') === 'true') showApp();
+    
+    // ডাটাবেস থেকে ক্লাসগুলো লোড করার ফাংশন এখানে কল করুন
+    loadStudentClasses(); 
+};
         async function checkStudentAuth() {
     const roll = document.getElementById('stuRollInp').value;
     const phone = document.getElementById('stuPhoneInp').value;
