@@ -44,6 +44,11 @@
     <button onclick="checkStudentAuth()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold shadow-lg">ড্যাশবোর্ড প্রবেশ</button>
 </div>
             <p id="loginError" class="text-red-500 mt-4 text-sm font-bold hidden">❌ ভুল পাসওয়ার্ড!</p>
+            <div class="mt-8 border-t pt-4 text-left">
+    <h4 class="text-xs font-black text-indigo-600 uppercase mb-3 italic">📢 সাম্প্রতিক নোটিস</h4>
+    <div id="loginPageNotices" class="space-y-2 max-h-40 overflow-y-auto pr-2 text-[10px]">
+        </div>
+</div>
         </div>
     </div>
 
@@ -186,11 +191,19 @@
                     </div>
                 </div>
             </div>
-            <div class="mt-8 pt-6 border-t border-slate-200">
-    <h3 class="font-bold text-indigo-900 mb-2 text-sm italic">📢 নতুন নোটিস পাঠান</h3>
-    <input type="text" id="noticeTitle" placeholder="শিরোনাম" class="w-full p-2 mb-2 rounded-xl bg-slate-50 border outline-none font-bold text-xs">
-    <textarea id="noticeContent" placeholder="বিস্তারিত লিখুন..." class="w-full p-2 mb-2 rounded-xl bg-slate-50 border outline-none font-bold text-xs h-20"></textarea>
-    <button onclick="sendNotice()" class="w-full bg-indigo-600 text-white py-2 rounded-xl font-bold text-xs shadow-md">পাবলিশ করুন ✅</button>
+           <div class="mt-8 pt-6 border-t-2 border-indigo-100">
+    <h3 class="font-bold text-indigo-900 mb-4 uppercase text-sm italic">📢 টার্গেটেড নোটিস পাঠান</h3>
+    <div class="space-y-3 bg-white p-5 rounded-2xl border border-indigo-200 shadow-sm">
+        <input type="text" id="noticeTitle" placeholder="নোটিসের শিরোনাম" class="w-full p-3 rounded-xl bg-slate-50 border outline-none font-bold">
+        <textarea id="noticeContent" placeholder="বিস্তারিত তথ্য..." class="w-full p-3 rounded-xl bg-slate-50 border outline-none font-bold h-24"></textarea>
+        
+        <div class="grid grid-cols-2 gap-2">
+            <select id="noticeClass" class="p-3 rounded-xl bg-slate-100 font-bold text-xs dynamic-class-list"></select>
+            <select id="noticeBatch" class="p-3 rounded-xl bg-slate-100 font-bold text-xs dynamic-batch-list"></select>
+        </div>
+        
+        <button onclick="sendNotice()" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-indigo-700 transition">পাবলিশ করুন ✅</button>
+    </div>
 </div>
         </div>
     </main>
@@ -521,24 +534,44 @@ ${s.name}
         document.getElementById('dsNotices').innerHTML = notices?.map(n => `<div class="p-3 bg-indigo-50 rounded-xl border-l-4 border-indigo-500"><h4 class="font-bold text-indigo-900">${n.title}</h4><p class="text-slate-600 text-xs">${n.content}</p></div>`).join('') || 'কোনো নোটিস নেই';
     } else { alert("তথ্য মেলেনি!"); }
 }
+// ১. ক্লাস/ব্যাচ অনুযায়ী নোটিস পাঠানো
 async function sendNotice() {
     const title = document.getElementById('noticeTitle').value;
     const content = document.getElementById('noticeContent').value;
-    if(!title || !content) return alert("শিরোনাম এবং বিস্তারিত লিখুন!");
+    const targetClass = document.getElementById('noticeClass').value;
+    const targetBatch = document.getElementById('noticeBatch').value;
     
+    if(!title || !content) return alert("সব ঘর পূরণ করুন!");
+
     const { error } = await _supabase.from('notices').insert([{ 
-        title: title, 
-        content: content, 
-        target_class: 'All' 
+        title, 
+        content, 
+        target_class: targetClass,
+        target_batch: targetBatch 
     }]);
 
     if (error) alert("ভুল হয়েছে: " + error.message);
-    else { 
-        alert("নোটিস সফলভাবে পাঠানো হয়েছে!"); 
-        document.getElementById('noticeTitle').value = "";
-        document.getElementById('noticeContent').value = "";
+    else { alert("সাফল্য! নোটিস পাবলিশ হয়েছে।"); location.reload(); }
+}
+
+// ২. লগইন পেজে নোটিস দেখানোর ফাংশন (এটি উইন্ডো লোড হওয়ার সময় চলবে)
+async function loadLoginNotices() {
+    const { data: notices } = await _supabase
+        .from('notices')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+    if (notices) {
+        document.getElementById('loginPageNotices').innerHTML = notices.map(n => `
+            <div class="bg-indigo-50 p-2 rounded-lg border-l-2 border-indigo-500">
+                <p class="font-bold text-indigo-900">${n.title}</p>
+                <p class="text-slate-600">${n.content}</p>
+            </div>
+        `).join('');
     }
 }
+loadLoginNotices(); // পেজ লোড হলেই কল হবে
     </script>
 </body>
 </html>
