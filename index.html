@@ -186,6 +186,12 @@
                     </div>
                 </div>
             </div>
+            <div class="mt-8 pt-6 border-t border-slate-200">
+    <h3 class="font-bold text-indigo-900 mb-2 text-sm italic">📢 নতুন নোটিস পাঠান</h3>
+    <input type="text" id="noticeTitle" placeholder="শিরোনাম" class="w-full p-2 mb-2 rounded-xl bg-slate-50 border outline-none font-bold text-xs">
+    <textarea id="noticeContent" placeholder="বিস্তারিত লিখুন..." class="w-full p-2 mb-2 rounded-xl bg-slate-50 border outline-none font-bold text-xs h-20"></textarea>
+    <button onclick="sendNotice()" class="w-full bg-indigo-600 text-white py-2 rounded-xl font-bold text-xs shadow-md">পাবলিশ করুন ✅</button>
+</div>
         </div>
     </main>
 
@@ -515,7 +521,24 @@ ${s.name}
         document.getElementById('dsNotices').innerHTML = notices?.map(n => `<div class="p-3 bg-indigo-50 rounded-xl border-l-4 border-indigo-500"><h4 class="font-bold text-indigo-900">${n.title}</h4><p class="text-slate-600 text-xs">${n.content}</p></div>`).join('') || 'কোনো নোটিস নেই';
     } else { alert("তথ্য মেলেনি!"); }
 }
+async function sendNotice() {
+    const title = document.getElementById('noticeTitle').value;
+    const content = document.getElementById('noticeContent').value;
+    if(!title || !content) return alert("শিরোনাম এবং বিস্তারিত লিখুন!");
+    
+    const { error } = await _supabase.from('notices').insert([{ 
+        title: title, 
+        content: content, 
+        target_class: 'All' 
+    }]);
 
+    if (error) alert("ভুল হয়েছে: " + error.message);
+    else { 
+        alert("নোটিস সফলভাবে পাঠানো হয়েছে!"); 
+        document.getElementById('noticeTitle').value = "";
+        document.getElementById('noticeContent').value = "";
+    }
+}
     </script>
 </body>
 </html>
