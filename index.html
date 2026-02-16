@@ -513,10 +513,10 @@ ${s.name}
     // ডাটাবেস থেকে ক্লাসগুলো লোড করার ফাংশন এখানে কল করুন
     loadStudentClasses(); 
 };
-    async function checkStudentAuth() {
+   async function checkStudentAuth() {
     const roll = document.getElementById('stuRollInp').value;
     const phone = document.getElementById('stuPhoneInp').value;
-    const sClass = document.getElementById('stuClassInp').value; // নতুন যোগ করা
+    const sClass = document.getElementById('stuClassInp').value;
 
     if(!roll || !phone || !sClass) return alert("রোল, ফোন এবং ক্লাস সিলেক্ট করুন!");
 
@@ -524,10 +524,34 @@ ${s.name}
         .select('*')
         .eq('roll_no', roll)
         .eq('phone', phone)
-        .eq('class', sClass) // ডাটাবেসের ক্লাসের সাথে মিলানো হচ্ছে
+        .eq('class', sClass)
         .single();
 
     if(student) {
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('studentDashboard').classList.remove('hidden');
+        document.getElementById('dsName').innerText = student.name;
+        document.getElementById('dsInfo').innerText = `Class: ${student.class} | Roll: ${student.roll_no}`;
+        
+        // --- বকেয়া বেতন চেক ---
+        const curMonth = new Date().toLocaleString('default', { month: 'long' });
+        const curYear = new Date().getFullYear().toString();
+        const { data: pay } = await _supabase.from('fees_collection')
+            .select('*')
+            .eq('student_id', student.id)
+            .eq('payment_month', curMonth)
+            .eq('payment_year', curYear);
+
+        if (!pay || pay.length === 0) {
+            document.getElementById('feeAlert').classList.remove('hidden');
+            document.getElementById('dueMonthText').innerText = `${curMonth} মাসের বেতন এখনো বকেয়া আছে।`;
+        }
+        
+        loadStudentNotices(student.class, student.batch);
+    } else {
+        alert("ভুল তথ্য! আবার চেষ্টা করুন।");
+    }
+}
         // ... বাকি কোড আগের মতোই থাকবে
         async function checkStudentAuth() {
     const roll = document.getElementById('stuRollInp').value;
