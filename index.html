@@ -13,14 +13,8 @@
         .tab-btn.active { background: #4f46e5; color: white; box-shadow: 0 8px 15px -5px rgba(79, 70, 229, 0.4); }
         .p-btn-active { background-color: #22c55e !important; color: white !important; }
         .a-btn-active { background-color: #ef4444 !important; color: white !important; }
-        
-        #loginOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            display: flex; align-items: center; justify-content: center; z-index: 9999;
-        }
-
-        @media (max-width: 768px) {
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        @media (max-width: 768px) { 
             .mobile-bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 12px; z-index: 1000; box-shadow: 0 -4px 15px rgba(0,0,0,0.1); border-radius: 20px 20px 0 0; }
             .desktop-header { display: none; }
         }
@@ -31,8 +25,8 @@
     <div id="loginOverlay">
         <div class="glass-card p-8 w-[90%] max-w-sm text-center shadow-2xl">
             <h1 class="text-3xl font-black text-indigo-700 mb-2 italic">UBIQUE</h1>
-            <input type="password" id="adminPass" placeholder="পাসওয়ার্ড দিন" class="w-full p-4 rounded-2xl bg-slate-100 mb-4 text-center text-2xl outline-none border-2 focus:border-indigo-500 font-bold">
-            <button onclick="checkLogin()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black">প্রবেশ করুন</button>
+            <input type="password" id="adminPass" placeholder="পাসওয়ার্ড" class="w-full p-4 rounded-2xl bg-slate-100 mb-4 text-center text-2xl outline-none border-2 focus:border-indigo-500 font-bold">
+            <button onclick="checkLogin()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black">প্রবেশ</button>
         </div>
     </div>
 
@@ -40,88 +34,88 @@
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-black text-indigo-700 italic">UBIQUE</h1>
             <nav class="flex gap-2">
-                <button onclick="switchTab('daily')" class="tab-btn px-5 py-2 rounded-xl font-bold active" id="d-daily">হাজিরা</button>
-                <button onclick="switchTab('fee')" class="tab-btn px-5 py-2 rounded-xl font-bold" id="d-fee">ফি</button>
-                <button onclick="switchTab('absent')" class="tab-btn px-5 py-2 rounded-xl font-bold" id="d-absent">কল লিস্ট</button>
-                <button onclick="switchTab('settings')" class="tab-btn px-5 py-2 rounded-xl font-bold" id="d-settings">সেটিংস</button>
+                <button onclick="switchTab('daily')" class="tab-btn px-5 py-2 rounded-xl font-bold active" id="btn-daily">হাজিরা</button>
+                <button onclick="switchTab('fee')" class="tab-btn px-5 py-2 rounded-xl font-bold" id="btn-fee">ফি</button>
+                <button onclick="switchTab('absent')" class="tab-btn px-5 py-2 rounded-xl font-bold" id="btn-absent">কল লিস্ট</button>
+                <button onclick="switchTab('settings')" class="tab-btn px-5 py-2 rounded-xl font-bold" id="btn-settings">সেটিংস</button>
             </nav>
         </div>
     </header>
 
-    <main id="mainApp" class="container mx-auto p-4 lg:mt-6 opacity-0 transition-opacity duration-500">
+    <main id="mainApp" class="container mx-auto p-4 lg:mt-6 opacity-0">
         
-        <div id="dailySection" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div id="dailySection" class="grid grid-cols-1 lg:grid-cols-12 gap-6 tab-content">
             <div class="lg:col-span-8">
                 <div class="glass-card p-5">
                     <div class="grid grid-cols-2 gap-2 mb-4">
-                        <select id="classFilter" onchange="loadStudents()" class="p-3 rounded-xl bg-indigo-50 font-bold dynamic-class-list"></select>
-                        <select id="batchFilter" onchange="loadStudents()" class="p-3 rounded-xl bg-slate-100 font-bold dynamic-batch-list"></select>
+                        <select id="classFilter" onchange="loadStudents()" class="p-3 rounded-xl bg-indigo-50 font-bold dynamic-class-list outline-none"></select>
+                        <select id="batchFilter" onchange="loadStudents()" class="p-3 rounded-xl bg-slate-100 font-bold dynamic-batch-list outline-none"></select>
                     </div>
-                    <div id="stuListBody" class="space-y-3"></div>
-                    <button onclick="submitFinalAttendance()" class="w-full mt-6 bg-indigo-600 text-white py-4 rounded-2xl font-black">হাজিরা সেভ করুন ✅</button>
+                    <div id="stuListBody" class="space-y-3 min-h-[200px]"></div>
+                    <button onclick="submitFinalAttendance()" class="w-full mt-6 bg-indigo-600 text-white py-4 rounded-2xl font-black">হাজিরা জমা দিন ✅</button>
                 </div>
             </div>
             <div class="lg:col-span-4">
                 <div class="glass-card p-6">
-                    <h3 id="formTitle" class="font-bold text-indigo-900 mb-4 border-b pb-2">👤 নতুন স্টুডেন্ট</h3>
+                    <h3 id="formTitle" class="font-bold text-indigo-900 mb-4 border-b pb-2">👤 স্টুডেন্ট কন্ট্রোল</h3>
                     <div class="space-y-3">
                         <input type="hidden" id="editStuId">
-                        <input type="text" id="stuName" placeholder="নাম" class="w-full p-3 bg-slate-50 border rounded-xl font-bold">
-                        <input type="number" id="stuRoll" placeholder="রোল" class="w-full p-3 bg-slate-50 border rounded-xl font-bold">
-                        <input type="text" id="stuPhone" placeholder="ফোন নম্বর" class="w-full p-3 bg-slate-50 border rounded-xl font-bold">
-                        <button onclick="saveSingleStudent()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">সেভ করুন</button>
+                        <input type="text" id="stuName" placeholder="নাম" class="w-full p-3 bg-slate-50 border rounded-xl font-bold outline-none">
+                        <input type="number" id="stuRoll" placeholder="রোল" class="w-full p-3 bg-slate-50 border rounded-xl font-bold outline-none">
+                        <input type="text" id="stuPhone" placeholder="ফোন নম্বর" class="w-full p-3 bg-slate-50 border rounded-xl font-bold outline-none">
+                        <button onclick="saveStudent()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">সেভ/আপডেট</button>
                         <button id="cancelBtn" onclick="resetForm()" class="hidden w-full bg-slate-200 py-2 rounded-xl font-bold">বাতিল</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="feeSection" class="hidden space-y-4">
+        <div id="feeSection" class="hidden space-y-4 tab-content">
             <div class="glass-card p-5">
-                <h2 class="text-xl font-black text-indigo-700 mb-4">💰 Fees Collection</h2>
+                <h2 class="text-xl font-black text-indigo-700 mb-4">💰 বেতন কালেকশন</h2>
                 <div class="grid grid-cols-2 gap-2 mb-4">
                     <select id="feeClassFilter" onchange="loadFeeStudents()" class="p-3 rounded-xl bg-slate-100 dynamic-class-list font-bold"></select>
                     <select id="feeMonthFilter" onchange="loadFeeStudents()" class="p-3 rounded-xl bg-indigo-50 font-bold">
-                        <option value="January">January</option><option value="February" selected>February</option><option value="March">March</option><option value="April">April</option><option value="May">May</option><option value="June">June</option><option value="July">July</option><option value="August">August</option><option value="September">September</option><option value="October">October</option><option value="November">November</option><option value="December">December</option>
+                        <option value="January">January</option><option value="February" selected>February</option><option value="March">March</option>
                     </select>
                 </div>
                 <div id="feeStuList" class="space-y-3"></div>
             </div>
-            <div id="feeActionForm" class="hidden glass-card p-6 border-2 border-indigo-500 sticky bottom-24">
-                <h3 id="targetStuName" class="font-bold mb-2">নাম</h3>
-                <input type="number" id="feeAmount" placeholder="টাকার পরিমাণ" class="w-full p-4 bg-slate-100 rounded-xl mb-2 font-bold">
-                <input type="text" id="memoNo" placeholder="মেমো নম্বর" class="w-full p-4 bg-slate-100 rounded-xl mb-4 font-bold">
+            <div id="feeActionForm" class="hidden glass-card p-6 border-2 border-indigo-500 sticky bottom-24 z-[99]">
+                <h3 id="targetStuName" class="font-bold mb-2 text-indigo-700">নাম</h3>
+                <input type="number" id="feeAmount" placeholder="টাকার পরিমাণ" class="w-full p-4 bg-slate-100 rounded-xl mb-2 font-bold outline-none">
+                <input type="text" id="memoNo" placeholder="মেমো নম্বর" class="w-full p-4 bg-slate-100 rounded-xl mb-4 font-bold outline-none border border-indigo-200">
                 <div class="flex gap-2">
-                    <button onclick="submitFee()" class="flex-grow bg-indigo-600 text-white py-3 rounded-xl font-bold">জমা নিন</button>
+                    <button onclick="submitFee()" class="flex-grow bg-indigo-600 text-white py-3 rounded-xl font-black">কনফার্ম ✅</button>
                     <button onclick="document.getElementById('feeActionForm').classList.add('hidden')" class="bg-slate-200 px-4 rounded-xl">X</button>
                 </div>
             </div>
         </div>
 
-        <div id="absentSection" class="hidden">
+        <div id="absentSection" class="hidden tab-content">
             <div class="glass-card p-5">
-                <h2 class="text-xl font-black text-red-600 mb-4 italic">🚨 Absent Call List</h2>
+                <h2 class="text-xl font-black text-red-600 mb-4">🚨 অনুপস্থিত কল লিস্ট</h2>
                 <div id="absentListGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
         </div>
 
-        <div id="settingsSection" class="hidden space-y-6">
+        <div id="settingsSection" class="hidden space-y-6 tab-content">
             <div class="glass-card p-6">
-                <h3 class="font-bold text-indigo-900 mb-4">⚙️ Academy Config</h3>
+                <h3 class="font-bold text-indigo-900 mb-4 border-b">⚙️ ক্লাস ও ব্যাচ সেটিংস</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <p class="text-xs font-bold text-slate-400 mb-2 uppercase">অ্যাড ক্লাস</p>
+                        <p class="text-xs font-bold text-slate-400 mb-1">ক্লাস যোগ করুন</p>
                         <div class="flex gap-2 mb-4">
-                            <input type="text" id="newClassInp" class="flex-grow p-3 border rounded-xl">
-                            <button onclick="addSetting('class')" class="bg-indigo-600 text-white px-4 rounded-xl">+</button>
+                            <input type="text" id="newClassInp" class="flex-grow p-3 border rounded-xl font-bold outline-none">
+                            <button onclick="addSetting('class')" class="bg-indigo-600 text-white px-5 rounded-xl font-bold">+</button>
                         </div>
                         <ul id="classListUI" class="space-y-2"></ul>
                     </div>
                     <div>
-                        <p class="text-xs font-bold text-slate-400 mb-2 uppercase">অ্যাড ব্যাচ</p>
+                        <p class="text-xs font-bold text-slate-400 mb-1">ব্যাচ যোগ করুন</p>
                         <div class="flex gap-2 mb-4">
-                            <input type="text" id="newBatchInp" class="flex-grow p-3 border rounded-xl">
-                            <button onclick="addSetting('batch')" class="bg-indigo-600 text-white px-4 rounded-xl">+</button>
+                            <input type="text" id="newBatchInp" class="flex-grow p-3 border rounded-xl font-bold outline-none">
+                            <button onclick="addSetting('batch')" class="bg-indigo-600 text-white px-5 rounded-xl font-bold">+</button>
                         </div>
                         <ul id="batchListUI" class="space-y-2"></ul>
                     </div>
@@ -140,7 +134,7 @@
 
     <script>
         const _supabase = supabase.createClient('https://sfsrtozgfethgdfrmskk.supabase.co', 'sb_publishable_ds6DYMap76uRiquvQ9a0fQ_rctZqM61');
-        let selectedStuId = null;
+        let currentStuId = null;
         let attendanceData = {};
 
         function checkLogin() {
@@ -153,10 +147,10 @@
         function showApp() {
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('mainApp').classList.replace('opacity-0', 'opacity-100');
-            syncSystem();
+            syncData();
         }
 
-        async function syncSystem() {
+        async function syncData() {
             const { data: settings } = await _supabase.from('academy_settings').select('*');
             if (settings) {
                 const classes = settings.filter(i => i.type === 'class');
@@ -165,8 +159,8 @@
                 const bOpts = batches.map(x => `<option value="${x.value}">${x.value}</option>`).join('');
                 document.querySelectorAll('.dynamic-class-list').forEach(el => el.innerHTML = cOpts);
                 document.querySelectorAll('.dynamic-batch-list').forEach(el => el.innerHTML = bOpts);
-                document.getElementById('classListUI').innerHTML = classes.map(i => `<li class="flex justify-between bg-slate-50 p-2 rounded-lg"><span>${i.value}</span><button onclick="deleteSetting('${i.id}')" class="text-red-500 font-bold">X</button></li>`).join('');
-                document.getElementById('batchListUI').innerHTML = batches.map(i => `<li class="flex justify-between bg-slate-50 p-2 rounded-lg"><span>${i.value}</span><button onclick="deleteSetting('${i.id}')" class="text-red-500 font-bold">X</button></li>`).join('');
+                document.getElementById('classListUI').innerHTML = classes.map(i => `<li class="flex justify-between bg-slate-50 p-2 rounded-lg font-bold"><span>${i.value}</span><button onclick="deleteSetting('${i.id}')" class="text-red-500">X</button></li>`).join('');
+                document.getElementById('batchListUI').innerHTML = batches.map(i => `<li class="flex justify-between bg-slate-50 p-2 rounded-lg font-bold"><span>${i.value}</span><button onclick="deleteSetting('${i.id}')" class="text-red-500">X</button></li>`).join('');
             }
             loadStudents();
         }
@@ -176,30 +170,35 @@
             const bth = document.getElementById('batchFilter').value;
             const today = new Date().toISOString().split('T')[0];
             const { data: students } = await _supabase.from('students').select('*').eq('class', cls).eq('batch', bth).order('roll_no');
-            const { data: attendance } = await _supabase.from('attendance').select('*').eq('attendance_date', today);
+            const { data: att } = await _supabase.from('attendance').select('*').eq('attendance_date', today);
 
-            if (students) {
-                document.getElementById('stuListBody').innerHTML = students.map(s => {
-                    const record = attendance?.find(x => x.student_id === s.id);
-                    return `
-                    <div class="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm">
-                        <div onclick='startEdit(${JSON.stringify(s)})' class="cursor-pointer">
-                            <h4 class="font-bold">${s.name}</h4>
-                            <p class="text-[10px] text-slate-400 font-bold">রোল: ${s.roll_no}</p>
+            document.getElementById('stuListBody').innerHTML = students?.map(s => {
+                const record = att?.find(x => x.student_id === s.id);
+                return `
+                <div class="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm">
+                    <div onclick='editStudent(${JSON.stringify(s)})' class="cursor-pointer">
+                        <h4 class="font-bold text-slate-800">${s.name}</h4>
+                        <p class="text-[10px] text-slate-400 font-bold">রোল: ${s.roll_no}</p>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <div class="flex gap-2">
+                            <button id="p-${s.id}" onclick="markAtt('${s.id}', 'Present')" class="w-10 h-10 rounded-lg border-2 ${record?.status === 'Present' ? 'p-btn-active' : 'text-green-500'}">P</button>
+                            <button id="a-${s.id}" onclick="markAtt('${s.id}', 'Absent')" class="w-10 h-10 rounded-lg border-2 ${record?.status === 'Absent' ? 'a-btn-active' : 'text-red-500'}">A</button>
                         </div>
-                        <div class="flex flex-col gap-2">
-                            <div class="flex gap-2">
-                                <button id="p-${s.id}" onclick="mark('${s.id}', 'Present')" class="w-10 h-10 rounded-lg border-2 ${record?.status === 'Present' ? 'p-btn-active' : 'border-green-100 text-green-500'}">P</button>
-                                <button id="a-${s.id}" onclick="mark('${s.id}', 'Absent')" class="w-10 h-10 rounded-lg border-2 ${record?.status === 'Absent' ? 'a-btn-active' : 'border-red-100 text-red-500'}">A</button>
-                            </div>
-                            <div class="flex gap-1">
-                                <button onclick="markHW('${s.id}', 'Yes')" class="px-2 py-1 bg-indigo-500 text-white rounded text-[10px]">HW-Y</button>
-                                <button onclick="markHW('${s.id}', 'No')" class="px-2 py-1 bg-orange-400 text-white rounded text-[10px]">HW-N</button>
-                            </div>
+                        <div class="flex gap-1">
+                            <button onclick="markHW('${s.id}', 'Yes')" class="px-2 py-1 bg-indigo-500 text-white rounded text-[10px] font-bold">HW-Y</button>
+                            <button onclick="markHW('${s.id}', 'No')" class="px-2 py-1 bg-orange-500 text-white rounded text-[10px] font-bold">HW-N</button>
                         </div>
-                    </div>`;
-                }).join('');
-            }
+                    </div>
+                </div>`;
+            }).join('') || "স্টুডেন্ট নেই";
+        }
+
+        async function submitFinalAttendance() {
+            const today = new Date().toISOString().split('T')[0];
+            const records = Object.entries(attendanceData).map(([id, status]) => ({ student_id: id, status, attendance_date: today }));
+            await _supabase.from('attendance').upsert(records, { onConflict: 'student_id,attendance_date' });
+            alert("সফলভাবে সেভ হয়েছে!"); loadStudents();
         }
 
         async function loadFeeStudents() {
@@ -208,17 +207,17 @@
             const { data: students } = await _supabase.from('students').select('*').eq('class', cls);
             const { data: payments } = await _supabase.from('fees_collection').select('*').eq('payment_month', mon);
 
-            document.getElementById('feeStuList').innerHTML = students.map(s => {
+            document.getElementById('feeStuList').innerHTML = students?.map(s => {
                 const pay = payments?.find(p => p.student_id === s.id);
                 return `<div class="bg-white p-4 rounded-xl flex justify-between items-center border-l-4 ${pay ? 'border-green-500' : 'border-red-500'} shadow-sm">
                     <div><h4 class="font-bold">${s.name}</h4><p class="text-xs">রোল: ${s.roll_no}</p></div>
-                    ${pay ? `<span class="text-green-600 font-bold">✅ Paid (${pay.amount}৳)</span>` : `<button onclick="openFeeForm('${s.id}', '${s.name}')" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-bold">টাকা নিন</button>`}
+                    ${pay ? `<span class="text-green-600 font-bold">✅ ${pay.amount}৳</span>` : `<button onclick="openFeeForm('${s.id}', '${s.name}')" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-bold">বেতন নিন</button>`}
                 </div>`;
-            }).join('');
+            }).join('') || "স্টুডেন্ট নেই";
         }
 
         function openFeeForm(id, name) {
-            selectedStuId = id;
+            currentStuId = id;
             document.getElementById('targetStuName').innerText = name;
             document.getElementById('feeActionForm').classList.remove('hidden');
         }
@@ -227,9 +226,8 @@
             const amt = document.getElementById('feeAmount').value;
             const memo = document.getElementById('memoNo').value;
             const mon = document.getElementById('feeMonthFilter').value;
-            if(!amt) return alert("টাকা লিখুন!");
-            await _supabase.from('fees_collection').insert([{ student_id: selectedStuId, amount: amt, payment_month: mon, memo_note: memo, payment_year: "2026" }]);
-            alert("বেতন জমা হয়েছে!");
+            if(!amt) return alert("টাকা লিখুন");
+            await _supabase.from('fees_collection').insert([{ student_id: currentStuId, amount: amt, payment_month: mon, memo_note: memo, payment_year: "2026" }]);
             document.getElementById('feeActionForm').classList.add('hidden');
             loadFeeStudents();
         }
@@ -237,50 +235,71 @@
         async function loadAbsentStudents() {
             const today = new Date().toISOString().split('T')[0];
             const { data: att } = await _supabase.from('attendance').select('student_id').eq('attendance_date', today).eq('status', 'Absent');
-            if(att && att.length > 0) {
+            if(att?.length > 0) {
                 const ids = att.map(x => x.student_id);
                 const { data: students } = await _supabase.from('students').select('*').in('id', ids);
                 document.getElementById('absentListGrid').innerHTML = students.map(s => `
                     <div class="bg-white p-4 rounded-xl shadow-sm border-r-4 border-red-500 flex justify-between items-center">
                         <div><p class="font-bold">${s.name}</p><p class="text-xs text-slate-400">রোল: ${s.roll_no}</p></div>
-                        <a href="tel:${s.phone}" class="bg-green-50 text-green-600 p-2 rounded-full font-bold">📞 Call</a>
+                        <a href="tel:${s.phone}" class="bg-green-50 text-green-600 p-2 rounded-full font-bold">📞 কল করুন</a>
                     </div>`).join('');
-            } else {
-                document.getElementById('absentListGrid').innerHTML = "<p class='text-slate-400 font-bold'>কেউ অনুপস্থিত নেই।</p>";
-            }
+            } else { document.getElementById('absentListGrid').innerHTML = "অনুপস্থিত নেই"; }
         }
 
         function switchTab(t) {
-            ['daily', 'fee', 'absent', 'settings'].forEach(id => {
-                document.getElementById(id + 'Section').classList.add('hidden');
-            });
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById(t + 'Section').classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            if(document.getElementById('btn-'+t)) document.getElementById('btn-'+t).classList.add('active');
             if(t === 'fee') loadFeeStudents();
             if(t === 'absent') loadAbsentStudents();
+            if(t === 'daily') loadStudents();
         }
 
-        function mark(id, s) { attendanceData[id] = s; loadStudents(); }
+        function markAtt(id, s) { attendanceData[id] = s; loadStudents(); }
+        
+        async function markHW(id, status) {
+            const today = new Date().toISOString().split('T')[0];
+            const { error } = await _supabase.from('attendance').update({ homework_status: status }).eq('student_id', id).eq('attendance_date', today);
+            if(error) alert("আগে হাজিরা দিন"); else alert("HW আপডেট!");
+        }
 
-        async function saveSingleStudent() {
+        async function saveStudent() {
             const id = document.getElementById('editStuId').value;
-            const p = { 
+            const data = { 
                 name: document.getElementById('stuName').value, 
                 roll_no: parseInt(document.getElementById('stuRoll').value), 
                 class: document.getElementById('classFilter').value, 
                 batch: document.getElementById('batchFilter').value, 
                 phone: document.getElementById('stuPhone').value 
             };
-            if(id) await _supabase.from('students').update(p).eq('id', id); else await _supabase.from('students').insert([p]);
-            alert("সফল!"); resetForm(); syncSystem();
+            if(id) await _supabase.from('students').update(data).eq('id', id); else await _supabase.from('students').insert([data]);
+            resetForm(); syncData();
         }
 
-        async function deleteSetting(id) {
-            if(confirm("মুছতে চান?")) { await _supabase.from('academy_settings').delete().eq('id', id); syncSystem(); }
+        function editStudent(s) {
+            document.getElementById('editStuId').value = s.id;
+            document.getElementById('stuName').value = s.name;
+            document.getElementById('stuRoll').value = s.roll_no;
+            document.getElementById('stuPhone').value = s.phone;
+            document.getElementById('cancelBtn').classList.remove('hidden');
+        }
+
+        function resetForm() {
+            document.getElementById('editStuId').value = "";
+            document.getElementById('stuName').value = "";
+            document.getElementById('stuRoll').value = "";
+            document.getElementById('stuPhone').value = "";
+            document.getElementById('cancelBtn').classList.add('hidden');
         }
 
         async function addSetting(type) {
             const val = document.getElementById(type === 'class' ? 'newClassInp' : 'newBatchInp').value;
-            if(val) { await _supabase.from('academy_settings').insert([{ type, value: val }]); syncSystem(); }
+            if(val) { await _supabase.from('academy_settings').insert([{ type, value: val }]); syncData(); }
+        }
+
+        async function deleteSetting(id) {
+            if(confirm("মুছবেন?")) { await _supabase.from('academy_settings').delete().eq('id', id); syncData(); }
         }
 
         window.onload = () => { if(localStorage.getItem('ubique_auth') === 'true') showApp(); };
