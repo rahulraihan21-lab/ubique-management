@@ -35,7 +35,7 @@
             <h1 class="text-3xl font-black text-indigo-700 mb-2 italic">UBIQUE</h1>
             <p class="text-slate-500 mb-6 font-bold text-xs uppercase tracking-widest">Admin Authorization</p>
             <input type="password" id="adminPass" placeholder="পাসওয়ার্ড দিন" class="w-full p-4 rounded-2xl bg-slate-100 mb-4 text-center text-2xl outline-none border-2 focus:border-indigo-500 font-bold">
-            <button onclick="checkLogin()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg">প্রবেশ করুন</button>
+            <button onclick="login()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg">প্রবেশ করুন</button>
             <button onclick="document.getElementById('studentFields').classList.toggle('hidden')" class="text-indigo-600 font-bold text-sm mt-4 block mx-auto underline">স্টুডেন্ট লগইন এখানে</button>
 
 <div id="studentFields" class="hidden mt-4 space-y-2">
@@ -231,7 +231,7 @@
         const SECRET_PASS = "1234";
 
         // --- লগইন এবং সেশন ---
-        function checkLogin() {
+        function Login() {
             const input = document.getElementById('adminPass').value;
             if(input === SECRET_PASS) {
                 localStorage.setItem('ubique_auth', 'true');
@@ -460,15 +460,31 @@ ${s.name}
             document.getElementById('feeActionForm').classList.remove('hidden');
         }
 
-        async function submitFee() {
-            const amt = document.getElementById('feeInputAmount').value;
-            const mon = document.getElementById('feeMonthFilter').value;
-            const year = new Date().getFullYear().toString();
-            if(!amt) return;
-            await _supabase.from('fees_collection').insert([{ student_id: selectedStudentId, amount: amt, payment_month: mon, payment_year: year,memo_note: document.getElementById('memoInp') ? document.getElementById('memoInp').value : '', fee_type: 'Monthly' }]);
-            document.getElementById('feeActionForm').classList.add('hidden');
-            loadFeeStudentsWithStatus();
-        }
+       async function submitFee() {
+    const amt = document.getElementById('feeInputAmount').value;
+    const mon = document.getElementById('feeMonthFilter').value;
+    const memo = document.getElementById('memoInp') ? document.getElementById('memoInp').value : '';
+    const year = new Date().getFullYear().toString();
+    
+    if(!amt) return alert("টাকার পরিমাণ দিন");
+
+    const { error } = await _supabase.from('fees_collection').insert([{ 
+        student_id: selectedStudentId, 
+        amount: amt, 
+        payment_month: mon, 
+        payment_year: year,
+        memo_note: memo,
+        fee_type: 'Monthly' 
+    }]);
+
+    if(!error) {
+        document.getElementById('feeActionForm').classList.add('hidden');
+        loadFeeStudentsWithStatus();
+        alert("ফি জমা হয়েছে!");
+    } else {
+        alert("ভুল হয়েছে: " + error.message);
+    }
+}
 
         // --- এডিট ও ডিলিট সেটিংস ---
         async function saveSingleStudent() {
@@ -558,7 +574,7 @@ async function loadStudentClasses() {
     const phone = document.getElementById('stuPhoneInp').value;
     const sClass = document.getElementById('stuClassInp').value;
 
-    if(!roll || !phone || !sClass) return alert("রোল, ফোন এবং ক্লাস সিলেক্ট করুন!");
+    if(!roll || !phone || !sClass) return alert("সব তথ্য সঠিকভাবে দিন!");
 
     const { data: student } = await _supabase.from('students')
         .select('*')
@@ -572,24 +588,8 @@ async function loadStudentClasses() {
         document.getElementById('studentDashboard').classList.remove('hidden');
         document.getElementById('dsName').innerText = student.name;
         document.getElementById('dsInfo').innerText = `Class: ${student.class} | Roll: ${student.roll_no}`;
-        
-        // --- বকেয়া বেতন চেক ---
-        const curMonth = new Date().toLocaleString('default', { month: 'long' });
-        const curYear = new Date().getFullYear().toString();
-        const { data: pay } = await _supabase.from('fees_collection')
-            .select('*')
-            .eq('student_id', student.id)
-            .eq('payment_month', curMonth)
-            .eq('payment_year', curYear);
-
-        if (!pay || pay.length === 0) {
-            document.getElementById('feeAlert').classList.remove('hidden');
-            document.getElementById('dueMonthText').innerText = `${curMonth} মাসের বেতন এখনো বকেয়া আছে।`;
-        }
-        
-        loadStudentNotices(student.class, student.batch);
     } else {
-        alert("ভুল তথ্য! আবার চেষ্টা করুন।");
+        alert("তথ্য মেলেনি! সঠিক রোল, ফোন এবং ক্লাস দিন।");
     }
 }
         // ... বাকি কোড আগের মতোই থাকবে
