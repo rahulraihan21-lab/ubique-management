@@ -465,7 +465,7 @@ ${s.name}
             const mon = document.getElementById('feeMonthFilter').value;
             const year = new Date().getFullYear().toString();
             if(!amt) return;
-            await _supabase.from('fees_collection').insert([{ student_id: selectedStudentId, amount: amt, payment_month: mon, payment_year: year,memo_note: document.getElementById('memoInp') ? document.getElementById('memoInp').value : '' fee_type: 'Monthly' }]);
+            await _supabase.from('fees_collection').insert([{ student_id: selectedStudentId, amount: amt, payment_month: mon, payment_year: year,memo_note: document.getElementById('memoInp') ? document.getElementById('memoInp').value : '', fee_type: 'Monthly' }]);
             document.getElementById('feeActionForm').classList.add('hidden');
             loadFeeStudentsWithStatus();
         }
