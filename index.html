@@ -144,6 +144,8 @@
                 <h3 id="targetStuName" class="font-bold text-lg mb-2">নাম</h3>
                 <div class="flex gap-2">
                     <input type="number" id="feeInputAmount" placeholder="টাকা" class="flex-grow p-4 bg-slate-100 rounded-xl font-bold outline-none">
+                    <input type="text" id="memoInp" placeholder="মেমো নাম্বার বা নোট" class="w-full p-2 mt-2 bg-white border rounded-lg text-sm font-bold shadow-sm">
+                    <input type="text" id="memoInp" placeholder="ক্যাশ মেমো নাম্বার" class="w-full p-2 mt-2 border rounded-lg text-sm font-bold">
                     <button onclick="submitFee()" class="bg-indigo-600 text-white px-6 rounded-xl font-bold">জমা</button>
                     <button onclick="document.getElementById('feeActionForm').classList.add('hidden')" class="bg-slate-200 p-4 rounded-xl font-bold">X</button>
                 </div>
@@ -330,6 +332,10 @@ ${s.name}
                         <div class="flex gap-2">
                             <button id="p-${s.id}" onclick="mark('${s.id}', 'Present')" class="w-10 h-10 rounded-lg border-2 ${record?.status === 'Present' ? 'p-btn-active' : 'border-green-500 text-green-600'}">P</button>
                             <button id="a-${s.id}" onclick="mark('${s.id}', 'Absent')" class="w-10 h-10 rounded-lg border-2 ${record?.status === 'Absent' ? 'a-btn-active' : 'border-red-500 text-red-600'}">A</button>
+                            `<div class="mt-2 flex gap-1">
+                            <button onclick="markHW('${s.id}', 'Yes')" class="px-2 py-1 bg-blue-500 text-white rounded text-[10px] font-bold">HW: Yes</button>
+                            <button onclick="markHW('${s.id}', 'No')" class="px-2 py-1 bg-orange-500 text-white rounded text-[10px] font-bold">HW: No</button>
+</div>`
                         </div>
                     </div>`;
                 }).join('');
@@ -459,7 +465,7 @@ ${s.name}
             const mon = document.getElementById('feeMonthFilter').value;
             const year = new Date().getFullYear().toString();
             if(!amt) return;
-            await _supabase.from('fees_collection').insert([{ student_id: selectedStudentId, amount: amt, payment_month: mon, payment_year: year, fee_type: 'Monthly' }]);
+            await _supabase.from('fees_collection').insert([{ student_id: selectedStudentId, amount: amt, payment_month: mon, payment_year: year,memo_note: document.getElementById('memoInp') ? document.getElementById('memoInp').value : '' fee_type: 'Monthly' }]);
             document.getElementById('feeActionForm').classList.add('hidden');
             loadFeeStudentsWithStatus();
         }
