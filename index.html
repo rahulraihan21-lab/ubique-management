@@ -3,258 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>UBIQUE Admin | Full System</title>
+    <title>UBIQUE Admin | Full Pro System</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
-        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f1f5f9; padding-bottom: 80px; }
-        .active-tab { background-color: #4f46e5 !important; color: white !important; }
-        .glass-card { background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
-        .p-btn-active { background-color: #22c55e !important; color: white !important; border-color: #22c55e !important; }
-        .a-btn-active { background-color: #ef4444 !important; color: white !important; border-color: #ef4444 !important; }
-        #loginOverlay { position: fixed; inset: 0; background: #4f46e5; display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f1f5f9; padding-bottom: 90px; }
+        .glass-card { background: white; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .tab-btn.active { background: #4f46e5; color: white; box-shadow: 0 8px 15px -5px rgba(79, 70, 229, 0.4); }
+        .p-btn-active { background-color: #22c55e !important; color: white !important; }
+        .a-btn-active { background-color: #ef4444 !important; color: white !important; }
+        #loginOverlay { position: fixed; inset: 0; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .stat-card { border-bottom: 4px solid #4f46e5; }
     </style>
 </head>
 <body>
 
     <div id="loginOverlay">
-        <div class="bg-white p-8 rounded-3xl w-[90%] max-w-sm text-center">
-            <h1 class="text-4xl font-black text-indigo-600 mb-6 italic">UBIQUE</h1>
+        <div class="glass-card p-8 w-[90%] max-w-sm text-center">
+            <h1 class="text-3xl font-black text-indigo-700 mb-6 italic">UBIQUE ADMIN</h1>
             <input type="password" id="adminPass" placeholder="পাসওয়ার্ড" class="w-full p-4 rounded-xl bg-slate-100 mb-4 text-center text-2xl outline-none border-2 focus:border-indigo-500 font-bold">
-            <button onclick="handleLogin()" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg">প্রবেশ করুন</button>
+            <button onclick="checkLogin()" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold">লগইন</button>
         </div>
     </div>
 
-    <header class="bg-white shadow-sm p-4 sticky top-0 z-50 hidden md:block">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-black text-indigo-600">UBIQUE ADMIN</h1>
-            <nav class="flex gap-4">
-                <button onclick="showTab('daily')" class="tab-btn px-4 py-2 rounded-lg font-bold active-tab">হাজিরা</button>
-                <button onclick="showTab('fee')" class="tab-btn px-4 py-2 rounded-lg font-bold">বেতন</button>
-                <button onclick="showTab('absent')" class="tab-btn px-4 py-2 rounded-lg font-bold">কল লিস্ট</button>
-                <button onclick="showTab('settings')" class="tab-btn px-4 py-2 rounded-lg font-bold">সেটিংস</button>
-            </nav>
-        </div>
-    </header>
-
-    <main id="mainApp" class="container mx-auto p-4 opacity-0 transition-opacity">
-        
-        <div id="dailySection" class="tab-content space-y-6">
-            <div class="glass-card p-4 grid grid-cols-2 gap-3">
-                <select id="clsFilter" onchange="syncUI()" class="p-3 bg-slate-100 rounded-xl font-bold outline-none"></select>
-                <select id="bthFilter" onchange="syncUI()" class="p-3 bg-slate-100 rounded-xl font-bold outline-none"></select>
+    <main id="mainApp" class="container mx-auto p-4 opacity-0 transition-opacity duration-500">
+        <div class="grid grid-cols-3 gap-3 mb-6">
+            <div class="glass-card p-4 text-center stat-card border-indigo-500">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">মোট স্টুডেন্ট</p>
+                <p id="totalCount" class="text-xl font-black text-slate-800">0</p>
             </div>
-            <div id="studentList" class="space-y-3 min-h-[300px]"></div>
-            <button onclick="saveAttendance()" class="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black text-xl shadow-lg">হাজিরা সেভ করুন ✅</button>
+            <div class="glass-card p-4 text-center stat-card border-green-500">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">উপস্থিত (P)</p>
+                <p id="presentCount" class="text-xl font-black text-green-600">0</p>
+            </div>
+            <div class="glass-card p-4 text-center stat-card border-red-500">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">অনুপস্থিত (A)</p>
+                <p id="absentCount" class="text-xl font-black text-red-600">0</p>
+            </div>
         </div>
 
-        <div id="feeSection" class="tab-content hidden space-y-4">
-            <div class="glass-card p-4">
-                <h2 class="text-xl font-bold mb-4">💰 বেতন কালেকশন</h2>
-                <select id="feeMonth" onchange="loadFeeData()" class="w-full p-3 bg-indigo-50 rounded-xl font-bold mb-4">
-                    <option value="January">January</option><option value="February" selected>February</option><option value="March">March</option>
-                </select>
-                <div id="feeList" class="space-y-3"></div>
+        <div id="dailySection" class="tab-content">
+            <div class="glass-card p-5 mb-6">
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <select id="classFilter" onchange="syncData()" class="p-3 rounded-xl bg-slate-100 font-bold dynamic-class-list"></select>
+                    <select id="batchFilter" onchange="syncData()" class="p-3 rounded-xl bg-slate-100 font-bold dynamic-batch-list"></select>
+                </div>
+                <div id="stuList" class="space-y-3 min-h-[200px]"></div>
+                <button onclick="saveAttendance()" class="w-full mt-6 bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg">হাজিরা জমা দিন ✅</button>
+            </div>
+        </div>
+
+        <div id="reportSection" class="tab-content hidden">
+            <div class="glass-card p-5">
+                <h2 class="text-xl font-black text-indigo-700 mb-4">📊 আজকের রিপোর্ট</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-indigo-50 text-indigo-700 text-sm">
+                                <th class="p-3 border">নাম</th>
+                                <th class="p-3 border">রোল</th>
+                                <th class="p-3 border">অবস্থা</th>
+                                <th class="p-3 border">HW</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTableBody" class="text-sm"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <div id="absentSection" class="tab-content hidden">
-            <div class="glass-card p-5">
-                <h2 class="text-xl font-bold text-red-600 mb-4 italic">🚨 আজকের অনুপস্থিত তালিকা</h2>
-                <div id="absentCallList" class="space-y-3"></div>
-            </div>
+            <div id="absentCallGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
 
-        <div id="settingsSection" class="tab-content hidden">
-            <div class="glass-card p-6 space-y-6">
-                <div>
-                    <h3 class="font-bold mb-2 uppercase text-xs text-slate-400">নতুন ক্লাস/ব্যাচ যোগ করুন</h3>
-                    <div class="flex gap-2 mb-4">
-                        <input type="text" id="settingVal" placeholder="নাম লিখুন" class="flex-grow p-3 border rounded-xl font-bold">
-                        <select id="settingType" class="p-3 border rounded-xl font-bold">
-                            <option value="class">Class</option>
-                            <option value="batch">Batch</option>
-                        </select>
-                        <button onclick="addConfig()" class="bg-indigo-600 text-white px-6 rounded-xl font-bold">+</button>
-                    </div>
+        <div id="settingsSection" class="tab-content hidden space-y-6">
+            <div class="glass-card p-6">
+                <h3 class="font-bold text-indigo-900 mb-4 border-b">👤 স্টুডেন্ট এন্ট্রি/এডিট</h3>
+                <div class="space-y-3">
+                    <input type="hidden" id="editId">
+                    <input type="text" id="stuName" placeholder="নাম" class="w-full p-3 border rounded-xl font-bold">
+                    <input type="number" id="stuRoll" placeholder="রোল" class="w-full p-3 border rounded-xl font-bold">
+                    <input type="text" id="stuPhone" placeholder="ফোন নম্বর" class="w-full p-3 border rounded-xl font-bold">
+                    <button onclick="saveStudent()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">সেভ করুন</button>
                 </div>
-                <div id="configDisplay" class="grid grid-cols-2 gap-4"></div>
             </div>
         </div>
     </main>
 
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around p-3 md:hidden z-50">
-        <button onclick="showTab('daily')" class="text-center"><span class="block">📝</span><span class="text-[10px] font-bold">হাজিরা</span></button>
-        <button onclick="showTab('fee')" class="text-center"><span class="block">💰</span><span class="text-[10px] font-bold">বেতন</span></button>
-        <button onclick="showTab('absent')" class="text-center"><span class="block">📞</span><span class="text-[10px] font-bold">কল</span></button>
-        <button onclick="showTab('settings')" class="text-center"><span class="block">⚙️</span><span class="text-[10px] font-bold">সেটিংস</span></button>
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around p-3 z-50">
+        <button onclick="switchTab('daily')" class="text-center"><span class="block">📝</span><span class="text-[10px] font-bold">হাজিরা</span></button>
+        <button onclick="switchTab('report')" class="text-center"><span class="block">📊</span><span class="text-[10px] font-bold">রিপোর্ট</span></button>
+        <button onclick="switchTab('absent')" class="text-center"><span class="block">📞</span><span class="text-[10px] font-bold">কল</span></button>
+        <button onclick="switchTab('settings')" class="text-center"><span class="block">⚙️</span><span class="text-[10px] font-bold">সেটিংস</span></button>
     </nav>
-
-    <div id="payModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[100]">
-        <div class="bg-white p-6 rounded-2xl w-full max-w-sm">
-            <h3 id="payName" class="text-lg font-bold mb-4">নাম</h3>
-            <input type="number" id="payAmt" placeholder="টাকার পরিমাণ" class="w-full p-3 border rounded-xl mb-3 font-bold">
-            <input type="text" id="payMemo" placeholder="মেমো নম্বর" class="w-full p-3 border rounded-xl mb-4 font-bold">
-            <div class="flex gap-2">
-                <button onclick="confirmPayment()" class="flex-grow bg-green-600 text-white py-3 rounded-xl font-bold">জমা দিন</button>
-                <button onclick="closeModal()" class="bg-slate-200 px-6 rounded-xl font-bold">বাতিল</button>
-            </div>
-        </div>
-    </div>
 
     <script>
         const _supabase = supabase.createClient('https://sfsrtozgfethgdfrmskk.supabase.co', 'sb_publishable_ds6DYMap76uRiquvQ9a0fQ_rctZqM61');
-        
-        let students = [], settings = [], attendance = {};
-        let activeStuId = null;
+        let attDataMap = {};
 
-        function handleLogin() {
+        function checkLogin() {
             if(document.getElementById('adminPass').value === "1234") {
-                localStorage.setItem('auth', 'true');
-                init();
+                localStorage.setItem('auth_final', 'true');
+                showApp();
             } else { alert("ভুল পাসওয়ার্ড!"); }
         }
 
-        async function init() {
+        function showApp() {
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('mainApp').style.opacity = '1';
-            await loadSettings();
-            await syncUI();
+            loadConfig();
         }
 
-        async function loadSettings() {
-            const { data } = await _supabase.from('academy_settings').select('*');
-            settings = data || [];
-            
-            const cls = settings.filter(s => s.type === 'class');
-            const bth = settings.filter(s => s.type === 'batch');
-            
-            const renderOpts = (arr) => arr.map(i => `<option value="${i.value}">${i.value}</option>`).join('');
-            document.getElementById('clsFilter').innerHTML = renderOpts(cls);
-            document.getElementById('bthFilter').innerHTML = renderOpts(bth);
-
-            document.getElementById('configDisplay').innerHTML = settings.map(s => `
-                <div class="bg-slate-50 p-2 rounded-lg flex justify-between items-center text-sm font-bold">
-                    <span>${s.value} (${s.type})</span>
-                    <button onclick="delConfig('${s.id}')" class="text-red-500">X</button>
-                </div>
-            `).join('');
+        async function loadConfig() {
+            const { data: settings } = await _supabase.from('academy_settings').select('*');
+            if(settings) {
+                const cls = settings.filter(s => s.type === 'class').map(i => `<option value="${i.value}">${i.value}</option>`).join('');
+                const bth = settings.filter(s => s.type === 'batch').map(i => `<option value="${i.value}">${i.value}</option>`).join('');
+                document.querySelectorAll('.dynamic-class-list').forEach(el => el.innerHTML = cls);
+                document.querySelectorAll('.dynamic-batch-list').forEach(el => el.innerHTML = bth);
+            }
+            syncData();
         }
 
-        async function syncUI() {
-            const cls = document.getElementById('clsFilter').value;
-            const bth = document.getElementById('bthFilter').value;
+        async function syncData() {
+            const cls = document.getElementById('classFilter').value;
+            const bth = document.getElementById('batchFilter').value;
             const today = new Date().toISOString().split('T')[0];
 
-            const { data: stuData } = await _supabase.from('students').select('*').eq('class', cls).eq('batch', bth).order('roll_no');
-            const { data: attData } = await _supabase.from('attendance').select('*').eq('attendance_date', today);
-            
-            students = stuData || [];
-            const attMap = {};
-            attData?.forEach(a => attMap[a.student_id] = a.status);
+            const { data: students } = await _supabase.from('students').select('*').eq('class', cls).eq('batch', bth).order('roll_no');
+            const { data: attendance } = await _supabase.from('attendance').select('*').eq('attendance_date', today);
 
-            document.getElementById('studentList').innerHTML = students.map(s => `
-                <div class="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm">
-                    <div><h4 class="font-bold">${s.name}</h4><p class="text-xs text-slate-400 font-bold">রোল: ${s.roll_no}</p></div>
-                    <div class="flex gap-2">
-                        <button id="p-${s.id}" onclick="setAtt('${s.id}', 'Present')" class="w-10 h-10 rounded-lg border-2 font-bold ${attMap[s.id] === 'Present' ? 'p-btn-active' : 'text-green-500 border-green-100'}">P</button>
-                        <button id="a-${s.id}" onclick="setAtt('${s.id}', 'Absent')" class="w-10 h-10 rounded-lg border-2 font-bold ${attMap[s.id] === 'Absent' ? 'a-btn-active' : 'text-red-500 border-red-100'}">A</button>
+            document.getElementById('totalCount').innerText = students?.length || 0;
+            let pCount = 0, aCount = 0;
+
+            const listHTML = students?.map(s => {
+                const record = attendance?.find(a => a.student_id === s.id);
+                if(record?.status === 'Present') pCount++;
+                if(record?.status === 'Absent') aCount++;
+
+                return `
+                <div class="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm border-l-4 ${record?.status === 'Present' ? 'border-green-500' : (record?.status === 'Absent' ? 'border-red-500' : 'border-slate-200')}">
+                    <div onclick="editMode('${s.id}', '${s.name}', '${s.roll_no}', '${s.phone}')" class="cursor-pointer">
+                        <h4 class="font-bold">${s.name}</h4>
+                        <p class="text-xs text-slate-400">রোল: ${s.roll_no}</p>
                     </div>
-                </div>
-            `).join('');
+                    <div class="flex gap-2">
+                        <button id="p-${s.id}" onclick="setMark('${s.id}', 'Present')" class="w-10 h-10 rounded-lg border-2 font-bold ${record?.status === 'Present' ? 'p-btn-active' : 'text-green-500 border-green-500'}">P</button>
+                        <button id="a-${s.id}" onclick="setMark('${s.id}', 'Absent')" class="w-10 h-10 rounded-lg border-2 font-bold ${record?.status === 'Absent' ? 'a-btn-active' : 'text-red-500 border-red-500'}">A</button>
+                    </div>
+                </div>`;
+            }).join('');
+
+            document.getElementById('stuList').innerHTML = listHTML || "এই ক্লাস/ব্যাচে কোনো স্টুডেন্ট নেই।";
+            document.getElementById('presentCount').innerText = pCount;
+            document.getElementById('absentCount').innerText = aCount;
+
+            // রিপোর্ট টেবিল আপডেট
+            document.getElementById('reportTableBody').innerHTML = students?.map(s => {
+                const record = attendance?.find(a => a.student_id === s.id);
+                return `<tr>
+                    <td class="p-3 border">${s.name}</td>
+                    <td class="p-3 border">${s.roll_no}</td>
+                    <td class="p-3 border font-bold ${record?.status === 'Present' ? 'text-green-600' : 'text-red-600'}">${record?.status || '-'}</td>
+                    <td class="p-3 border">${record?.homework_status || '-'}</td>
+                </tr>`;
+            }).join('');
         }
 
-        function setAtt(id, status) {
-            attendance[id] = status;
-            document.getElementById(`p-${id}`).className = `w-10 h-10 rounded-lg border-2 font-bold ${status === 'Present' ? 'p-btn-active' : 'text-green-500 border-green-100'}`;
-            document.getElementById(`a-${id}`).className = `w-10 h-10 rounded-lg border-2 font-bold ${status === 'Absent' ? 'a-btn-active' : 'text-red-500 border-red-100'}`;
+        function setMark(id, status) {
+            attDataMap[id] = status;
+            document.getElementById(`p-${id}`).className = `w-10 h-10 rounded-lg border-2 font-bold ${status === 'Present' ? 'p-btn-active' : 'text-green-500 border-green-500'}`;
+            document.getElementById(`a-${id}`).className = `w-10 h-10 rounded-lg border-2 font-bold ${status === 'Absent' ? 'a-btn-active' : 'text-red-500 border-red-500'}`;
         }
 
         async function saveAttendance() {
             const today = new Date().toISOString().split('T')[0];
-            const records = Object.entries(attendance).map(([id, status]) => ({
-                student_id: id,
-                status: status,
-                attendance_date: today
-            }));
-            
-            const { error } = await _supabase.from('attendance').upsert(records, { onConflict: 'student_id,attendance_date' });
-            if(!error) alert("হাজিরা সেভ হয়েছে!"); else alert("ত্রুটি হয়েছে!");
-            syncUI();
+            const entries = Object.entries(attDataMap).map(([id, status]) => ({ student_id: id, status, attendance_date: today }));
+            await _supabase.from('attendance').upsert(entries, { onConflict: 'student_id,attendance_date' });
+            alert("সফলভাবে সেভ হয়েছে!");
+            syncData();
         }
 
-        async function loadFeeData() {
-            const mon = document.getElementById('feeMonth').value;
-            const cls = document.getElementById('clsFilter').value;
-            
-            const { data: stuData } = await _supabase.from('students').select('*').eq('class', cls);
-            const { data: payData } = await _supabase.from('fees_collection').select('*').eq('payment_month', mon);
-
-            document.getElementById('feeList').innerHTML = stuData.map(s => {
-                const pay = payData?.find(p => p.student_id === s.id);
-                return `
-                <div class="bg-white p-4 rounded-xl flex justify-between items-center shadow-sm border-l-4 ${pay ? 'border-green-500' : 'border-red-500'}">
-                    <div><h4 class="font-bold">${s.name}</h4><p class="text-xs">রোল: ${s.roll_no}</p></div>
-                    ${pay ? `<span class="text-green-600 font-bold text-sm">✅ ${pay.amount}৳</span>` : `<button onclick="openPay('${s.id}', '${s.name}')" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-bold">টাকা নিন</button>`}
-                </div>`;
-            }).join('');
+        function switchTab(t) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(t + 'Section').classList.remove('hidden');
+            if(t === 'absent') loadAbsentCalls();
         }
 
-        function openPay(id, name) {
-            activeStuId = id;
-            document.getElementById('payName').innerText = name;
-            document.getElementById('payModal').classList.remove('hidden');
-        }
-
-        async function confirmPayment() {
-            const amt = document.getElementById('payAmt').value;
-            const memo = document.getElementById('payMemo').value;
-            const mon = document.getElementById('feeMonth').value;
-            
-            await _supabase.from('fees_collection').insert([{ 
-                student_id: activeStuId, 
-                amount: amt, 
-                payment_month: mon, 
-                memo_note: memo,
-                payment_year: "2026"
-            }]);
-            
-            closeModal();
-            loadFeeData();
-        }
-
-        async function loadAbsents() {
+        async function loadAbsentCalls() {
             const today = new Date().toISOString().split('T')[0];
             const { data: att } = await _supabase.from('attendance').select('student_id').eq('attendance_date', today).eq('status', 'Absent');
             if(att?.length > 0) {
-                const { data: stus } = await _supabase.from('students').select('*').in('id', att.map(a => a.student_id));
-                document.getElementById('absentCallList').innerHTML = stus.map(s => `
-                    <div class="bg-white p-4 rounded-xl shadow-sm border-r-4 border-red-500 flex justify-between items-center">
-                        <div><p class="font-bold">${s.name}</p><p class="text-xs">ফোন: ${s.phone}</p></div>
-                        <a href="tel:${s.phone}" class="bg-green-100 text-green-600 px-4 py-2 rounded-lg font-bold">📞 কল</a>
+                const { data: students } = await _supabase.from('students').select('*').in('id', att.map(x => x.student_id));
+                document.getElementById('absentCallGrid').innerHTML = students.map(s => `
+                    <div class="glass-card p-4 flex justify-between items-center border-r-4 border-red-500">
+                        <div><h4 class="font-bold">${s.name}</h4><p class="text-xs">রোল: ${s.roll_no}</p></div>
+                        <a href="tel:${s.phone}" class="bg-green-500 text-white px-4 py-2 rounded-xl font-bold">Call</a>
                     </div>
                 `).join('');
-            } else { document.getElementById('absentCallList').innerHTML = "অনুপস্থিত নেই।"; }
+            } else { document.getElementById('absentCallGrid').innerHTML = "<p class='p-5 text-slate-400'>আজ কোনো স্টুডেন্ট অনুপস্থিত নেই।</p>"; }
         }
 
-        function showTab(t) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(t + 'Section').classList.remove('hidden');
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active-tab'));
-            if(t === 'fee') loadFeeData();
-            if(t === 'absent') loadAbsents();
+        async function saveStudent() {
+            const id = document.getElementById('editId').value;
+            const data = { 
+                name: document.getElementById('stuName').value, 
+                roll_no: parseInt(document.getElementById('stuRoll').value), 
+                class: document.getElementById('classFilter').value, 
+                batch: document.getElementById('batchFilter').value, 
+                phone: document.getElementById('stuPhone').value 
+            };
+            if(id) await _supabase.from('students').update(data).eq('id', id); else await _supabase.from('students').insert([data]);
+            alert("সফল!"); location.reload();
         }
 
-        function closeModal() { document.getElementById('payModal').classList.add('hidden'); }
-        async function addConfig() {
-            const type = document.getElementById('settingType').value;
-            const value = document.getElementById('settingVal').value;
-            if(value) { await _supabase.from('academy_settings').insert([{type, value}]); loadSettings(); }
+        function editMode(id, name, roll, phone) {
+            switchTab('settings');
+            document.getElementById('editId').value = id;
+            document.getElementById('stuName').value = name;
+            document.getElementById('stuRoll').value = roll;
+            document.getElementById('stuPhone').value = phone;
         }
-        async function delConfig(id) { if(confirm("মুছবেন?")) { await _supabase.from('academy_settings').delete().eq('id', id); loadSettings(); } }
 
-        window.onload = () => { if(localStorage.getItem('auth') === 'true') init(); };
+        window.onload = () => { if(localStorage.getItem('auth_final') === 'true') showApp(); };
     </script>
 </body>
 </html>
