@@ -513,6 +513,23 @@ ${s.name}
     // ডাটাবেস থেকে ক্লাসগুলো লোড করার ফাংশন এখানে কল করুন
     loadStudentClasses(); 
 };
+        
+async function loadStudentClasses() {
+    const { data: classes } = await _supabase.from('students').select('class');
+    if (classes) {
+        const uniqueClasses = [...new Set(classes.map(item => item.class))].sort((a, b) => a - b);
+        const selectBox = document.getElementById('stuClassInp');
+        if(selectBox) {
+            selectBox.innerHTML = '<option value="">আপনার ক্লাস সিলেক্ট করুন</option>';
+            uniqueClasses.forEach(cls => {
+                const option = document.createElement('option');
+                option.value = cls;
+                option.innerText = `Class ${cls}`;
+                selectBox.appendChild(option);
+            });
+        }
+    }
+}        
    async function checkStudentAuth() {
     const roll = document.getElementById('stuRollInp').value;
     const phone = document.getElementById('stuPhoneInp').value;
