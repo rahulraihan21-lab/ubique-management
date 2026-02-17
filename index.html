@@ -3,230 +3,578 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>UBIQUE Admin | Full Pro System</title>
+    <title>UBIQUE Admin | Premium System</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
-        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f1f5f9; padding-bottom: 90px; }
+        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f8fafc; padding-bottom: 90px; }
         .glass-card { background: white; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .tab-btn.active { background: #4f46e5; color: white; box-shadow: 0 8px 15px -5px rgba(79, 70, 229, 0.4); }
+        .stat-card { background: white; border-bottom: 4px solid #4f46e5; border-radius: 15px; }
         .p-btn-active { background-color: #22c55e !important; color: white !important; }
         .a-btn-active { background-color: #ef4444 !important; color: white !important; }
-        #loginOverlay { position: fixed; inset: 0; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-        .stat-card { border-bottom: 4px solid #4f46e5; }
+        
+        #loginOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            display: flex; align-items: center; justify-content: center; z-index: 9999;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 12px; z-index: 1000; box-shadow: 0 -4px 15px rgba(0,0,0,0.1); border-radius: 20px 20px 0 0; }
+            .desktop-header { display: none; }
+        }
     </style>
 </head>
 <body>
 
     <div id="loginOverlay">
-        <div class="glass-card p-8 w-[90%] max-w-sm text-center">
-            <h1 class="text-3xl font-black text-indigo-700 mb-6 italic">UBIQUE ADMIN</h1>
-            <input type="password" id="adminPass" placeholder="পাসওয়ার্ড" class="w-full p-4 rounded-xl bg-slate-100 mb-4 text-center text-2xl outline-none border-2 focus:border-indigo-500 font-bold">
-            <button onclick="checkLogin()" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold">লগইন</button>
+        <div class="glass-card p-8 w-[90%] max-w-sm text-center shadow-2xl overflow-y-auto max-h-[95vh]">
+            <h1 class="text-3xl font-black text-indigo-700 mb-2 italic">UBIQUE</h1>
+            <p class="text-slate-500 mb-6 font-bold text-xs uppercase tracking-widest">Access Portal</p>
+            
+            <div id="adminLoginPart">
+                <input type="password" id="adminPass" placeholder="অ্যাডমিন পিন" class="w-full p-4 rounded-2xl bg-slate-100 mb-4 text-center text-2xl outline-none border-2 focus:border-indigo-500 font-bold">
+                <button onclick="checkLogin()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg mb-4">প্রবেশ করুন</button>
+            </div>
+
+            <button onclick="document.getElementById('studentFields').classList.toggle('hidden')" class="text-indigo-600 font-bold text-sm underline cursor-pointer">স্টুডেন্ট লগইন এখানে</button>
+
+            <div id="studentFields" class="hidden mt-6 space-y-3 border-t pt-4 text-left">
+                <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">রোল নম্বর</label>
+                <input type="number" id="stuRollInp" placeholder="যেমন: 101" class="w-full p-3 rounded-xl bg-slate-50 border outline-none font-bold">
+                <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">ফোন নম্বর</label>
+                <input type="text" id="stuPhoneInp" placeholder="যেমন: 017..." class="w-full p-3 rounded-xl bg-slate-50 border outline-none font-bold">
+                <button onclick="checkStudentAuth()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold shadow-lg">ড্যাশবোর্ড দেখুন 👤</button>
+            </div>
+            
+            <p id="loginError" class="text-red-500 mt-4 text-sm font-bold hidden">❌ তথ্য ভুল!</p>
         </div>
     </div>
 
-    <main id="mainApp" class="container mx-auto p-4 opacity-0 transition-opacity duration-500">
-        <div class="grid grid-cols-3 gap-3 mb-6">
-            <div class="glass-card p-4 text-center stat-card border-indigo-500">
-                <p class="text-[10px] font-bold text-slate-400 uppercase">মোট স্টুডেন্ট</p>
-                <p id="totalCount" class="text-xl font-black text-slate-800">0</p>
-            </div>
-            <div class="glass-card p-4 text-center stat-card border-green-500">
-                <p class="text-[10px] font-bold text-slate-400 uppercase">উপস্থিত (P)</p>
-                <p id="presentCount" class="text-xl font-black text-green-600">0</p>
-            </div>
-            <div class="glass-card p-4 text-center stat-card border-red-500">
-                <p class="text-[10px] font-bold text-slate-400 uppercase">অনুপস্থিত (A)</p>
-                <p id="absentCount" class="text-xl font-black text-red-600">0</p>
-            </div>
+    <header class="desktop-header bg-white shadow-sm p-4 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-black text-indigo-700 italic">UBIQUE</h1>
+            <nav class="flex gap-2">
+                <button onclick="switchTab('daily')" class="tab-btn px-5 py-2 rounded-xl font-bold active" id="d-daily">হাজিরা</button>
+                <button onclick="switchTab('fee')" class="tab-btn px-5 py-2 rounded-xl font-bold" id="d-fee">ফি</button>
+                <button onclick="switchTab('absent')" class="tab-btn px-5 py-2 rounded-xl font-bold" id="d-absent">কল লিস্ট</button>
+                <button onclick="switchTab('notice')" class="tab-btn px-5 py-2 rounded-xl font-bold" id="d-notice">নোটিস</button>
+                <button onclick="switchTab('report')" class="tab-btn px-5 py-2 rounded-xl font-bold" id="d-report">রিপোর্ট</button>
+                <button onclick="switchTab('settings')" class="tab-btn px-5 py-2 rounded-xl font-bold" id="d-settings">সেটিংস</button>
+            </nav>
         </div>
+    </header>
 
-        <div id="dailySection" class="tab-content">
-            <div class="glass-card p-5 mb-6">
-                <div class="grid grid-cols-2 gap-2 mb-4">
-                    <select id="classFilter" onchange="syncData()" class="p-3 rounded-xl bg-slate-100 font-bold dynamic-class-list"></select>
-                    <select id="batchFilter" onchange="syncData()" class="p-3 rounded-xl bg-slate-100 font-bold dynamic-batch-list"></select>
-                </div>
-                <div id="stuList" class="space-y-3 min-h-[200px]"></div>
-                <button onclick="saveAttendance()" class="w-full mt-6 bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg">হাজিরা জমা দিন ✅</button>
+    <div id="studentDashboard" class="hidden fixed inset-0 bg-slate-50 z-[10000] overflow-y-auto p-4">
+        <div class="max-w-md mx-auto space-y-4 pt-6">
+            <div class="glass-card p-6 text-center border-b-4 border-indigo-500">
+                <div class="w-16 h-16 bg-indigo-100 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl">👤</div>
+                <h2 id="dsName" class="text-xl font-black text-slate-800 italic">লোড হচ্ছে...</h2>
+                <p id="dsInfo" class="text-slate-500 font-bold text-xs"></p>
+                <button onclick="location.reload()" class="mt-4 text-[10px] bg-red-50 text-red-500 px-4 py-2 rounded-full font-bold uppercase">লগআউট 🚪</button>
             </div>
-        </div>
-
-        <div id="reportSection" class="tab-content hidden">
-            <div class="glass-card p-5">
-                <h2 class="text-xl font-black text-indigo-700 mb-4">📊 আজকের রিপোর্ট</h2>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-indigo-50 text-indigo-700 text-sm">
-                                <th class="p-3 border">নাম</th>
-                                <th class="p-3 border">রোল</th>
-                                <th class="p-3 border">অবস্থা</th>
-                                <th class="p-3 border">HW</th>
-                            </tr>
-                        </thead>
-                        <tbody id="reportTableBody" class="text-sm"></tbody>
-                    </table>
-                </div>
+            <div id="feeAlert" class="hidden p-5 rounded-2xl bg-red-100 border-2 border-red-300">
+                <p class="font-black text-red-700">⚠️ বেতন বকেয়া!</p>
+                <p class="text-xs font-bold text-red-600 opacity-80" id="dueMonthText"></p>
             </div>
-        </div>
-
-        <div id="absentSection" class="tab-content hidden">
-            <div id="absentCallGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-        </div>
-
-        <div id="settingsSection" class="tab-content hidden space-y-6">
             <div class="glass-card p-6">
-                <h3 class="font-bold text-indigo-900 mb-4 border-b">👤 স্টুডেন্ট এন্ট্রি/এডিট</h3>
-                <div class="space-y-3">
-                    <input type="hidden" id="editId">
-                    <input type="text" id="stuName" placeholder="নাম" class="w-full p-3 border rounded-xl font-bold">
-                    <input type="number" id="stuRoll" placeholder="রোল" class="w-full p-3 border rounded-xl font-bold">
-                    <input type="text" id="stuPhone" placeholder="ফোন নম্বর" class="w-full p-3 border rounded-xl font-bold">
-                    <button onclick="saveStudent()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">সেভ করুন</button>
+                <h3 class="font-black text-indigo-700 mb-4 border-b pb-2 flex items-center gap-2 text-sm">📢 নোটিস বোর্ড</h3>
+                <div id="dsNotices" class="space-y-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <main id="mainApp" class="container mx-auto p-4 lg:mt-6 opacity-0 transition-opacity duration-500">
+        
+        <div id="statsBar" class="grid grid-cols-3 gap-3 mb-6">
+            <div class="stat-card p-4 text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">মোট</p><p id="totalCount" class="text-xl font-black text-slate-800">0</p></div>
+            <div class="stat-card p-4 text-center !border-green-500"><p class="text-[10px] font-bold text-slate-400 uppercase">উপস্থিত</p><p id="presentCount" class="text-xl font-black text-green-600">0</p></div>
+            <div class="stat-card p-4 text-center !border-red-500"><p class="text-[10px] font-bold text-slate-400 uppercase">অনুপস্থিত</p><p id="absentCount" class="text-xl font-black text-red-600">0</p></div>
+        </div>
+
+        <div id="dailySection" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-8">
+                <div class="glass-card p-5 mb-6">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">
+                        <select id="classFilter" onchange="loadStudents()" class="p-3 rounded-xl bg-indigo-50 text-indigo-700 font-bold dynamic-class-list"></select>
+                        <select id="batchFilter" onchange="loadStudents()" class="p-3 rounded-xl bg-slate-100 font-bold dynamic-batch-list"></select>
+                        <input type="text" id="searchName" oninput="loadStudents()" placeholder="নাম..." class="p-3 rounded-xl bg-slate-100 outline-none font-bold">
+                        <input type="number" id="searchRoll" oninput="loadStudents()" placeholder="রোল..." class="p-3 rounded-xl bg-slate-100 outline-none font-bold">
+                    </div>
+                    <div id="stuListBody" class="space-y-3 min-h-[300px]"></div>
+                    <button onclick="submitFinalAttendance()" class="w-full mt-6 bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-xl">হাজিরা জমা দিন ✅</button>
+                </div>
+            </div>
+            <div class="lg:col-span-4">
+                <div class="glass-card p-6 sticky top-24">
+                    <h3 id="formTitle" class="font-bold text-indigo-900 mb-4 border-b pb-2">👤 স্টুডেন্ট এন্ট্রি</h3>
+                    <input type="hidden" id="editStuId">
+                    <div class="space-y-3">
+                        <input type="text" id="stuName" placeholder="নাম" class="w-full p-3 rounded-xl bg-slate-50 border font-bold">
+                        <input type="number" id="stuRoll" placeholder="রোল" class="w-full p-3 rounded-xl bg-slate-50 border font-bold">
+                        <div class="grid grid-cols-2 gap-2"><select id="stuClass" class="p-3 rounded-xl bg-slate-50 border dynamic-class-list"></select><select id="stuBatch" class="p-3 rounded-xl bg-slate-50 border dynamic-batch-list"></select></div>
+                        <input type="text" id="stuPhone" placeholder="ফোন নম্বর" class="w-full p-3 rounded-xl bg-slate-50 border font-bold">
+                        <button onclick="saveSingleStudent()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">সেভ করুন</button>
+                        <button id="cancelBtn" onclick="resetForm()" class="hidden w-full bg-slate-200 py-2 rounded-xl mt-2 font-bold">বাতিল</button>
+                    </div>
+                    <div class="mt-6 border-t pt-4">
+                        <p class="text-xs font-bold text-slate-400 mb-2 uppercase italic">Excel Bulk Upload</p>
+                        <input type="file" id="excelInput" accept=".xlsx, .xls" class="hidden" onchange="handleExcel(event)">
+                        <button onclick="document.getElementById('excelInput').click()" class="w-full border-2 border-dashed border-indigo-200 text-indigo-600 py-3 rounded-xl font-bold text-sm hover:bg-indigo-50">ফাইল আপলোড করুন 📁</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="feeSection" class="hidden space-y-4">
+            <div class="glass-card p-5">
+                <h2 class="text-xl font-black text-indigo-700 mb-4">💰 ফি কালেকশন</h2>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+                    <select id="feeClassFilter" onchange="loadFeeStudentsWithStatus()" class="p-3 rounded-xl bg-slate-100 font-bold dynamic-class-list"></select>
+                    <select id="feeBatchFilter" onchange="loadFeeStudentsWithStatus()" class="p-3 rounded-xl bg-slate-100 font-bold dynamic-batch-list"></select>
+                    <select id="feeMonthFilter" onchange="loadFeeStudentsWithStatus()" class="p-3 rounded-xl bg-indigo-50 text-indigo-700 font-bold">
+                        <option value="January">January</option><option value="February" selected>February</option><option value="March">March</option><option value="April">April</option><option value="May">May</option><option value="June">June</option><option value="July">July</option><option value="August">August</option><option value="September">September</option><option value="October">October</option><option value="November">November</option><option value="December">December</option>
+                    </select>
+                </div>
+                <div id="feeStuStatusList" class="space-y-3 min-h-[200px]"></div>
+            </div>
+            <div id="feeActionForm" class="hidden glass-card p-6 border-2 border-indigo-500 sticky bottom-24 z-[1001]">
+                <h3 id="targetStuName" class="font-bold text-lg mb-2">নাম</h3>
+                <div class="flex gap-2">
+                    <input type="number" id="feeInputAmount" placeholder="টাকা" class="flex-grow p-4 bg-slate-100 rounded-xl font-bold outline-none">
+                    <button onclick="submitFee()" class="bg-indigo-600 text-white px-6 rounded-xl font-bold">জমা</button>
+                    <button onclick="document.getElementById('feeActionForm').classList.add('hidden')" class="bg-slate-200 p-4 rounded-xl font-bold">X</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="absentSection" class="hidden space-y-4">
+            <div class="glass-card p-4">
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <select id="absentClassFilter" onchange="loadAbsentStudents()" class="p-3 rounded-xl bg-red-50 text-red-700 font-bold dynamic-class-list outline-none"></select>
+                    <select id="absentBatchFilter" onchange="loadAbsentStudents()" class="p-3 rounded-xl bg-slate-100 font-bold dynamic-batch-list outline-none"></select>
+                </div>
+                <h2 class="font-black text-red-600 px-2 mb-2 italic underline uppercase tracking-tighter">🚨 Today's Absent List</h2>
+                <div id="absentListGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+        </div>
+
+        <div id="noticeSection" class="hidden glass-card p-6">
+            <h3 class="font-bold text-indigo-900 mb-4">📢 নোটিস বা রিমাইন্ডার পাঠান</h3>
+            <div class="space-y-3">
+                <input type="text" id="noticeTitle" placeholder="নোটিসের শিরোনাম" class="w-full p-3 bg-slate-100 rounded-xl font-bold">
+                <textarea id="noticeBody" placeholder="বিস্তারিত লিখুন..." class="w-full p-3 bg-slate-100 rounded-xl h-32"></textarea>
+                <div class="grid grid-cols-2 gap-2">
+                    <select id="noticeClass" class="p-3 bg-slate-100 rounded-xl dynamic-class-list"></select>
+                    <select id="noticeBatch" class="p-3 bg-slate-100 rounded-xl dynamic-batch-list"></select>
+                </div>
+                <button onclick="postNotice()" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-black shadow-lg">নোটিস পাবলিশ করুন 🚀</button>
+            </div>
+        </div>
+
+        <div id="reportSection" class="hidden glass-card p-6">
+            <h3 class="font-bold text-indigo-900 mb-4">📊 মাসিক হাজিরা রিপোর্ট</h3>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-6">
+                <select id="reportClass" class="p-3 bg-slate-100 rounded-xl dynamic-class-list"></select>
+                <select id="reportBatch" class="p-3 bg-slate-100 rounded-xl dynamic-batch-list"></select>
+                <input type="month" id="reportMonth" class="p-3 bg-slate-100 rounded-xl col-span-2 md:col-span-1 font-bold">
+                <button onclick="fetchMonthlyReport()" class="bg-indigo-600 text-white p-3 rounded-xl font-bold">লোড 🔄</button>
+            </div>
+            <div class="overflow-x-auto rounded-xl border">
+                <table class="w-full text-left" id="mainReportTable">
+                    <thead id="reportHead" class="bg-indigo-950 text-white"></thead>
+                    <tbody id="reportTableBody" class="bg-white divide-y"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="settingsSection" class="hidden space-y-6">
+            <div class="glass-card p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold text-indigo-900 uppercase">🏫 সেটিংস</h3>
+                    <button onclick="logout()" class="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-xs font-black">লগআউট 🚪</button>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <div class="flex gap-2 mb-4"><input type="text" id="newClassInput" class="flex-grow p-3 bg-slate-100 rounded-xl" placeholder="নতুন ক্লাস..."><button onclick="addSetting('class')" class="bg-indigo-600 text-white px-6 rounded-xl font-bold">+</button></div>
+                        <ul id="classListUI" class="space-y-2"></ul>
+                    </div>
+                    <div>
+                        <div class="flex gap-2 mb-4"><input type="text" id="newBatchInput" class="flex-grow p-3 bg-slate-100 rounded-xl" placeholder="নতুন ব্যাচ..."><button onclick="addSetting('batch')" class="bg-indigo-600 text-white px-6 rounded-xl font-bold">+</button></div>
+                        <ul id="batchListUI" class="space-y-2"></ul>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around p-3 z-50">
-        <button onclick="switchTab('daily')" class="text-center"><span class="block">📝</span><span class="text-[10px] font-bold">হাজিরা</span></button>
-        <button onclick="switchTab('report')" class="text-center"><span class="block">📊</span><span class="text-[10px] font-bold">রিপোর্ট</span></button>
-        <button onclick="switchTab('absent')" class="text-center"><span class="block">📞</span><span class="text-[10px] font-bold">কল</span></button>
-        <button onclick="switchTab('settings')" class="text-center"><span class="block">⚙️</span><span class="text-[10px] font-bold">সেটিংস</span></button>
+    <nav class="mobile-bottom-nav">
+        <button onclick="switchTab('daily')" id="m-daily" class="flex flex-col items-center text-indigo-600"><span>📋</span><span class="text-[10px] font-bold">হাজিরা</span></button>
+        <button onclick="switchTab('fee')" id="m-fee" class="flex flex-col items-center text-slate-400"><span>💰</span><span class="text-[10px] font-bold">ফি</span></button>
+        <button onclick="switchTab('absent')" id="m-absent" class="flex flex-col items-center text-slate-400"><span>📞</span><span class="text-[10px] font-bold">কল</span></button>
+        <button onclick="switchTab('notice')" id="m-notice" class="flex flex-col items-center text-slate-400"><span>📢</span><span class="text-[10px] font-bold">নোটিস</span></button>
+        <button onclick="switchTab('report')" id="m-report" class="flex flex-col items-center text-slate-400"><span>📊</span><span class="text-[10px] font-bold">রিপোর্ট</span></button>
+        <button onclick="switchTab('settings')" id="m-settings" class="flex flex-col items-center text-slate-400"><span>⚙️</span><span class="text-[10px] font-bold">সেটিংস</span></button>
     </nav>
 
     <script>
-        const _supabase = supabase.createClient('https://sfsrtozgfethgdfrmskk.supabase.co', 'sb_publishable_ds6DYMap76uRiquvQ9a0fQ_rctZqM61');
-        let attDataMap = {};
+        const SUPABASE_URL = 'https://sfsrtozgfethgdfrmskk.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_ds6DYMap76uRiquvQ9a0fQ_rctZqM61';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        let attendanceData = {}; 
+        let selectedStudentId = null;
+        const SECRET_PASS = "1234";
 
+        // --- লগইন এবং অথেন্টিকেশন ---
         function checkLogin() {
-            if(document.getElementById('adminPass').value === "1234") {
-                localStorage.setItem('auth_final', 'true');
+            const input = document.getElementById('adminPass').value;
+            if(input === SECRET_PASS) {
+                localStorage.setItem('ubique_auth', 'true');
                 showApp();
-            } else { alert("ভুল পাসওয়ার্ড!"); }
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
         }
 
         function showApp() {
             document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('mainApp').style.opacity = '1';
-            loadConfig();
+            document.getElementById('mainApp').classList.replace('opacity-0', 'opacity-100');
+            syncSystem();
         }
 
-        async function loadConfig() {
-            const { data: settings } = await _supabase.from('academy_settings').select('*');
-            if(settings) {
-                const cls = settings.filter(s => s.type === 'class').map(i => `<option value="${i.value}">${i.value}</option>`).join('');
-                const bth = settings.filter(s => s.type === 'batch').map(i => `<option value="${i.value}">${i.value}</option>`).join('');
-                document.querySelectorAll('.dynamic-class-list').forEach(el => el.innerHTML = cls);
-                document.querySelectorAll('.dynamic-batch-list').forEach(el => el.innerHTML = bth);
+        // --- স্টুডেন্ট ড্যাশবোর্ড লজিক (নতুন সংশোধিত) ---
+        async function checkStudentAuth() {
+            const roll = document.getElementById('stuRollInp').value;
+            const phone = document.getElementById('stuPhoneInp').value;
+
+            if(!roll || !phone) return alert("রোল এবং ফোন নম্বর দিন");
+
+            const { data: student, error } = await _supabase
+                .from('students')
+                .select('*')
+                .eq('roll_no', parseInt(roll))
+                .eq('phone', phone.trim())
+                .single();
+
+            if(student) {
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('studentDashboard').classList.remove('hidden');
+                renderStudentData(student);
+            } else {
+                alert("তথ্য মেলেনি! রোল ও ফোন নম্বর চেক করুন।");
             }
-            syncData();
         }
 
-        async function syncData() {
-            const cls = document.getElementById('classFilter').value;
-            const bth = document.getElementById('batchFilter').value;
-            const today = new Date().toISOString().split('T')[0];
+        async function renderStudentData(student) {
+            document.getElementById('dsName').innerText = student.name;
+            document.getElementById('dsInfo').innerText = `Class: ${student.class} | Batch: ${student.batch} | Roll: ${student.roll_no}`;
 
-            const { data: students } = await _supabase.from('students').select('*').eq('class', cls).eq('batch', bth).order('roll_no');
-            const { data: attendance } = await _supabase.from('attendance').select('*').eq('attendance_date', today);
+            // ১. বেতন চেক (বর্তমান মাস)
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            const currentMonth = monthNames[new Date().getMonth()];
+            const currentYear = new Date().getFullYear().toString();
 
-            document.getElementById('totalCount').innerText = students?.length || 0;
-            let pCount = 0, aCount = 0;
+            const { data: fee } = await _supabase
+                .from('fees_collection')
+                .select('*')
+                .eq('student_id', student.id)
+                .eq('payment_month', currentMonth)
+                .eq('payment_year', currentYear);
 
-            const listHTML = students?.map(s => {
-                const record = attendance?.find(a => a.student_id === s.id);
-                if(record?.status === 'Present') pCount++;
-                if(record?.status === 'Absent') aCount++;
+            if(!fee || fee.length === 0) {
+                document.getElementById('feeAlert').classList.remove('hidden');
+                document.getElementById('dueMonthText').innerText = `${currentMonth}, ${currentYear} মাসের বেতন এখনও পরিশোধ করা হয়নি।`;
+            }
 
-                return `
-                <div class="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm border-l-4 ${record?.status === 'Present' ? 'border-green-500' : (record?.status === 'Absent' ? 'border-red-500' : 'border-slate-200')}">
-                    <div onclick="editMode('${s.id}', '${s.name}', '${s.roll_no}', '${s.phone}')" class="cursor-pointer">
-                        <h4 class="font-bold">${s.name}</h4>
-                        <p class="text-xs text-slate-400">রোল: ${s.roll_no}</p>
+            // ২. নোটিস লোড
+            const { data: notices } = await _supabase
+                .from('notices')
+                .select('*')
+                .or(`target_class.eq.${student.class},target_class.eq.All`)
+                .order('created_at', { ascending: false });
+
+            if(notices && notices.length > 0) {
+                document.getElementById('dsNotices').innerHTML = notices.map(n => `
+                    <div class="p-4 bg-indigo-50 rounded-xl border-l-4 border-indigo-500">
+                        <h4 class="font-bold text-indigo-900">${n.title}</h4>
+                        <p class="text-slate-600 mt-1 text-xs">${n.content}</p>
+                        <p class="text-[9px] text-slate-400 mt-2 font-bold">${new Date(n.created_at).toLocaleDateString('bn-BD')}</p>
                     </div>
-                    <div class="flex gap-2">
-                        <button id="p-${s.id}" onclick="setMark('${s.id}', 'Present')" class="w-10 h-10 rounded-lg border-2 font-bold ${record?.status === 'Present' ? 'p-btn-active' : 'text-green-500 border-green-500'}">P</button>
-                        <button id="a-${s.id}" onclick="setMark('${s.id}', 'Absent')" class="w-10 h-10 rounded-lg border-2 font-bold ${record?.status === 'Absent' ? 'a-btn-active' : 'text-red-500 border-red-500'}">A</button>
-                    </div>
-                </div>`;
-            }).join('');
-
-            document.getElementById('stuList').innerHTML = listHTML || "এই ক্লাস/ব্যাচে কোনো স্টুডেন্ট নেই।";
-            document.getElementById('presentCount').innerText = pCount;
-            document.getElementById('absentCount').innerText = aCount;
-
-            // রিপোর্ট টেবিল আপডেট
-            document.getElementById('reportTableBody').innerHTML = students?.map(s => {
-                const record = attendance?.find(a => a.student_id === s.id);
-                return `<tr>
-                    <td class="p-3 border">${s.name}</td>
-                    <td class="p-3 border">${s.roll_no}</td>
-                    <td class="p-3 border font-bold ${record?.status === 'Present' ? 'text-green-600' : 'text-red-600'}">${record?.status || '-'}</td>
-                    <td class="p-3 border">${record?.homework_status || '-'}</td>
-                </tr>`;
-            }).join('');
+                `).join('');
+            } else {
+                document.getElementById('dsNotices').innerHTML = '<p class="text-slate-400 italic text-center text-xs">কোনো নোটিস নেই</p>';
+            }
         }
 
-        function setMark(id, status) {
-            attDataMap[id] = status;
-            document.getElementById(`p-${id}`).className = `w-10 h-10 rounded-lg border-2 font-bold ${status === 'Present' ? 'p-btn-active' : 'text-green-500 border-green-500'}`;
-            document.getElementById(`a-${id}`).className = `w-10 h-10 rounded-lg border-2 font-bold ${status === 'Absent' ? 'a-btn-active' : 'text-red-500 border-red-500'}`;
+        // --- নোটিস পাঠানো (অ্যাডমিন) ---
+        async function postNotice() {
+            const title = document.getElementById('noticeTitle').value;
+            const body = document.getElementById('noticeBody').value;
+            const cls = document.getElementById('noticeClass').value;
+            const bth = document.getElementById('noticeBatch').value;
+
+            if(!title || !body) return alert("শিরোনাম এবং মেসেজ লিখুন!");
+
+            const { error } = await _supabase.from('notices').insert([{
+                title: title,
+                content: body,
+                target_class: cls,
+                target_batch: bth
+            }]);
+
+            if(!error) {
+                alert("নোটিস সফলভাবে পাবলিশ হয়েছে!");
+                document.getElementById('noticeTitle').value = "";
+                document.getElementById('noticeBody').value = "";
+            } else {
+                alert("ভুল হয়েছে: " + error.message);
+            }
         }
 
-        async function saveAttendance() {
-            const today = new Date().toISOString().split('T')[0];
-            const entries = Object.entries(attDataMap).map(([id, status]) => ({ student_id: id, status, attendance_date: today }));
-            await _supabase.from('attendance').upsert(entries, { onConflict: 'student_id,attendance_date' });
-            alert("সফলভাবে সেভ হয়েছে!");
-            syncData();
+        function logout() {
+            localStorage.removeItem('ubique_auth');
+            location.reload();
+        }
+
+        // --- কোর সিস্টেম ---
+        async function syncSystem() {
+            const { data: settings } = await _supabase.from('academy_settings').select('*');
+            if (settings) {
+                const classes = settings.filter(i => i.type === 'class');
+                const batches = settings.filter(i => i.type === 'batch');
+                const cOpts = '<option value="All">All Class</option>' + classes.map(x => `<option value="${x.value}">${x.value}</option>`).join('');
+                const bOpts = '<option value="All">All Batch</option>' + batches.map(x => `<option value="${x.value}">${x.value}</option>`).join('');
+                document.querySelectorAll('.dynamic-class-list').forEach(el => el.innerHTML = cOpts);
+                document.querySelectorAll('.dynamic-batch-list').forEach(el => el.innerHTML = bOpts);
+                document.getElementById('classListUI').innerHTML = classes.map(i => `<li class="flex justify-between bg-slate-50 p-3 rounded-xl"><span>${i.value}</span><button onclick="deleteSetting('${i.id}')" class="text-red-500 font-bold">ডিলিট</button></li>`).join('');
+                document.getElementById('batchListUI').innerHTML = batches.map(i => `<li class="flex justify-between bg-slate-50 p-3 rounded-xl"><span>${i.value}</span><button onclick="deleteSetting('${i.id}')" class="text-red-500 font-bold">ডিলিট</button></li>`).join('');
+            }
+            loadStudents();
         }
 
         function switchTab(t) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(t + 'Section').classList.remove('hidden');
-            if(t === 'absent') loadAbsentCalls();
+            ['daily', 'absent', 'report', 'settings', 'fee', 'notice'].forEach(id => {
+                const sec = document.getElementById(id + 'Section');
+                if (sec) sec.classList.add('hidden');
+                const dBtn = document.getElementById('d-' + id);
+                if (dBtn) dBtn.classList.remove('active');
+                const mBtn = document.getElementById('m-' + id);
+                if (mBtn) mBtn.classList.replace('text-indigo-600', 'text-slate-400');
+            });
+
+            const targetSec = document.getElementById(t + 'Section');
+            if (targetSec) targetSec.classList.remove('hidden');
+            const activeDBtn = document.getElementById('d-' + t);
+            if (activeDBtn) activeDBtn.classList.add('active');
+            const activeMBtn = document.getElementById('m-' + t);
+            if (activeMBtn) activeMBtn.classList.replace('text-slate-400', 'text-indigo-600');
+
+            if (t === 'fee') loadFeeStudentsWithStatus();
+            if (t === 'absent') loadAbsentStudents();
+            if (t === 'daily') loadStudents();
         }
 
-        async function loadAbsentCalls() {
+        // --- স্টুডেন্ট ও হাজিরা লোড ---
+        async function loadStudents() {
+            const cls = document.getElementById('classFilter').value;
+            const bth = document.getElementById('batchFilter').value;
+            const sn = document.getElementById('searchName').value.toLowerCase();
+            const rollSearch = document.getElementById('searchRoll').value;
             const today = new Date().toISOString().split('T')[0];
+            let q = _supabase.from('students').select('*');
+            if (cls !== "All") q = q.eq('class', cls);
+            if (bth !== "All") q = q.eq('batch', bth);
+            const { data: students } = await q.order('roll_no');
+            const { data: attendance } = await _supabase.from('attendance').select('*').eq('attendance_date', today);
+            
+            if (students) {
+                let filtered = students.filter(s => s.name.toLowerCase().includes(sn));
+                if(rollSearch) filtered = filtered.filter(s => s.roll_no.toString() === rollSearch);
+                document.getElementById('totalCount').innerText = filtered.length;
+                let p=0, a=0;
+                document.getElementById('stuListBody').innerHTML = filtered.map(s => {
+                    const record = attendance?.find(x => x.student_id === s.id);
+                    if(record) record.status === 'Present' ? p++ : a++;
+                    return `<div class="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm">
+                        <div onclick='startEdit(${JSON.stringify(s)})' class="cursor-pointer font-bold">${s.name}<p class="text-[10px] text-slate-400">${s.roll_no} | ${s.batch}</p></div>
+                        <div class="flex gap-2">
+                            <button id="p-${s.id}" onclick="mark('${s.id}', 'Present')" class="w-10 h-10 rounded-lg border-2 ${record?.status === 'Present' ? 'p-btn-active' : 'border-green-500 text-green-600'}">P</button>
+                            <button id="a-${s.id}" onclick="mark('${s.id}', 'Absent')" class="w-10 h-10 rounded-lg border-2 ${record?.status === 'Absent' ? 'a-btn-active' : 'border-red-500 text-red-600'}">A</button>
+                        </div>
+                    </div>`;
+                }).join('');
+                document.getElementById('presentCount').innerText = p;
+                document.getElementById('absentCount').innerText = a;
+            }
+        }
+
+        function mark(id, s) {
+            attendanceData[id] = s;
+            document.getElementById(`p-${id}`).className = `w-10 h-10 rounded-lg border-2 ${s === 'Present' ? 'p-btn-active' : 'border-green-500 text-green-600'}`;
+            document.getElementById(`a-${id}`).className = `w-10 h-10 rounded-lg border-2 ${s === 'Absent' ? 'a-btn-active' : 'border-red-500 text-red-600'}`;
+        }
+
+        async function submitFinalAttendance() {
+            const records = Object.keys(attendanceData).map(id => ({ student_id: parseInt(id), status: attendanceData[id], attendance_date: new Date().toISOString().split('T')[0] }));
+            if(records.length === 0) return alert("মার্ক করুন!");
+            await _supabase.from('attendance').upsert(records, { onConflict: 'student_id,attendance_date' });
+            alert("হাজিরা সেভ হয়েছে!"); attendanceData = {}; loadStudents();
+        }
+
+        async function loadAbsentStudents() {
+            const cls = document.getElementById('absentClassFilter').value;
+            const bth = document.getElementById('absentBatchFilter').value;
+            const today = new Date().toISOString().split('T')[0];
+            let q = _supabase.from('students').select('*');
+            if(cls !== 'All') q = q.eq('class', cls);
+            if(bth !== 'All') q = q.eq('batch', bth);
+            const { data: students } = await q;
             const { data: att } = await _supabase.from('attendance').select('student_id').eq('attendance_date', today).eq('status', 'Absent');
-            if(att?.length > 0) {
-                const { data: students } = await _supabase.from('students').select('*').in('id', att.map(x => x.student_id));
-                document.getElementById('absentCallGrid').innerHTML = students.map(s => `
-                    <div class="glass-card p-4 flex justify-between items-center border-r-4 border-red-500">
-                        <div><h4 class="font-bold">${s.name}</h4><p class="text-xs">রোল: ${s.roll_no}</p></div>
-                        <a href="tel:${s.phone}" class="bg-green-500 text-white px-4 py-2 rounded-xl font-bold">Call</a>
-                    </div>
-                `).join('');
-            } else { document.getElementById('absentCallGrid').innerHTML = "<p class='p-5 text-slate-400'>আজ কোনো স্টুডেন্ট অনুপস্থিত নেই।</p>"; }
+            const absentIds = att?.map(a => a.student_id) || [];
+            const filtered = students?.filter(s => absentIds.includes(s.id)) || [];
+            document.getElementById('absentListGrid').innerHTML = filtered.map(s => `
+                <div class="bg-white p-4 rounded-2xl shadow-sm border-r-4 border-red-500 flex justify-between items-center">
+                    <div><h4 class="font-bold text-slate-800">${s.name}</h4><p class="text-xs text-slate-400 font-bold">${s.phone}</p></div>
+                    <a href="tel:${s.phone}" class="bg-red-100 p-3 rounded-full text-red-600">📞</a>
+                </div>`).join('');
         }
 
-        async function saveStudent() {
-            const id = document.getElementById('editId').value;
-            const data = { 
-                name: document.getElementById('stuName').value, 
-                roll_no: parseInt(document.getElementById('stuRoll').value), 
-                class: document.getElementById('classFilter').value, 
-                batch: document.getElementById('batchFilter').value, 
-                phone: document.getElementById('stuPhone').value 
+        async function fetchMonthlyReport() {
+            const monthVal = document.getElementById('reportMonth').value;
+            const cls = document.getElementById('reportClass').value;
+            const bth = document.getElementById('reportBatch').value;
+            if(!monthVal) return alert("মাস সিলেক্ট করুন!");
+            const [year, month] = monthVal.split('-');
+            const days = new Date(year, month, 0).getDate();
+            
+            let q = _supabase.from('students').select('*');
+            if (cls !== "All") q = q.eq('class', cls);
+            if (bth !== "All") q = q.eq('batch', bth);
+            const { data: students } = await q.order('roll_no');
+            const { data: records } = await _supabase.from('attendance').select('*').gte('attendance_date', `${year}-${month}-01`).lte('attendance_date', `${year}-${month}-${days}`);
+            
+            let h = `<tr><th class="p-2 border sticky left-0 bg-indigo-900 z-10">রোল</th><th class="p-2 border sticky left-[50px] bg-indigo-900 z-10">নাম</th>`;
+            for(let i=1; i<=days; i++) h += `<th class="p-1 border text-[10px] w-6">${i}</th>`;
+            document.getElementById('reportHead').innerHTML = h + `</tr>`;
+            
+            document.getElementById('reportTableBody').innerHTML = students.map(s => {
+                let r = `<tr><td class="p-2 border font-bold sticky left-0 bg-white text-center text-xs">${s.roll_no}</td><td class="p-2 border font-bold sticky left-[50px] bg-white text-xs">${s.name}</td>`;
+                for(let d=1; d<=days; d++) {
+                    const date = `${year}-${month}-${d.toString().padStart(2, '0')}`;
+                    const f = records?.find(x => x.student_id === s.id && x.attendance_date === date);
+                    r += `<td class="p-1 border text-center text-[10px] ${f?.status === 'Present' ? 'bg-green-100 text-green-700' : f?.status === 'Absent' ? 'bg-red-100 text-red-700' : ''}">${f ? (f.status === 'Present' ? 'P' : 'A') : '-'}</td>`;
+                }
+                return r + `</tr>`;
+            }).join('');
+        }
+
+        function handleExcel(e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(sheet);
+                const students = json.map(row => ({
+                    name: row.Name,
+                    roll_no: parseInt(row.Roll),
+                    class: row.Class,
+                    batch: row.Batch,
+                    phone: row.Phone?.toString()
+                }));
+                const { error } = await _supabase.from('students').insert(students);
+                if(!error) { alert("সব স্টুডেন্ট সফলভাবে আপলোড হয়েছে!"); syncSystem(); }
+                else { alert("Error: " + error.message); }
             };
-            if(id) await _supabase.from('students').update(data).eq('id', id); else await _supabase.from('students').insert([data]);
-            alert("সফল!"); location.reload();
+            reader.readAsArrayBuffer(file);
         }
 
-        function editMode(id, name, roll, phone) {
-            switchTab('settings');
-            document.getElementById('editId').value = id;
-            document.getElementById('stuName').value = name;
-            document.getElementById('stuRoll').value = roll;
-            document.getElementById('stuPhone').value = phone;
+        async function loadFeeStudentsWithStatus() {
+            const cls = document.getElementById('feeClassFilter').value;
+            const bth = document.getElementById('feeBatchFilter').value;
+            const mon = document.getElementById('feeMonthFilter').value;
+            const year = new Date().getFullYear().toString();
+            let q = _supabase.from('students').select('*');
+            if (cls !== "All") q = q.eq('class', cls);
+            if (bth !== "All") q = q.eq('batch', bth);
+            const { data: students } = await q.order('roll_no');
+            const { data: payments } = await _supabase.from('fees_collection').select('student_id, amount').eq('payment_month', mon).eq('payment_year', year);
+
+            const listDiv = document.getElementById('feeStuStatusList');
+            if (students) {
+                listDiv.innerHTML = students.map(s => {
+                    const payRecord = payments?.find(p => p.student_id === s.id);
+                    const isPaid = !!payRecord;
+                    return `<div class="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm border-l-4 ${isPaid ? 'border-green-500' : 'border-red-500'}">
+                        <div><h4 class="font-bold text-slate-800">${s.name}</h4><p class="text-[10px] text-slate-400 font-bold">রোল: ${s.roll_no} | ${isPaid ? 'পরিশোধিত: ' + payRecord.amount + '৳' : 'বাকি'}</p></div>
+                        ${isPaid ? '<span class="text-green-600 font-bold text-sm">✅ PAID</span>' : `<button onclick="openFeeForm('${s.id}', '${s.name}')" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-bold text-xs">টাকা নিন 💰</button>`}
+                    </div>`;
+                }).join('');
+            }
         }
 
-        window.onload = () => { if(localStorage.getItem('auth_final') === 'true') showApp(); };
+        function openFeeForm(id, name) {
+            selectedStudentId = id;
+            document.getElementById('targetStuName').innerText = name;
+            document.getElementById('feeActionForm').classList.remove('hidden');
+        }
+
+        async function submitFee() {
+            const amt = document.getElementById('feeInputAmount').value;
+            const mon = document.getElementById('feeMonthFilter').value;
+            const year = new Date().getFullYear().toString();
+            if(!amt) return;
+            await _supabase.from('fees_collection').insert([{ student_id: selectedStudentId, amount: amt, payment_month: mon, payment_year: year, fee_type: 'Monthly' }]);
+            document.getElementById('feeActionForm').classList.add('hidden');
+            loadFeeStudentsWithStatus();
+        }
+
+        async function saveSingleStudent() {
+            const id = document.getElementById('editStuId').value;
+            const p = { name: document.getElementById('stuName').value, roll_no: parseInt(document.getElementById('stuRoll').value), class: document.getElementById('stuClass').value, batch: document.getElementById('stuBatch').value, phone: document.getElementById('stuPhone').value };
+            if(id) await _supabase.from('students').update(p).eq('id', id); else await _supabase.from('students').insert([p]);
+            alert("সফল!"); resetForm(); syncSystem();
+        }
+
+        function startEdit(s) {
+            document.getElementById('editStuId').value = s.id;
+            document.getElementById('stuName').value = s.name;
+            document.getElementById('stuRoll').value = s.roll_no;
+            document.getElementById('stuClass').value = s.class;
+            document.getElementById('stuBatch').value = s.batch;
+            document.getElementById('stuPhone').value = s.phone;
+            document.getElementById('formTitle').innerText = "📝 আপডেট";
+            document.getElementById('cancelBtn').classList.remove('hidden');
+        }
+
+        function resetForm() {
+            document.getElementById('editStuId').value = "";
+            document.getElementById('stuName').value = "";
+            document.getElementById('stuRoll').value = "";
+            document.getElementById('stuPhone').value = "";
+            document.getElementById('formTitle').innerText = "👤 এন্ট্রি";
+            document.getElementById('cancelBtn').classList.add('hidden');
+        }
+
+        async function addSetting(type) {
+            const el = type === 'class' ? 'newClassInput' : 'newBatchInput';
+            const val = document.getElementById(el).value;
+            if(!val) return;
+            await _supabase.from('academy_settings').insert([{ type, value: val }]);
+            document.getElementById(el).value = "";
+            syncSystem();
+        }
+
+        async function deleteSetting(id) {
+            if(!confirm("নিশ্চিত?")) return;
+            await _supabase.from('academy_settings').delete().eq('id', id);
+            syncSystem();
+        }
     </script>
 </body>
 </html>
