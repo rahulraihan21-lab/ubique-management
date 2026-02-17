@@ -513,6 +513,23 @@ ${s.name}
     // ডাটাবেস থেকে ক্লাসগুলো লোড করার ফাংশন এখানে কল করুন
     loadStudentClasses(); 
 };
+// ১. হোমওয়ার্ক চেক করার ফাংশন
+async function markHW(studentId, status) {
+    const today = new Date().toISOString().split('T')[0];
+    const { error } = await _supabase.from('attendance')
+        .update({ homework_status: status })
+        .eq('student_id', studentId)
+        .eq('date', today);
+    
+    if(!error) alert("হোমওয়ার্ক স্ট্যাটাস আপডেট হয়েছে!");
+    else alert("আগে আজকের হাজিরা (P/A) দিন, তারপর হোমওয়ার্ক চেক করুন।");
+}
+
+// ২. মেমো নাম্বার সহ ফি জমা দেওয়ার লজিক (এটি আপনার বিদ্যমান ফাংশনকে সাহায্য করবে)
+function getMemoValue() {
+    const memo = document.getElementById('memoInp');
+    return memo ? memo.value : '';
+}
         
 async function loadStudentClasses() {
     const { data: classes } = await _supabase.from('students').select('class');
