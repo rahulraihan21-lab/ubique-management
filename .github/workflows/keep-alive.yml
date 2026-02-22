@@ -1,0 +1,16 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    - cron: '0 0 */5 * *'  # প্রতি ৫ দিনে একবার
+  workflow_dispatch:  # manual run এর জন্য
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase
+        run: |
+          curl -X GET "https://sfsrtozgfethgdfrmskk.supabase.co/rest/v1/students?select=id&limit=1" \
+          -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmc3J0b3pnZmV0aGdkZnJtc2trIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNzU3NzYsImV4cCI6MjA4NjY1MTc3Nn0.hPdrAY9xwGmuyTHvCT5ihJEw797bYP20fOLNXvyK3uI" \
+          -H "Authorization: Bearer YOUR_ANON_KEY"
