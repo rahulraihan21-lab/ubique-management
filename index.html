@@ -642,6 +642,25 @@ async function aLogin(){
   if(pin===stored){localStorage.setItem('ub','a');showAdmin();}
   else{g('lerr').innerText='❌ পিন ভুল!';show('lerr');g('aPass').value='';}
 }
+async function tLogin(){var pin=gv('tPass').trim();if(!pin){g('lerr').innerText='❌ পিন দিন!';show('lerr');return;}var r=await SB.from('teachers').select('*').eq('pin',pin).single();if(r.data){localStorage.setItem('ub','t');localStorage.setItem('ub_tname',r.data.name||'টিচার');localStorage.setItem('ub_tcls',r.data.assigned_class||'All');showTeacher();}else{g('lerr').innerText='❌ পিন ভুল!';show('lerr');g('tPass').value='';}}
+async function sLogin(){
+  var cls=gv('sClass'),roll=gv('sRoll'),ph=gv('sPhone').trim();
+  if(!cls||!roll||!ph){alert('ক্লাস, রোল ও ফোন নম্বর দিন!');return;}
+  // class+roll = unique student, phone = identity verification
+  var r=await SB.from('students').select('*').eq('class',cls).eq('roll_no',parseInt(roll,10));
+  if(!r.data||!r.data.length){
+    g('lerr').innerText='❌ এই ক্লাসে এই রোল নেই!';show('lerr');return;
+  }
+  // Find the one matching phone (handles siblings with same phone on different classes)
+  var stu=r.data.find(function(s){return (s.phone||'').trim()===ph;});
+  if(stu){
+    localStorage.setItem('ub','s');
+    localStorage.setItem('ub_sid', stu.id);
+    hide('lo');g('sd').style.display='block';renderStuDash(stu);
+  }else{
+    g('lerr').innerText='❌ ফোন নম্বর মেলেনি!';show('lerr');
+  }
+}
 function logout(){localStorage.removeItem('ub');localStorage.removeItem('ub_tname');localStorage.removeItem('ub_tcls');localStorage.removeItem('ub_sid');location.reload();}
 
 async function showAdmin(){hide('lo');g('am').style.display='block';var cur=ALL_MONTHS[new Date().getMonth()];var opts=g('fMo').options;for(var i=0;i<opts.length;i++)if(opts[i].value===cur)opts[i].selected=true;var t=new Date();g('rMo').value=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0');g('drDate').value=t.toISOString().split('T')[0];g('exDate').value=t.toISOString().split('T')[0];g('mtDate').value=t.toISOString().split('T')[0];await loadFeeData();syncDrops();loadPubNotice();}
