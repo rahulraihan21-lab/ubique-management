@@ -741,9 +741,9 @@ async function saveStu(){
   if(r.error){alert(r.error.message);return;}
   // Collect current month fee if checkbox checked
   var collectFee=g('eCollectFee')&&g('eCollectFee').checked;
-  if(!id && collectFee){
-    // Get the newly inserted student id
-    var sid=r.data&&r.data[0]?r.data[0].id:null;
+  if(collectFee){
+    // Get student id - for new student from insert, for edit use existing id
+    var sid=id?parseInt(id):( r.data&&r.data[0]?r.data[0].id:null );
     if(!sid){
       // Fetch by roll+class+batch
       var sr=await SB.from('students').select('id').eq('class',cls).eq('batch',bat).eq('roll_no',roll).single();
@@ -880,7 +880,7 @@ async function printExamResult(){
   '<div class="grade-box"><span>A+ ≥80%</span><span>A ≥70%</span><span>B ≥60%</span><span>C ≥50%</span><span>D ≥40%</span><span>F &lt;40%</span></div>'+
   '<div class="stamp"><div>পরীক্ষক<span>স্বাক্ষর</span></div><div>প্রধান শিক্ষক<span>স্বাক্ষর ও সিল</span></div></div>'+
   '<div class="footer"><span>তারিখ: '+dateStr+'</span><span>মোট পরীক্ষার্থী: '+rows.length+'</span><span>UBIQUE</span></div>'+
-  '</body></html>';
+  '<\/body><\/html>';
   // Open in new window for print/save as PDF
   var w=window.open('','_blank','width=900,height=700');
   w.document.write(html);
