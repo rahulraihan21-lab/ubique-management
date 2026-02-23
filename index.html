@@ -1930,8 +1930,6 @@ function filterSetS(){
 // ═══════════════════════════════════════════════
 
 var isOnline = navigator.onLine;
-var OFFLINE_KEY = 'ub_att_queue';
-
 // ── Network status monitoring ──
 window.addEventListener('online', function(){
   isOnline = true;
@@ -1940,7 +1938,6 @@ window.addEventListener('online', function(){
 });
 window.addEventListener('offline', function(){
   isOnline = false;
-  updateOfflineBar();
 });
 
 function updateOfflineBar(){
@@ -1964,14 +1961,11 @@ function updateOfflineBar(){
   }
 }
 
-// ── Queue management ──
 function getQueue(){
   try { return JSON.parse(localStorage.getItem(OFFLINE_KEY)||'[]'); }
   catch(e){ return []; }
 }
-function saveQueue(q){
-  localStorage.setItem(OFFLINE_KEY, JSON.stringify(q));
-}
+
 function addToQueue(recs, date){
   var q = getQueue();
   // Remove any existing entries for same date
