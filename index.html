@@ -205,6 +205,12 @@ textarea.inp{resize:none}
   </div>
 </div>
 <div class="card" style="padding:17px"><h3 class="stitle">🏆 পরীক্ষার ফলাফল</h3><div id="stuExamList" style="display:flex;flex-direction:column;gap:9px"><div class="sk" style="height:50px;width:100%"></div></div></div>
+    <div class="card" style="padding:17px">
+      <h3 class="stitle">🎥 অনলাইন ক্লাস</h3>
+      <div id="sOcList" style="display:flex;flex-direction:column;gap:14px">
+        <div class="sk" style="height:50px;width:100%"></div>
+      </div>
+    </div>
     <div class="card" style="padding:17px"><h3 class="stitle">📢 নোটিস বোর্ড</h3><div id="sntc" style="display:flex;flex-direction:column;gap:9px"><div class="sk" style="height:50px;width:100%"></div></div></div>
   </div>
 </div>
@@ -240,6 +246,7 @@ textarea.inp{resize:none}
     <button onclick="gTab('enroll')" class="dt" id="d-enroll">📤 বাল্ক ভর্তি</button>
     <button onclick="gTab('expense');initExpenseTab()" class="dt" id="d-expense">💸 খরচ</button>
     <button onclick="gTab('dailytest')" class="dt" id="d-dailytest">📝 ডেইলি টেস্ট</button>
+    <button onclick="gTab('online')" class="dt" id="d-online">🎥 অনলাইন ক্লাস</button>
     <button onclick="gTab('settings')" class="dt" id="d-settings">⚙️</button>
     <button onclick="logout()" class="dt" style="color:#ef4444">🚪 লগআউট</button>
   </nav>
@@ -432,6 +439,37 @@ textarea.inp{resize:none}
   </div>
 </section>
 
+<section id="sec-online" class="hidden">
+  <div style="display:flex;flex-direction:column;gap:16px">
+
+    <!-- Admin: Add Video -->
+    <div id="ocAdmin" class="card" style="padding:18px">
+      <h2 class="stitle">🎥 নতুন ক্লাস ভিডিও যোগ করুন</h2>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <input type="text" id="ocTitle" class="inp" placeholder="ভিডিওর শিরোনাম (যেমন: অধ্যায় ৩ - বীজগণিত)">
+        <textarea id="ocDesc" class="inp" rows="2" style="resize:none" placeholder="বিবরণ (ঐচ্ছিক)"></textarea>
+        <input type="text" id="ocUrl" class="inp" placeholder="YouTube বা Google Drive লিংক">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <select id="ocCl" class="inp dynC"></select>
+          <select id="ocBt" class="inp dynB"></select>
+        </div>
+        <button onclick="saveOnlineClass()" class="btn btn-p">💾 সেভ করুন</button>
+      </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="card" style="padding:18px">
+      <h2 class="stitle" style="margin-bottom:12px">📚 ক্লাস ভিডিও</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        <select id="ocFCl" onchange="loadOnlineClasses()" class="inp dynC"></select>
+        <select id="ocFBt" onchange="loadOnlineClasses()" class="inp dynB"></select>
+      </div>
+      <div id="ocList" style="display:flex;flex-direction:column;gap:16px"></div>
+    </div>
+
+  </div>
+</section>
+
 <section id="sec-settings" class="hidden"><div style="display:flex;flex-direction:column;gap:16px"><div class="card" style="padding:17px">
   <h3 class="stitle" style="margin-bottom:12px">🔐 অ্যাডমিন PIN</h3>
   <p style="font-size:.72rem;color:var(--muted);margin-bottom:10px">এডিট ও ডিলিট সুরক্ষায় PIN ব্যবহার হয়</p>
@@ -579,6 +617,7 @@ textarea.inp{resize:none}
       <button onclick="closeMM();gTab('enroll')" class="mm-btn"><span>📤</span><span>বাল্ক ভর্তি</span></button>
       <button onclick="closeMM();gTab('expense');initExpenseTab()" class="mm-btn"><span>💸</span><span>খরচ</span></button>
       <button onclick="closeMM();gTab('dailytest')" class="mm-btn"><span>📝</span><span>ডেইলি টেস্ট</span></button>
+      <button onclick="closeMM();gTab('online')" class="mm-btn"><span>🎥</span><span>অনলাইন</span></button>
       <button onclick="closeMM();gTab('settings')" class="mm-btn"><span>⚙️</span><span>সেটিংস</span></button>
       <button onclick="closeMM();logout()" class="mm-btn" style="color:#ef4444"><span>🚪</span><span>লগআউট</span></button>
     </div>
@@ -725,7 +764,7 @@ function logout(){localStorage.removeItem('ub');localStorage.removeItem('ub_tnam
 async function showAdmin(){hide('lo');g('am').style.display='block';var cur=ALL_MONTHS[new Date().getMonth()];var opts=g('fMo').options;for(var i=0;i<opts.length;i++)if(opts[i].value===cur)opts[i].selected=true;var t=new Date();g('rMo').value=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0');g('drDate').value=t.toISOString().split('T')[0];g('exDate').value=t.toISOString().split('T')[0];g('mtDate').value=t.toISOString().split('T')[0];await loadFeeData();syncDrops();loadPubNotice();}
 function showTeacher(){hide('lo');g('td').style.display='block';TAD={};THD={};loadTDrops();g('tRMo').value=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');}
 
-var TABS=['daily','fee','absent','homework','exam','modeltest','dailytest','notice','report','routine','lectureplan','settings','enroll','expense'];
+var TABS=['daily','fee','absent','homework','exam','modeltest','dailytest','notice','report','routine','lectureplan','settings','enroll','expense','online'];
 function gTab(t){closeMM();
   var mp=g('morePanel');if(mp)mp.style.display='none';
 g('m-more').classList.remove('on');
@@ -736,7 +775,7 @@ g('m-more').classList.remove('on');
   var m=g('m-'+t);if(m)m.classList.add('on');
   // If tab is in more menu, highlight more button and the item
   g('sb').style.display=t==='daily'?'grid':'none';
-  if(t==='dailytest'){loadDailyTests();var now=new Date();g('dtDate').value=now.toISOString().split('T')[0];g('dtMo').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');syncDrops();}if(t==='fee')loadFee();if(t==='absent')loadAb();if(t==='homework')loadHW();if(t==='notice')loadNotices();if(t==='exam')loadExams();if(t==='modeltest'){loadModelTests();loadMTDropdown();}if(t==='routine')syncRtDrops();if(t==='lectureplan')syncLPDrops();
+  if(t==='dailytest'){loadDailyTests();var now=new Date();g('dtDate').value=now.toISOString().split('T')[0];g('dtMo').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');syncDrops();}if(t==='online'){loadOnlineClasses();syncDrops();var isA=localStorage.getItem('ub')==='a';if(g('ocAdmin'))g('ocAdmin').style.display=isA?'block':'none';}if(t==='fee')loadFee();if(t==='absent')loadAb();if(t==='homework')loadHW();if(t==='notice')loadNotices();if(t==='exam')loadExams();if(t==='modeltest'){loadModelTests();loadMTDropdown();}if(t==='routine')syncRtDrops();if(t==='lectureplan')syncLPDrops();
 }
 async function tTab(id){['ta','tp','te','tr'].forEach(function(x){hide(x);var b=g('tb-'+x);if(b)b.classList.remove('on');});show(id);var b=g('tb-'+id);if(b)b.classList.add('on');if(id==='tp')loadTP();if(id==='te')loadTExams();if(id==='tr')loadTR();}
 
@@ -1153,7 +1192,8 @@ g('stuExamList').innerHTML=stuEx.length?stuEx.map(function(ex){
   html+='</div>';
   return html;
 }).join(''):'<p style="text-align:center;color:var(--muted);padding:18px">নেই</p>';
-var nR=await SB.from('notices').select('*').order('created_at',{ascending:false});g('sntc').innerHTML=(nR.data||[]).map(function(n){return'<div class="ni"><p style="font-weight:700">'+e(n.title)+'</p><p style="font-size:.76rem;color:var(--muted);margin-top:3px">'+e(n.content)+'</p><p style="font-size:.62rem;color:#94a3b8;margin-top:5px">'+fd(n.created_at)+'</p></div>';}).join('')||'<p style="text-align:center;color:var(--muted);padding:20px">নেই</p>';}
+loadStuOnline(s.class,s.batch);
+  var nR=await SB.from('notices').select('*').order('created_at',{ascending:false});g('sntc').innerHTML=(nR.data||[]).map(function(n){return'<div class="ni"><p style="font-weight:700">'+e(n.title)+'</p><p style="font-size:.76rem;color:var(--muted);margin-top:3px">'+e(n.content)+'</p><p style="font-size:.62rem;color:#94a3b8;margin-top:5px">'+fd(n.created_at)+'</p></div>';}).join('')||'<p style="text-align:center;color:var(--muted);padding:20px">নেই</p>';}
 
 /* INIT */
 async function loadLoginCls(){var r=await SB.from('academy_settings').select('*').eq('type','class').order('value');g('sClass').innerHTML=(r.data||[]).length?'<option value="">-- ক্লাস --</option>'+r.data.map(function(x){return'<option>'+e(x.value)+'</option>';}).join(''):'<option value="">নেই</option>';}
@@ -2657,6 +2697,156 @@ async function printDTSummary(){
   var w=window.open('','_blank','width=1100,height=700');
   w.document.write(html);w.document.close();
   w.onload=function(){w.focus();w.print();};
+}
+
+
+/* ONLINE CLASSES */
+function getVideoEmbed(url){
+  if(!url)return null;
+  // YouTube
+  var yt=url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/v\/|shorts\/))([\w-]{11})/);
+  if(yt)return {type:'youtube',id:yt[1]};
+  // Google Drive
+  var gd=url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([\w-]+)/);
+  if(gd)return {type:'drive',id:gd[1]};
+  return null;
+}
+function getEmbedSrc(v){
+  if(!v)return '';
+  if(v.type==='youtube')return 'https://www.youtube.com/embed/'+v.id+'?rel=0&modestbranding=1';
+  if(v.type==='drive')return 'https://drive.google.com/file/d/'+v.id+'/preview';
+  return '';
+}
+
+async function saveOnlineClass(){
+  var title=g('ocTitle').value.trim(),desc=g('ocDesc').value.trim();
+  var url=g('ocUrl').value.trim(),cls=g('ocCl').value,bat=g('ocBt').value;
+  if(!title||!url){alert('শিরোনাম ও লিংক দিন!');return;}
+  var vid=getVideoEmbed(url);
+  if(!vid){alert('❌ সঠিক YouTube বা Google Drive লিংক দিন!');return;}
+  var r=await SB.from('online_classes').insert([{title:title,description:desc||null,youtube_url:vid.type+':'+vid.id,class:cls,batch:bat}]);
+  if(r.error){alert('❌ '+r.error.message);return;}
+  g('ocTitle').value='';g('ocDesc').value='';g('ocUrl').value='';
+  alert('✅ ভিডিও যোগ হয়েছে!');
+  loadOnlineClasses();
+}
+
+async function loadOnlineClasses(){
+  var cls=g('ocFCl').value,bat=g('ocFBt').value;
+  var q=SB.from('online_classes').select('*');
+  if(cls!=='All')q=q.eq('class',cls);
+  if(bat!=='All')q=q.eq('batch',bat);
+  var r=await q.order('created_at',{ascending:false}).limit(100);
+  var el=g('ocList');
+  if(!r.data||!r.data.length){
+    el.innerHTML='<p style="text-align:center;color:var(--muted);padding:20px">কোনো ভিডিও নেই</p>';
+    return;
+  }
+  el.innerHTML='';
+  var isAdmin=localStorage.getItem('ub')==='a';
+  r.data.forEach(function(oc){
+    var card=document.createElement('div');
+    card.style.cssText='background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e0e7ff;box-shadow:0 2px 12px rgba(99,102,241,.07)';
+    // Video embed
+    var vWrap=document.createElement('div');
+    vWrap.style.cssText='position:relative;width:100%;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:0';
+    var iframe=document.createElement('iframe');
+    var _v=oc.youtube_url;
+    var _src='';
+    if(_v.indexOf('youtube:')===0){_src='https://www.youtube.com/embed/'+_v.replace('youtube:','')+'?rel=0&modestbranding=1';}
+    else if(_v.indexOf('drive:')===0){_src='https://drive.google.com/file/d/'+_v.replace('drive:','')+'/preview?usp=sharing';}
+    else{_src='https://www.youtube.com/embed/'+_v+'?rel=0&modestbranding=1';}
+    iframe.src=_src;
+    iframe.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;border:none';
+    iframe.allow='accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture';
+    iframe.allowFullscreen=true;
+    iframe.setAttribute('scrolling','no');
+    iframe.setAttribute('frameborder','0');
+    // Info
+    var info=document.createElement('div');
+    info.style.cssText='padding:12px 14px';
+    var title=document.createElement('p');
+    title.style.cssText='font-weight:700;font-size:.9rem;color:#1e1b4b;margin-bottom:4px';
+    title.textContent=oc.title;
+    info.appendChild(title);
+    if(oc.description){
+      var desc=document.createElement('p');
+      desc.style.cssText='font-size:.75rem;color:#64748b;line-height:1.5';
+      desc.textContent=oc.description;
+      info.appendChild(desc);
+    }
+    var meta=document.createElement('p');
+    meta.style.cssText='font-size:.65rem;color:#94a3b8;margin-top:4px';
+    meta.textContent=(oc.class&&oc.class!=='All'?oc.class:'সব ক্লাস')+(oc.batch&&oc.batch!=='All'?' | '+oc.batch:'');
+    info.appendChild(meta);
+    // Delete button (admin only)
+    if(isAdmin){
+      var delBtn=document.createElement('button');
+      delBtn.textContent='🗑️ মুছুন';
+      delBtn.style.cssText='margin-top:8px;background:#fef2f2;color:#dc2626;border:none;padding:5px 12px;border-radius:8px;font-size:.72rem;font-weight:700;cursor:pointer';
+      delBtn.onclick=function(){deleteOnlineClass(oc.id,card);};
+      info.appendChild(delBtn);
+    }
+    vWrap.appendChild(iframe);
+    card.appendChild(vWrap);
+    card.appendChild(info);
+    el.appendChild(card);
+  });
+}
+
+async function deleteOnlineClass(id,card){
+  if(!confirm('এই ভিডিও মুছবেন?'))return;
+  var r=await SB.from('online_classes').delete().eq('id',id);
+  if(r.error){alert('❌ '+r.error.message);return;}
+  card.remove();
+}
+
+
+async function loadStuOnline(cls,bat){
+  var q=SB.from('online_classes').select('*');
+  if(cls&&cls!=='All')q=q.eq('class',cls);
+  var r=await q.order('created_at',{ascending:false}).limit(20);
+  var el=g('sOcList');
+  if(!el)return;
+  if(!r.data||!r.data.length){
+    el.innerHTML='<p style="text-align:center;color:var(--muted);font-size:.8rem;padding:12px">কোনো ভিডিও নেই</p>';
+    return;
+  }
+  el.innerHTML='';
+  r.data.forEach(function(oc){
+    var card=document.createElement('div');
+    card.style.cssText='background:#f8faff;border-radius:14px;overflow:hidden;border:1px solid #e0e7ff';
+    var vWrap=document.createElement('div');
+    vWrap.style.cssText='position:relative;width:100%;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:0';
+    var iframe=document.createElement('iframe');
+    var _v=oc.youtube_url;
+    var _src='';
+    if(_v.indexOf('youtube:')===0){_src='https://www.youtube.com/embed/'+_v.replace('youtube:','')+'?rel=0&modestbranding=1';}
+    else if(_v.indexOf('drive:')===0){_src='https://drive.google.com/file/d/'+_v.replace('drive:','')+'/preview?usp=sharing';}
+    else{_src='https://www.youtube.com/embed/'+_v+'?rel=0&modestbranding=1';}
+    iframe.src=_src;
+    iframe.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;border:none';
+    iframe.allow='accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture';
+    iframe.allowFullscreen=true;
+    iframe.setAttribute('scrolling','no');
+    iframe.setAttribute('frameborder','0');
+    var info=document.createElement('div');
+    info.style.cssText='padding:10px 12px';
+    var title=document.createElement('p');
+    title.style.cssText='font-weight:700;font-size:.85rem;color:#1e1b4b';
+    title.textContent=oc.title;
+    info.appendChild(title);
+    if(oc.description){
+      var desc=document.createElement('p');
+      desc.style.cssText='font-size:.72rem;color:#64748b;margin-top:3px;line-height:1.5';
+      desc.textContent=oc.description;
+      info.appendChild(desc);
+    }
+    vWrap.appendChild(iframe);
+    card.appendChild(vWrap);
+    card.appendChild(info);
+    el.appendChild(card);
+  });
 }
 
 </script>
