@@ -238,6 +238,7 @@ textarea.inp{resize:none}
     <button onclick="gTab('routine')" class="dt" id="d-routine">🗓️ রুটিন</button>
     <button onclick="gTab('lectureplan')" class="dt" id="d-lectureplan">📚 লেকচার</button>
     <button onclick="gTab('enroll')" class="dt" id="d-enroll">📤 বাল্ক ভর্তি</button>
+    <button onclick="gTab('expense');initExpenseTab()" class="dt" id="d-expense">💸 খরচ</button>
     <button onclick="gTab('settings')" class="dt" id="d-settings">⚙️</button>
     <button onclick="logout()" class="dt" style="color:#ef4444">🚪 লগআউট</button>
   </nav>
@@ -252,10 +253,16 @@ textarea.inp{resize:none}
   </div>
 
   <!-- DAILY -->
-  <section id="sec-daily"><div class="dg"><div class="card" style="padding:18px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><div style="display:flex;align-items:center;gap:8px"><h2 style="font-family:'Sora',sans-serif;font-size:.9rem;font-weight:700;color:var(--ink2)">📋 আজকের হাজিরা</h2><button id="slToggle" onclick="toggleSL()" style="background:#f1f5f9;border:none;padding:3px 9px;border-radius:8px;font-size:.7rem;font-weight:700;color:var(--muted);cursor:pointer">▲ লুকান</button></div><button onclick="openEF()" style="background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;border:none;padding:7px 13px;border-radius:10px;font-family:'Hind Siliguri',sans-serif;font-weight:700;font-size:.76rem;cursor:pointer;box-shadow:0 3px 10px rgba(99,102,241,.28)">➕ নতুন ভর্তি</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><select id="aCl" onchange="loadS()" class="inp dynC"></select><select id="aBt" onchange="loadS()" class="inp dynB"></select></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:13px"><input type="text" id="aSN" oninput="loadS()" placeholder="🔍 নাম" class="inp"><input type="number" id="aSR" oninput="loadS()" placeholder="🔢 রোল" class="inp"></div><div id="slBody"><div id="SL" style="display:flex;flex-direction:column;gap:7px;min-height:80px"></div><button onclick="subAtt()" class="btn btn-p" style="margin-top:16px">✅ জমা দিন</button></div></div></div></section>
+  <section id="sec-daily"><div class="dg"><div class="card" style="padding:18px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><div style="display:flex;align-items:center;gap:8px"><h2 style="font-family:'Sora',sans-serif;font-size:.9rem;font-weight:700;color:var(--ink2)">📋 আজকের হাজিরা</h2><button id="slToggle" onclick="toggleSL()" style="background:#f1f5f9;border:none;padding:3px 9px;border-radius:8px;font-size:.7rem;font-weight:700;color:var(--muted);cursor:pointer">▲ লুকান</button></div><button onclick="openEF()" style="background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;border:none;padding:7px 13px;border-radius:10px;font-family:'Hind Siliguri',sans-serif;font-weight:700;font-size:.76rem;cursor:pointer;box-shadow:0 3px 10px rgba(99,102,241,.28)">➕ নতুন ভর্তি</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><select id="aCl" onchange="loadS()" class="inp dynC"></select><select id="aBt" onchange="loadS()" class="inp dynB"></select></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:13px"><input type="text" id="aSN" oninput="loadS()" placeholder="🔍 নাম" class="inp"><input type="number" id="aSR" oninput="loadS()" placeholder="🔢 রোল" class="inp"></div><div id="slBody"><div id="SL" style="display:flex;flex-direction:column;gap:7px;min-height:80px"></div><div style="display:flex;gap:8px;margin-top:16px">
+  <button onclick="subAtt()" class="btn btn-p" style="flex:1">✅ জমা দিন</button>
+  <button onclick="openAttEdit()" class="btn btn-ghost" style="font-size:.75rem;padding:8px 12px">✏️ সংশোধন</button>
+</div></div></div></div></section>
 
   <!-- FEE -->
-  <section id="sec-fee" class="hidden"><div class="card" style="padding:18px"><h2 class="stitle">💰 ফি কালেকশন</h2><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px"><input id="fSearch" class="inp" placeholder="🔍 নাম বা রোল নম্বর..." oninput="loadFee()" style="flex:1;min-width:150px"><select id="fCl" onchange="loadFee()" class="inp dynC" style="width:auto;min-width:110px"></select><select id="fBt" onchange="loadFee()" class="inp dynB" style="width:auto;min-width:110px"></select><select id="fMo" onchange="loadFee()" class="inp"><option value="January">জানুয়ারি</option><option value="February">ফেব্রুয়ারি</option><option value="March">মার্চ</option><option value="April">এপ্রিল</option><option value="May">মে</option><option value="June">জুন</option><option value="July">জুলাই</option><option value="August">আগস্ট</option><option value="September">সেপ্টেম্বর</option><option value="October">অক্টোবর</option><option value="November">নভেম্বর</option><option value="December">ডিসেম্বর</option></select></div><div id="fL"></div></div><div id="fF" class="hidden card" style="padding:17px;border:2px solid #c7d2fe;position:sticky;bottom:74px;z-index:50;margin-top:13px"><div style="display:flex;justify-content:space-between;margin-bottom:11px"><div><p style="font-size:.58rem;font-weight:700;color:var(--muted);text-transform:uppercase">ফি নেওয়া হচ্ছে</p><h3 id="fNm" style="font-size:.9rem;font-weight:700;color:var(--g1);margin-top:2px"></h3></div><button onclick="hide('fF')" style="width:27px;height:27px;border-radius:99px;background:#f1f5f9;border:none;cursor:pointer;color:var(--muted);font-weight:700">✕</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><input type="number" id="fAm" placeholder="টাকা" class="inp" onkeydown="if(event.key==='Enter')subFee()"><input type="text" id="fMe" placeholder="মেমো" class="inp" onkeydown="if(event.key==='Enter')subFee()"></div><input type="text" id="fNo" placeholder="নোট" class="inp" style="margin-bottom:10px"><button onclick="subFee()" class="btn btn-p">✅ জমা</button></div></section>
+  <section id="sec-fee" class="hidden"><div class="card" style="padding:18px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+  <h2 class="stitle" style="margin:0">💰 ফি কালেকশন</h2>
+  <button onclick="printDueCards()" class="btn btn-ghost btn-sm">🖨️ বকেয়া কার্ড</button>
+</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px"><input id="fSearch" class="inp" placeholder="🔍 নাম বা রোল নম্বর..." oninput="loadFee()" style="flex:1;min-width:150px"><select id="fCl" onchange="loadFee()" class="inp dynC" style="width:auto;min-width:110px"></select><select id="fBt" onchange="loadFee()" class="inp dynB" style="width:auto;min-width:110px"></select><select id="fMo" onchange="loadFee()" class="inp"><option value="January">জানুয়ারি</option><option value="February">ফেব্রুয়ারি</option><option value="March">মার্চ</option><option value="April">এপ্রিল</option><option value="May">মে</option><option value="June">জুন</option><option value="July">জুলাই</option><option value="August">আগস্ট</option><option value="September">সেপ্টেম্বর</option><option value="October">অক্টোবর</option><option value="November">নভেম্বর</option><option value="December">ডিসেম্বর</option></select></div><div id="fL"></div></div><div id="fF" class="hidden card" style="padding:17px;border:2px solid #c7d2fe;position:sticky;bottom:74px;z-index:50;margin-top:13px"><div style="display:flex;justify-content:space-between;margin-bottom:11px"><div><p style="font-size:.58rem;font-weight:700;color:var(--muted);text-transform:uppercase">ফি নেওয়া হচ্ছে</p><h3 id="fNm" style="font-size:.9rem;font-weight:700;color:var(--g1);margin-top:2px"></h3></div><button onclick="hide('fF')" style="width:27px;height:27px;border-radius:99px;background:#f1f5f9;border:none;cursor:pointer;color:var(--muted);font-weight:700">✕</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><input type="number" id="fAm" placeholder="টাকা" class="inp" onkeydown="if(event.key==='Enter')subFee()"><input type="text" id="fMe" placeholder="মেমো" class="inp" onkeydown="if(event.key==='Enter')subFee()"></div><input type="text" id="fNo" placeholder="নোট" class="inp" style="margin-bottom:10px"><button onclick="subFee()" class="btn btn-p">✅ জমা</button></div></section>
 
   <!-- ABSENT CALL -->
   <section id="sec-absent" class="hidden"><div class="card" style="padding:18px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:13px"><div style="width:38px;height:38px;border-radius:11px;background:var(--rs);display:flex;align-items:center;justify-content:center;font-size:1rem">🚨</div><div><h2 style="font-family:'Sora',sans-serif;font-size:.92rem;font-weight:700;color:var(--red)">আজকের কল লিস্ট</h2><p style="font-size:.68rem;color:var(--muted)">অনুপস্থিত শিক্ষার্থীদের কল করুন</p></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:13px"><select id="abCl" onchange="loadAb()" class="inp dynC"></select><select id="abBt" onchange="loadAb()" class="inp dynB"></select></div><div id="abL" style="display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(210px,1fr))"></div></div></section>
@@ -365,7 +372,9 @@ textarea.inp{resize:none}
   </section>
 
   <!-- SETTINGS -->
-  <section id="sec-settings" class="hidden"><div style="display:flex;flex-direction:column;gap:16px"><div class="card" style="padding:17px">
+  
+
+<section id="sec-settings" class="hidden"><div style="display:flex;flex-direction:column;gap:16px"><div class="card" style="padding:17px">
   <h3 class="stitle" style="margin-bottom:12px">🔐 অ্যাডমিন PIN</h3>
   <p style="font-size:.72rem;color:var(--muted);margin-bottom:10px">এডিট ও ডিলিট সুরক্ষায় PIN ব্যবহার হয়</p>
   <button onclick="changeAdminPin()" class="btn btn-ghost" style="font-size:.82rem">🔑 PIN পরিবর্তন করুন</button>
@@ -423,6 +432,57 @@ textarea.inp{resize:none}
     </div>
   </section>
 
+<section id="sec-expense" class="hidden">
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <!-- Add Expense Card -->
+    <div class="card" style="padding:18px">
+      <h2 class="stitle" style="margin-bottom:14px">💸 নতুন খরচ এন্ট্রি</h2>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <input type="date" id="exDate" class="inp">
+          <input type="number" id="exAmt" class="inp" placeholder="💵 পরিমাণ (টাকা)">
+        </div>
+        <select id="exCat" class="inp">
+          <option value="">-- ক্যাটাগরি বেছে নিন --</option>
+          <option value="বেতন">👨‍🏫 বেতন</option>
+          <option value="ভাড়া">🏠 ভাড়া</option>
+          <option value="বিদ্যুৎ">💡 বিদ্যুৎ</option>
+          <option value="স্টেশনারি">📝 স্টেশনারি</option>
+          <option value="পরিবহন">🚗 পরিবহন</option>
+          <option value="মেইনটেন্যান্স">🔧 মেইনটেন্যান্স</option>
+          <option value="অন্যান্য">📦 অন্যান্য</option>
+        </select>
+        <textarea id="exDesc" class="inp" rows="2" placeholder="বিবরণ (ঐচ্ছিক)" style="resize:none"></textarea>
+        <button onclick="saveExpense()" class="btn btn-p">💾 সেভ করুন</button>
+      </div>
+    </div>
+    <!-- Filter + Summary -->
+    <div class="card" style="padding:18px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
+        <select id="exFMo" onchange="loadExpenses()" class="inp" style="flex:1;min-width:120px">
+          <option value="01">জানুয়ারি</option><option value="02">ফেব্রুয়ারি</option>
+          <option value="03">মার্চ</option><option value="04">এপ্রিল</option>
+          <option value="05">মে</option><option value="06">জুন</option>
+          <option value="07">জুলাই</option><option value="08">আগস্ট</option>
+          <option value="09">সেপ্টেম্বর</option><option value="10">অক্টোবর</option>
+          <option value="11">নভেম্বর</option><option value="12">ডিসেম্বর</option>
+        </select>
+        <select id="exFYr" onchange="loadExpenses()" class="inp" style="flex:1;min-width:90px">
+          <option value="2025">2025</option>
+          <option value="2026" selected>2026</option>
+          <option value="2027">2027</option>
+        </select>
+        <button onclick="loadExpenses()" class="btn btn-ghost" style="font-size:.75rem">🔍</button>
+      </div>
+      <!-- Summary -->
+      <div id="exSummary" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px"></div>
+      <!-- List -->
+      <div id="exList" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+  </div>
+</section>
+
+
 </main>
 
 <!-- MOBILE NAV with "More" button -->
@@ -459,6 +519,7 @@ textarea.inp{resize:none}
       <button onclick="closeMM();gTab('routine')" class="mm-btn"><span>🗓️</span><span>রুটিন</span></button>
       <button onclick="closeMM();gTab('lectureplan')" class="mm-btn"><span>📚</span><span>লেকচার</span></button>
       <button onclick="closeMM();gTab('enroll')" class="mm-btn"><span>📤</span><span>বাল্ক ভর্তি</span></button>
+      <button onclick="closeMM();gTab('expense');initExpenseTab()" class="mm-btn"><span>💸</span><span>খরচ</span></button>
       <button onclick="closeMM();gTab('settings')" class="mm-btn"><span>⚙️</span><span>সেটিংস</span></button>
       <button onclick="closeMM();logout()" class="mm-btn" style="color:#ef4444"><span>🚪</span><span>লগআউট</span></button>
     </div>
@@ -599,7 +660,7 @@ function logout(){localStorage.removeItem('ub');localStorage.removeItem('ub_tnam
 async function showAdmin(){hide('lo');g('am').style.display='block';var cur=ALL_MONTHS[new Date().getMonth()];var opts=g('fMo').options;for(var i=0;i<opts.length;i++)if(opts[i].value===cur)opts[i].selected=true;var t=new Date();g('rMo').value=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0');g('drDate').value=t.toISOString().split('T')[0];g('exDate').value=t.toISOString().split('T')[0];g('mtDate').value=t.toISOString().split('T')[0];await loadFeeData();syncDrops();loadPubNotice();}
 function showTeacher(){hide('lo');g('td').style.display='block';TAD={};THD={};loadTDrops();g('tRMo').value=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');}
 
-var TABS=['daily','fee','absent','homework','exam','modeltest','notice','report','routine','lectureplan','settings','enroll'];
+var TABS=['daily','fee','absent','homework','exam','modeltest','notice','report','routine','lectureplan','settings','enroll','expense'];
 function gTab(t){closeMM();
   var mp=g('morePanel');if(mp)mp.style.display='none';
 g('m-more').classList.remove('on');
@@ -670,9 +731,36 @@ async function saveStu(){
     }
   }
   var pl={name:name,roll_no:roll,class:cls,batch:bat,phone:gv('ePh').trim(),admission_month:gv('eAdm')};
-  var r=id?await SB.from('students').update(pl).eq('id',id):await SB.from('students').insert([pl]);
-  if(r.error)alert(r.error.message);
-  else{resetE();closeEF();syncDrops();alert('✅');}
+  var r=id?await SB.from('students').update(pl).eq('id',id):await SB.from('students').insert([pl]).select();
+  if(r.error){alert(r.error.message);return;}
+  // Collect current month fee if checkbox checked
+  var collectFee=g('eCollectFee')&&g('eCollectFee').checked;
+  if(!id && collectFee){
+    // Get the newly inserted student id
+    var sid=r.data&&r.data[0]?r.data[0].id:null;
+    if(!sid){
+      // Fetch by roll+class+batch
+      var sr=await SB.from('students').select('id').eq('class',cls).eq('batch',bat).eq('roll_no',roll).single();
+      sid=sr.data?sr.data.id:null;
+    }
+    if(sid){
+      var now=new Date();
+      var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+      var feeAmt=parseFloat(g('eFeePay')?g('eFeePay').value:0)||0;
+      var feeMemo=g('eFeeMemo')?g('eFeeMemo').value.trim():'ভর্তির সময় বেতন';
+      var fr=await SB.from('fees_collection').insert([{
+        student_id:sid,
+        payment_month:months[now.getMonth()],
+        payment_year:now.getFullYear().toString(),
+        payment_date:now.toISOString().split('T')[0],
+        amount:feeAmt||null,
+        memo:feeMemo
+      }]);
+      if(fr.error)alert('ভর্তি হয়েছে কিন্তু বেতন সেভ হয়নি: '+fr.error.message);
+      else{resetE();closeEF();syncDrops();alert('✅ ভর্তি সম্পন্ন! বেতনও নেওয়া হয়েছে।');return;}
+    }
+  }
+  resetE();closeEF();syncDrops();alert('✅');
 }
 
 /* FEE */
@@ -1857,6 +1945,124 @@ async function syncOfflineQueue(){
   }
 }
 
+
+
+async function printDueCards(){
+  var cls=gv('fCl'),bch=gv('fBt'),mo=gv('fMo'),yr=new Date().getFullYear().toString();
+  var q=SB.from('students').select('*');
+  if(cls!=='All')q=q.eq('class',cls);
+  if(bch!=='All')q=q.eq('batch',bch);
+  var r1=await q.order('roll_no');
+  if(!r1.data||!r1.data.length){alert('কোনো শিক্ষার্থী নেই!');return;}
+  var r2=await SB.from('fees_collection').select('student_id,payment_month').eq('payment_year',yr);
+  var paidMap={};
+  (r2.data||[]).forEach(function(f){
+    if(!paidMap[f.student_id])paidMap[f.student_id]=[];
+    paidMap[f.student_id].push(f.payment_month);
+  });
+  var ALL_MO=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var MO_BN={January:'জানুয়ারি',February:'ফেব্রুয়ারি',March:'মার্চ',April:'এপ্রিল',May:'মে',June:'জুন',July:'জুলাই',August:'আগস্ট',September:'সেপ্টেম্বর',October:'অক্টোবর',November:'নভেম্বর',December:'ডিসেম্বর'};
+  var curMoIdx=ALL_MO.indexOf(mo);
+  var cards=[];
+  r1.data.forEach(function(s){
+    var admIdx=ALL_MO.indexOf(s.admission_month||'January');
+    var paid=paidMap[s.id]||[];
+    var dueMos=[];
+    for(var i=admIdx;i<=curMoIdx;i++){
+      if(paid.indexOf(ALL_MO[i])===-1)dueMos.push(MO_BN[ALL_MO[i]]);
+    }
+    if(dueMos.length)cards.push({s:s,dueMos:dueMos});
+  });
+  if(!cards.length){alert('কোনো বকেয়া নেই!');return;}
+  // Build preview
+  var previewGrid=document.getElementById('dcPreviewBody');
+  previewGrid.innerHTML='';
+  cards.forEach(function(item){
+    previewGrid.appendChild(buildCard(item,false));
+  });
+  document.getElementById('dcCount').innerText=cards.length+'টি বকেয়া কার্ড পাওয়া গেছে';
+  window._dueCards=cards;
+  document.getElementById('dcModal').style.display='flex';
+}
+
+function buildCard(item,forPrint){
+  var s=item.s,dueMos=item.dueMos;
+  var today=new Date().toLocaleDateString('bn-BD');
+  var div=document.createElement('div');
+  div.className='due-card';
+  var moHTML=dueMos.map(function(m){return '<span class="dc-mo">'+m+'</span>';}).join('');
+  div.innerHTML=
+    '<div class="dc-header">'+
+      '<span class="dc-logo">UBIQUE</span>'+
+      '<span class="dc-tag">বকেয়া নোটিশ</span>'+
+    '</div>'+
+    '<div class="dc-body">'+
+      '<div class="dc-row"><span class="dc-lbl">নাম</span><span class="dc-val">'+s.name+'</span></div>'+
+      '<div class="dc-row"><span class="dc-lbl">ক্লাস</span><span class="dc-val">'+s.class+' | '+s.batch+'</span></div>'+
+      '<div class="dc-row"><span class="dc-lbl">রোল</span><span class="dc-val">'+s.roll_no+'</span></div>'+
+      '<div class="dc-due-sec">'+
+        '<div class="dc-lbl">বকেয়া মাস</div>'+
+        '<div class="dc-months">'+moHTML+'</div>'+
+      '</div>'+
+      '<div class="dc-total">'+
+        '<span>মোট বকেয়া</span>'+
+        '<span class="dc-num">'+dueMos.length+' মাস</span>'+
+      '</div>'+
+      '<div class="dc-msg">'+
+        'প্রিয় অভিভাবক, আপনার সন্তানের <b>'+dueMos.length+' মাসের</b> বেতন বকেয়া রয়েছে। '+
+        'অনুগ্রহ করে <b>৭ কার্যদিবসের মধ্যে</b> বেতন পরিশোধ করুন।'+
+        ' অন্যথায় ক্লাসে অংশগ্রহণে সমস্যা হতে পারে। &mdash; UBIQUE কর্তৃপক্ষ'+
+      '</div>'+
+    '</div>'+
+    '<div class="dc-footer">'+
+      '<span>তারিখ: '+today+'</span>'+
+      '<span>স্বাক্ষর: ___________</span>'+
+    '</div>';
+  return div;
+}
+
+function closeDcModal(){document.getElementById('dcModal').style.display='none';}
+
+function printDueCardsNow(){
+  var cards=window._dueCards||[];
+  if(!cards.length)return;
+  var cardHTML=cards.map(function(item){
+    return buildCard(item,true).outerHTML;
+  }).join('');
+  var css=[
+    '@page{size:A4;margin:8mm}',
+    'body{font-family:Arial,sans-serif;margin:0;padding:2mm;background:#fff}',
+    '.grid{display:grid;grid-template-columns:1fr 1fr;gap:5mm}',
+    '.due-card{border:1.5px solid #4f46e5;border-radius:7px;overflow:hidden;break-inside:avoid;page-break-inside:avoid;font-size:8pt}',
+    '.dc-header{background:#4f46e5;color:#fff;padding:5px 10px;display:flex;justify-content:space-between;align-items:center}',
+    '.dc-logo{font-weight:900;font-size:11pt;letter-spacing:2px}',
+    '.dc-tag{background:rgba(255,255,255,.2);padding:1px 7px;border-radius:99px;font-size:7pt;font-weight:700}',
+    '.dc-body{padding:7px 10px;display:flex;flex-direction:column;gap:3px}',
+    '.dc-row{display:flex;align-items:center;gap:5px}',
+    '.dc-lbl{font-size:7pt;color:#64748b;min-width:40px;font-weight:700}',
+    '.dc-val{font-weight:700;font-size:9pt;color:#1e1b4b}',
+    '.dc-due-sec{margin-top:3px}',
+    '.dc-months{display:flex;flex-wrap:wrap;gap:2px;margin-top:2px}',
+    '.dc-mo{background:#fef3c7;color:#92400e;padding:1px 5px;border-radius:4px;font-size:7pt;font-weight:700;border:1px solid #fde68a}',
+    '.dc-total{background:#fef2f2;border-radius:4px;padding:3px 7px;margin-top:3px;display:flex;justify-content:space-between;border:1px solid #fecaca;font-size:8pt}',
+    '.dc-num{font-weight:900;color:#dc2626}',
+    '.dc-msg{margin-top:5px;font-size:7pt;color:#374151;line-height:1.5;background:#f8faff;border-radius:4px;padding:5px 7px;border-left:3px solid #4f46e5}',
+    '.dc-footer{background:#f1f5f9;border-top:1px solid #e0e7ff;padding:4px 10px;font-size:7pt;color:#64748b;display:flex;justify-content:space-between}',
+    '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}'
+  ].join('');
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><style>'+css+'</style></head><body><div class="grid">'+cardHTML+'</div></body></html>';
+  doPrint(html);
+}
+
+
+async function openAttEdit(){
+  g('aeDate').value=new Date().toISOString().split('T')[0];
+  var srcCl=g('aCl'),srcBt=g('aBt');
+  if(srcCl){g('aeCl').innerHTML=srcCl.innerHTML;g('aeBt').innerHTML=srcBt.innerHTML;}
+  g('aeModal').style.display='flex';
+}
+function closeAttEdit(){g('aeModal').style.display='none';}
+
 window.onload=function(){
   if(isOnline && getQueue().length) setTimeout(syncOfflineQueue, 2000);
   updateOfflineBar();
@@ -1881,5 +2087,281 @@ window.onload=function(){
   }
   loadPubNotice();loadLoginCls();var auth=localStorage.getItem('ub');if(auth==='a')showAdmin();else if(auth==='t')showTeacher();};
 </script>
+<script>
+var AE_CHANGES={};
+
+async function openAttEdit(){
+  g('aeDate').value=new Date().toISOString().split('T')[0];
+  var srcCl=g('aCl'),srcBt=g('aBt');
+  if(srcCl){g('aeCl').innerHTML=srcCl.innerHTML;g('aeBt').innerHTML=srcBt.innerHTML;}
+  AE_CHANGES={};
+  g('aeList').innerHTML='<p style="color:#94a3b8;font-size:.8rem;text-align:center;padding:20px">তারিখ ও ক্লাস বেছে লোড করুন</p>';
+  g('aeModal').style.display='flex';
+}
+
+function closeAttEdit(){
+  g('aeModal').style.display='none';
+  AE_CHANGES={};
+}
+
+async function loadAttEdit(){
+  var date=g('aeDate').value,cls=g('aeCl').value,bch=g('aeBt').value;
+  if(!date){alert('তারিখ দিন!');return;}
+  var list=g('aeList');
+  list.innerHTML='<p style="color:#94a3b8;font-size:.8rem;padding:10px;text-align:center">লোড হচ্ছে...</p>';
+  var q=SB.from('students').select('*');
+  if(cls!=='All')q=q.eq('class',cls);
+  if(bch!=='All')q=q.eq('batch',bch);
+  var r1=await q.order('roll_no');
+  if(!r1.data||!r1.data.length){
+    list.innerHTML='<p style="color:#94a3b8;font-size:.8rem;padding:10px;text-align:center">কোনো শিক্ষার্থী নেই</p>';
+    return;
+  }
+  var ids=r1.data.map(function(s){return s.id;});
+  var r2=await SB.from('attendance').select('student_id,status').eq('attendance_date',date).in('student_id',ids);
+  var attMap={};
+  (r2.data||[]).forEach(function(a){attMap[a.student_id]=a.status;});
+  list.innerHTML='';
+  AE_CHANGES={};
+  r1.data.forEach(function(s){
+    var st=attMap[s.id]||'';
+    var isP=st==='Present',isA=st==='Absent';
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;margin-bottom:4px;background:'+(isP?'#f0fdf4':isA?'#fef2f2':'#f8faff')+';border:1px solid '+(isP?'#bbf7d0':isA?'#fecaca':'#e0e7ff');
+    var rollEl=document.createElement('span');
+    rollEl.style.cssText='font-weight:700;font-size:.72rem;min-width:26px;color:#64748b';
+    rollEl.textContent=s.roll_no;
+    var nameEl=document.createElement('span');
+    nameEl.style.cssText='flex:1;font-size:.8rem;font-weight:600';
+    nameEl.textContent=s.name;
+    var btnWrap=document.createElement('div');
+    btnWrap.style.cssText='display:flex;gap:4px;align-items:center';
+    var pBtn=document.createElement('button');
+    pBtn.className='ae-btn '+(isP?'ae-p':'ae-off');
+    pBtn.title='উপস্থিত';
+    pBtn.textContent='✅';
+    var aBtn=document.createElement('button');
+    aBtn.className='ae-btn '+(isA?'ae-a':'ae-off');
+    aBtn.title='অনুপস্থিত';
+    aBtn.textContent='❌';
+    pBtn.onclick=function(){
+      AE_CHANGES[s.id]='Present';
+      pBtn.className='ae-btn ae-p';
+      aBtn.className='ae-btn ae-off';
+      row.style.background='#f0fdf4';
+      row.style.borderColor='#bbf7d0';
+    };
+    aBtn.onclick=function(){
+      AE_CHANGES[s.id]='Absent';
+      aBtn.className='ae-btn ae-a';
+      pBtn.className='ae-btn ae-off';
+      row.style.background='#fef2f2';
+      row.style.borderColor='#fecaca';
+    };
+    var delBtn=document.createElement('button');
+    delBtn.className='ae-btn';
+    delBtn.style.cssText='background:#fee2e2;color:#dc2626;margin-left:4px';
+    delBtn.title='এন্ট্রি মুছুন';
+    delBtn.textContent='🗑️';
+    delBtn.onclick=async function(){
+      if(!confirm(s.name+' এর '+date+' তারিখের হাজিরা মুছবেন?'))return;
+      var r=await SB.from('attendance').delete().eq('student_id',s.id).eq('attendance_date',date);
+      if(r.error){alert('❌ '+r.error.message);return;}
+      delete AE_CHANGES[s.id];
+      row.remove();
+      if(typeof loadS==='function')loadS();
+    };
+    if(!st){
+      var badge=document.createElement('span');
+      badge.style.cssText='font-size:.6rem;color:#f59e0b;font-weight:700;background:#fef3c7;padding:1px 5px;border-radius:4px';
+      badge.textContent='নতুন';
+      btnWrap.appendChild(badge);
+    }
+    btnWrap.appendChild(pBtn);
+    btnWrap.appendChild(aBtn);
+    if(st) btnWrap.appendChild(delBtn);
+    row.appendChild(rollEl);
+    row.appendChild(nameEl);
+    row.appendChild(btnWrap);
+    list.appendChild(row);
+  });
+}
+
+async function saveAttEdit(){
+  var date=g('aeDate').value;
+  var keys=Object.keys(AE_CHANGES);
+  if(!date||!keys.length){alert('কোনো পরিবর্তন নেই!');return;}
+  var recs=keys.map(function(sid){
+    return {student_id:parseInt(sid,10),attendance_date:date,status:AE_CHANGES[sid]};
+  });
+  var r=await SB.from('attendance').upsert(recs,{onConflict:'student_id,attendance_date'});
+  if(r.error){alert('❌ '+r.error.message);return;}
+  AE_CHANGES={};
+  alert('✅ '+recs.length+'টি হাজিরা সংশোধন হয়েছে!');
+  loadAttEdit();
+  if(typeof loadS==='function')loadS();
+}
+
+function toggleEnrollFee(){
+  var cb=g('eCollectFee');
+  var ex=g('eFeeExtra');
+  if(cb&&ex) ex.style.display=cb.checked?'flex':'none';
+}
+
+window.addEventListener('load',function(){var ae=g('aeModal');if(ae)ae.addEventListener('click',function(e){if(e.target===this)closeAttEdit();});});
+</script>
+<script>
+
+async function saveExpense(){
+  var date=g('exDate').value,amt=g('exAmt').value,cat=g('exCat').value,desc=g('exDesc').value.trim();
+  if(!date||!amt||!cat){alert('তারিখ, পরিমাণ ও ক্যাটাগরি দিন!');return;}
+  var r=await SB.from('expenses').insert([{
+    expense_date:date,
+    amount:parseFloat(amt),
+    category:cat,
+    description:desc||null
+  }]);
+  if(r.error){alert('❌ '+r.error.message);return;}
+  g('exAmt').value='';g('exDesc').value='';g('exCat').selectedIndex=0;
+  alert('✅ খরচ সেভ হয়েছে!');
+  loadExpenses();
+}
+
+async function loadExpenses(){
+  var mo=g('exFMo').value,yr=g('exFYr').value;
+  var from=yr+'-'+mo+'-01';
+  var lastDay=new Date(parseInt(yr),parseInt(mo),0).getDate();
+  var to=yr+'-'+mo+'-'+lastDay;
+  var r=await SB.from('expenses').select('*').gte('expense_date',from).lte('expense_date',to).order('expense_date',{ascending:false});
+  var data=r.data||[];
+  // Summary by category
+  var catMap={};
+  var total=0;
+  data.forEach(function(ex){
+    catMap[ex.category]=(catMap[ex.category]||0)+ex.amount;
+    total+=ex.amount;
+  });
+  // Render summary
+  var sumHTML='<div style="grid-column:1/-1;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center"><span style="font-weight:700;font-size:.82rem">মোট খরচ</span><span style="font-weight:900;font-size:1.1rem;color:#dc2626">৳'+total.toLocaleString('bn-BD')+'</span></div>';
+  Object.keys(catMap).forEach(function(cat){
+    sumHTML+='<div style="background:#f8faff;border:1px solid #e0e7ff;border-radius:8px;padding:8px 12px"><p style="font-size:.68rem;color:#64748b;margin:0">'+cat+'</p><p style="font-weight:700;font-size:.9rem;margin:0;color:#1e1b4b">৳'+catMap[cat].toLocaleString('bn-BD')+'</p></div>';
+  });
+  g('exSummary').innerHTML=sumHTML;
+  // Render list
+  if(!data.length){g('exList').innerHTML='<p style="text-align:center;color:#94a3b8;font-size:.8rem;padding:20px">এই মাসে কোনো খরচ নেই</p>';return;}
+  var listEl=g('exList');
+  listEl.innerHTML='';
+  data.forEach(function(ex){
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fff;border:1px solid #e0e7ff;border-radius:10px';
+    var left=document.createElement('div');
+    left.style.cssText='flex:1';
+    var top=document.createElement('div');
+    top.style.cssText='display:flex;gap:6px;align-items:center';
+    var catBadge=document.createElement('span');
+    catBadge.style.cssText='font-size:.65rem;font-weight:700;background:#eff6ff;color:#3b82f6;padding:2px 7px;border-radius:99px';
+    catBadge.textContent=ex.category;
+    var dateEl=document.createElement('span');
+    dateEl.style.cssText='font-size:.65rem;color:#94a3b8';
+    dateEl.textContent=ex.expense_date;
+    top.appendChild(catBadge);top.appendChild(dateEl);
+    var desc=document.createElement('p');
+    desc.style.cssText='font-size:.78rem;font-weight:600;margin:2px 0 0;color:#1e1b4b';
+    desc.textContent=ex.description||ex.category;
+    left.appendChild(top);left.appendChild(desc);
+    var amt=document.createElement('span');
+    amt.style.cssText='font-weight:800;font-size:.9rem;color:#dc2626;white-space:nowrap';
+    amt.textContent='৳'+ex.amount.toLocaleString('bn-BD');
+    var delBtn=document.createElement('button');
+    delBtn.style.cssText='background:#fef2f2;border:none;color:#dc2626;width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:.8rem';
+    delBtn.textContent='🗑️';
+    delBtn.onclick=async function(){
+      if(!confirm('এই খরচ মুছবেন?'))return;
+      var dr=await SB.from('expenses').delete().eq('id',ex.id);
+      if(dr.error){alert('❌ '+dr.error.message);return;}
+      row.remove();
+      loadExpenses();
+    };
+    row.appendChild(left);row.appendChild(amt);row.appendChild(delBtn);
+    listEl.appendChild(row);
+  });
+}
+
+function initExpenseTab(){
+  // Set current month
+  var now=new Date();
+  var mo=String(now.getMonth()+1).padStart(2,'0');
+  g('exFMo').value=mo;
+  g('exDate').value=now.toISOString().split('T')[0];
+  loadExpenses();
+}
+
+</script>
+<!-- ATTENDANCE EDIT MODAL -->
+<div id="aeModal" style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.55);align-items:flex-start;justify-content:center;padding:12px;overflow-y:auto">
+  <div style="background:#fff;border-radius:20px;width:100%;max-width:480px;margin:auto;box-shadow:0 24px 80px rgba(0,0,0,.25)">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #e0e7ff;position:sticky;top:0;background:#fff;border-radius:20px 20px 0 0;z-index:1">
+      <h3 style="font-weight:700;font-size:.95rem;margin:0">✏️ হাজিরা সংশোধন</h3>
+      <button onclick="closeAttEdit()" style="background:#f1f5f9;border:none;width:28px;height:28px;border-radius:99px;cursor:pointer;font-weight:700">✕</button>
+    </div>
+    <div style="padding:14px 18px;border-bottom:1px solid #f1f5f9;display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input type="date" id="aeDate" class="inp" style="flex:1;min-width:130px">
+        <select id="aeCl" class="inp dynC" style="flex:1;min-width:110px"></select>
+        <select id="aeBt" class="inp dynB" style="flex:1;min-width:110px"></select>
+      </div>
+      <button onclick="loadAttEdit()" class="btn btn-p" style="font-size:.8rem">🔍 লোড করুন</button>
+    </div>
+    <div id="aeList" style="padding:12px 14px;max-height:55vh;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
+      <p style="color:var(--muted);font-size:.8rem;text-align:center;padding:20px">তারিখ ও ক্লাস বেছে লোড করুন</p>
+    </div>
+    <div style="padding:12px 18px;border-top:1px solid #f1f5f9;display:flex;gap:8px">
+      <button onclick="saveAttEdit()" class="btn btn-p" style="flex:1">💾 সংশোধন সেভ করুন</button>
+      <button onclick="closeAttEdit()" class="btn btn-ghost">বাতিল</button>
+    </div>
+  </div>
+</div>
+<style>
+.ae-btn{border:none;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:.85rem;transition:all .15s}
+.ae-p{background:#dcfce7;color:#15803d}
+.ae-a{background:#fee2e2;color:#dc2626}
+.ae-off{background:#f1f5f9;color:#94a3b8}
+</style>
+<!-- DUE CARD PREVIEW MODAL -->
+<div id="dcModal" style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.6);align-items:flex-start;justify-content:center;padding:12px;overflow-y:auto">
+  <div style="background:#fff;border-radius:20px;width:100%;max-width:860px;margin:auto;box-shadow:0 24px 80px rgba(0,0,0,.3)">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #e0e7ff;position:sticky;top:0;background:#fff;border-radius:20px 20px 0 0;z-index:1">
+      <div>
+        <h3 style="font-weight:700;font-size:.95rem;margin:0">🖨️ বকেয়া কার্ড প্রিভিউ</h3>
+        <p id="dcCount" style="font-size:.7rem;color:#64748b;margin:2px 0 0"></p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="printDueCardsNow()" class="btn btn-p" style="font-size:.75rem">🖨️ প্রিন্ট করুন</button>
+        <button onclick="closeDcModal()" class="btn btn-ghost" style="font-size:.75rem">✕ বন্ধ</button>
+      </div>
+    </div>
+    <div style="padding:16px;background:#f1f5f9;border-radius:0 0 20px 20px">
+      <div id="dcPreviewBody" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
+    </div>
+  </div>
+</div>
+<style>
+.due-card{border:1.5px solid #4f46e5;border-radius:8px;overflow:hidden;background:#fff;font-size:8.5pt;font-family:inherit}
+.dc-header{background:#4f46e5;color:#fff;padding:6px 11px;display:flex;justify-content:space-between;align-items:center}
+.dc-logo{font-weight:900;font-size:11pt;letter-spacing:2px}
+.dc-tag{background:rgba(255,255,255,.2);padding:1px 7px;border-radius:99px;font-size:7pt;font-weight:700}
+.dc-body{padding:8px 11px;display:flex;flex-direction:column;gap:4px}
+.dc-row{display:flex;align-items:center;gap:6px}
+.dc-lbl{font-size:7pt;color:#64748b;min-width:42px;font-weight:700}
+.dc-val{font-weight:700;font-size:9pt;color:#1e1b4b}
+.dc-due-sec{margin-top:3px}
+.dc-months{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px}
+.dc-mo{background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:4px;font-size:7pt;font-weight:700;border:1px solid #fde68a}
+.dc-total{background:#fef2f2;border-radius:5px;padding:4px 7px;margin-top:4px;display:flex;justify-content:space-between;border:1px solid #fecaca;font-size:8pt}
+.dc-num{font-weight:900;color:#dc2626}
+.dc-msg{margin-top:5px;font-size:7.5pt;color:#374151;line-height:1.55;background:#f8faff;border-radius:5px;padding:6px 8px;border-left:3px solid #4f46e5}
+.dc-footer{background:#f1f5f9;border-top:1px solid #e0e7ff;padding:5px 11px;font-size:7pt;color:#64748b;display:flex;justify-content:space-between}
+</style>
 </body>
-</html>
+</html
+>
