@@ -760,7 +760,7 @@ async function saveStu(){
         payment_year:now.getFullYear().toString(),
         payment_date:now.toISOString().split('T')[0],
         amount:feeAmt||null,
-        memo:feeMemo
+        memo_no:feeMemo
       }]);
       if(fr.error)alert('ভর্তি হয়েছে কিন্তু বেতন সেভ হয়নি: '+fr.error.message);
       else{resetE();closeEF();syncDrops();alert('✅ ভর্তি সম্পন্ন! বেতনও নেওয়া হয়েছে।');return;}
