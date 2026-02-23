@@ -377,7 +377,7 @@ textarea.inp{resize:none}
 <section id="sec-settings" class="hidden"><div style="display:flex;flex-direction:column;gap:16px"><div class="card" style="padding:17px">
   <h3 class="stitle" style="margin-bottom:12px">🔐 অ্যাডমিন PIN</h3>
   <p style="font-size:.72rem;color:var(--muted);margin-bottom:10px">এডিট ও ডিলিট সুরক্ষায় PIN ব্যবহার হয়</p>
-  <button onclick="changeAdminPin()" class="btn btn-ghost" style="font-size:.82rem">🔑 PIN পরিবর্তন করুন</button>
+  <p style="font-size:.75rem;color:var(--muted);background:#f8faff;padding:10px 12px;border-radius:10px;border:1px solid #e0e7ff">🔑 PIN পরিবর্তন করতে <strong>Supabase → academy_settings</strong> table এ <strong>admin_pin</strong> row এর value বদলান।</p>
 </div>
 <div class="card" style="padding:17px"><button onclick="logout()" class="btn btn-red">🚪 লগআউট</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:14px"><div class="card" style="padding:17px"><h3 class="stitle">🏫 ক্লাস</h3><div style="display:flex;gap:6px;margin-bottom:11px"><input type="text" id="nCl" class="inp" placeholder="নতুন ক্লাস..."><button onclick="addSet('class')" style="flex-shrink:0;background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;border:none;padding:0 13px;border-radius:11px;font-size:1.1rem;cursor:pointer;font-weight:700">+</button></div><ul id="clL" style="display:flex;flex-direction:column;gap:6px"></ul></div><div class="card" style="padding:17px"><h3 class="stitle">📦 ব্যাচ</h3><div style="display:flex;gap:6px;margin-bottom:11px"><input type="text" id="nBt" class="inp" placeholder="নতুন ব্যাচ..."><button onclick="addSet('batch')" style="flex-shrink:0;background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;border:none;padding:0 13px;border-radius:11px;font-size:1.1rem;cursor:pointer;font-weight:700">+</button></div><ul id="btL" style="display:flex;flex-direction:column;gap:6px"></ul></div></div><div class="card" style="padding:17px"><h3 class="stitle">👥 শিক্ষার্থী</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><select id="sCl" onchange="loadSetS()" class="inp dynC"></select><select id="sBt" onchange="loadSetS()" class="inp dynB"></select></div><input id="setSearch" class="inp" placeholder="🔍 নাম বা রোল নম্বর..." oninput="filterSetS()" style="margin-bottom:10px;width:100%;box-sizing:border-box">
 <div id="setL" style="display:flex;flex-direction:column;gap:6px"></div></div></div></section>
@@ -635,25 +635,12 @@ function toggleMore(){
 
 /* AUTH */
 function selRole(r){var parts=['pa','pt','ps'],btns=['rA','rT','rS'];parts.forEach(function(id){var el=g(id);el.classList.add('hidden');el.style.display='none';});btns.forEach(function(id){g(id).classList.remove('sel');});var idx=r==='a'?0:r==='t'?1:2;g(parts[idx]).classList.remove('hidden');g(parts[idx]).style.display='flex';g(btns[idx]).classList.add('sel');hide('lerr');}
-async function aLogin(){var stored=localStorage.getItem('ub_apin')||'1234';if(gv('aPass')===stored){localStorage.setItem('ub','a');showAdmin();}else{g('lerr').innerText='❌ পিন ভুল!';show('lerr');g('aPass').value='';}}
-async function tLogin(){var pin=gv('tPass').trim();if(!pin){g('lerr').innerText='❌ পিন দিন!';show('lerr');return;}var r=await SB.from('teachers').select('*').eq('pin',pin).single();if(r.data){localStorage.setItem('ub','t');localStorage.setItem('ub_tname',r.data.name||'টিচার');localStorage.setItem('ub_tcls',r.data.assigned_class||'All');showTeacher();}else{g('lerr').innerText='❌ পিন ভুল!';show('lerr');g('tPass').value='';}}
-async function sLogin(){
-  var cls=gv('sClass'),roll=gv('sRoll'),ph=gv('sPhone').trim();
-  if(!cls||!roll||!ph){alert('ক্লাস, রোল ও ফোন নম্বর দিন!');return;}
-  // class+roll = unique student, phone = identity verification
-  var r=await SB.from('students').select('*').eq('class',cls).eq('roll_no',parseInt(roll,10));
-  if(!r.data||!r.data.length){
-    g('lerr').innerText='❌ এই ক্লাসে এই রোল নেই!';show('lerr');return;
-  }
-  // Find the one matching phone (handles siblings with same phone on different classes)
-  var stu=r.data.find(function(s){return (s.phone||'').trim()===ph;});
-  if(stu){
-    localStorage.setItem('ub','s');
-    localStorage.setItem('ub_sid', stu.id);
-    hide('lo');g('sd').style.display='block';renderStuDash(stu);
-  }else{
-    g('lerr').innerText='❌ ফোন নম্বর মেলেনি!';show('lerr');
-  }
+async function aLogin(){
+  var pin=gv('aPass');
+  var r=await SB.from('academy_settings').select('value').eq('type','admin_pin').single();
+  var stored=r.data?r.data.value:'1234';
+  if(pin===stored){localStorage.setItem('ub','a');showAdmin();}
+  else{g('lerr').innerText='❌ পিন ভুল!';show('lerr');g('aPass').value='';}
 }
 function logout(){localStorage.removeItem('ub');localStorage.removeItem('ub_tname');localStorage.removeItem('ub_tcls');localStorage.removeItem('ub_sid');location.reload();}
 
