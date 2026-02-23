@@ -239,6 +239,7 @@ textarea.inp{resize:none}
     <button onclick="gTab('lectureplan')" class="dt" id="d-lectureplan">📚 লেকচার</button>
     <button onclick="gTab('enroll')" class="dt" id="d-enroll">📤 বাল্ক ভর্তি</button>
     <button onclick="gTab('expense');initExpenseTab()" class="dt" id="d-expense">💸 খরচ</button>
+    <button onclick="gTab('dailytest')" class="dt" id="d-dailytest">📝 ডেইলি টেস্ট</button>
     <button onclick="gTab('settings')" class="dt" id="d-settings">⚙️</button>
     <button onclick="logout()" class="dt" style="color:#ef4444">🚪 লগআউট</button>
   </nav>
@@ -373,6 +374,63 @@ textarea.inp{resize:none}
 
   <!-- SETTINGS -->
   
+
+<section id="sec-dailytest" class="hidden">
+  <div style="display:flex;flex-direction:column;gap:16px">
+
+    <!-- Create Test -->
+    <div class="card" style="padding:18px">
+      <h2 class="stitle">📝 নতুন ডেইলি টেস্ট</h2>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <input type="text" id="dtName" class="inp" placeholder="টেস্টের নাম (যেমন: অধ্যায় ১)">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <input type="date" id="dtDate" class="inp">
+          <input type="number" id="dtTotal" class="inp" placeholder="সর্বোচ্চ নম্বর" value="100">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <select id="dtCl" class="inp dynC"></select>
+          <select id="dtBt" class="inp dynB"></select>
+        </div>
+        <button onclick="createDailyTest()" class="btn btn-p">📝 টেস্ট তৈরি করুন</button>
+      </div>
+    </div>
+
+    <!-- Test List & Marks -->
+    <div class="card" style="padding:18px">
+      <h2 class="stitle" style="margin-bottom:12px">📋 নম্বর দিন</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <select id="dtLCl" onchange="loadDailyTests()" class="inp dynC"></select>
+        <select id="dtLBt" onchange="loadDailyTests()" class="inp dynB"></select>
+      </div>
+      <div id="dtList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:16px"></div>
+      <div id="dtEntry" class="hidden">
+        <div style="background:#f0fdf4;border-radius:13px;padding:13px;margin-bottom:13px;border:1.5px solid #bbf7d0">
+          <h3 id="dtSelName" style="font-size:.92rem;font-weight:700;color:#065f46"></h3>
+          <p id="dtSelInfo" style="font-size:.68rem;color:var(--muted);margin-top:1px"></p>
+        </div>
+        <div id="dtMarksList" style="display:flex;flex-direction:column;gap:6px"></div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button onclick="saveDTMarks()" class="btn btn-p" style="flex:1">💾 সেভ</button>
+          <button onclick="printDTResult()" class="btn btn-g btn-sm">🖨️ প্রিন্ট</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly Summary -->
+    <div class="card" style="padding:18px">
+      <h2 class="stitle" style="margin-bottom:12px">📊 মাসিক মেরিট</h2>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+        <input type="month" id="dtMo" class="inp" style="flex:1;min-width:148px">
+        <select id="dtSCl" class="inp dynC" style="flex:1;min-width:110px"></select>
+        <select id="dtSBt" class="inp dynB" style="flex:1;min-width:110px"></select>
+        <button onclick="loadDTSummary()" class="btn btn-p btn-sm">🔄 লোড</button>
+        <button onclick="printDTSummary()" id="dtPrint" class="btn btn-ghost btn-sm hidden">🖨️ প্রিন্ট</button>
+      </div>
+      <div id="dtSummary"></div>
+    </div>
+
+  </div>
+</section>
 
 <section id="sec-settings" class="hidden"><div style="display:flex;flex-direction:column;gap:16px"><div class="card" style="padding:17px">
   <h3 class="stitle" style="margin-bottom:12px">🔐 অ্যাডমিন PIN</h3>
@@ -520,6 +578,7 @@ textarea.inp{resize:none}
       <button onclick="closeMM();gTab('lectureplan')" class="mm-btn"><span>📚</span><span>লেকচার</span></button>
       <button onclick="closeMM();gTab('enroll')" class="mm-btn"><span>📤</span><span>বাল্ক ভর্তি</span></button>
       <button onclick="closeMM();gTab('expense');initExpenseTab()" class="mm-btn"><span>💸</span><span>খরচ</span></button>
+      <button onclick="closeMM();gTab('dailytest')" class="mm-btn"><span>📝</span><span>ডেইলি টেস্ট</span></button>
       <button onclick="closeMM();gTab('settings')" class="mm-btn"><span>⚙️</span><span>সেটিংস</span></button>
       <button onclick="closeMM();logout()" class="mm-btn" style="color:#ef4444"><span>🚪</span><span>লগআউট</span></button>
     </div>
@@ -666,7 +725,7 @@ function logout(){localStorage.removeItem('ub');localStorage.removeItem('ub_tnam
 async function showAdmin(){hide('lo');g('am').style.display='block';var cur=ALL_MONTHS[new Date().getMonth()];var opts=g('fMo').options;for(var i=0;i<opts.length;i++)if(opts[i].value===cur)opts[i].selected=true;var t=new Date();g('rMo').value=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0');g('drDate').value=t.toISOString().split('T')[0];g('exDate').value=t.toISOString().split('T')[0];g('mtDate').value=t.toISOString().split('T')[0];await loadFeeData();syncDrops();loadPubNotice();}
 function showTeacher(){hide('lo');g('td').style.display='block';TAD={};THD={};loadTDrops();g('tRMo').value=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');}
 
-var TABS=['daily','fee','absent','homework','exam','modeltest','notice','report','routine','lectureplan','settings','enroll','expense'];
+var TABS=['daily','fee','absent','homework','exam','modeltest','dailytest','notice','report','routine','lectureplan','settings','enroll','expense'];
 function gTab(t){closeMM();
   var mp=g('morePanel');if(mp)mp.style.display='none';
 g('m-more').classList.remove('on');
@@ -677,7 +736,7 @@ g('m-more').classList.remove('on');
   var m=g('m-'+t);if(m)m.classList.add('on');
   // If tab is in more menu, highlight more button and the item
   g('sb').style.display=t==='daily'?'grid':'none';
-  if(t==='fee')loadFee();if(t==='absent')loadAb();if(t==='homework')loadHW();if(t==='notice')loadNotices();if(t==='exam')loadExams();if(t==='modeltest'){loadModelTests();loadMTDropdown();}if(t==='routine')syncRtDrops();if(t==='lectureplan')syncLPDrops();
+  if(t==='dailytest'){loadDailyTests();var now=new Date();g('dtDate').value=now.toISOString().split('T')[0];g('dtMo').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');syncDrops();}if(t==='fee')loadFee();if(t==='absent')loadAb();if(t==='homework')loadHW();if(t==='notice')loadNotices();if(t==='exam')loadExams();if(t==='modeltest'){loadModelTests();loadMTDropdown();}if(t==='routine')syncRtDrops();if(t==='lectureplan')syncLPDrops();
 }
 async function tTab(id){['ta','tp','te','tr'].forEach(function(x){hide(x);var b=g('tb-'+x);if(b)b.classList.remove('on');});show(id);var b=g('tb-'+id);if(b)b.classList.add('on');if(id==='tp')loadTP();if(id==='te')loadTExams();if(id==='tr')loadTR();}
 
@@ -776,7 +835,11 @@ var c=g('fL');c.innerHTML='<div class="sk" style="height:50px;width:100%"></div>
 var r1=await q.order('roll_no'),r2=await SB.from('fees_collection').select('*').eq('payment_year',yr);
 if(srch&&r1.data){r1.data=r1.data.filter(function(s){return s.name.toLowerCase().indexOf(srch)!==-1||String(s.roll_no).indexOf(srch)!==-1;});}
 if(r1.data)r1.data.forEach(function(s){stuCache[s.id]=s;});
-if(!r1.data||!r1.data.length){c.innerHTML='<p style="text-align:center;padding:26px;color:var(--muted)">নেই</p>';return;}feeCache={};if(r2.data)r2.data.forEach(function(f){if(!feeCache[f.student_id])feeCache[f.student_id]=[];if(feeCache[f.student_id].indexOf(f.payment_month)===-1)feeCache[f.student_id].push(f.payment_month);});var pc=r2.data?r2.data.filter(function(p){return p.payment_month===mon&&r1.data.some(function(s){return s.id===p.student_id;});}).length:0;c.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:13px"><span class="paid-b">✅ পরিশোধ: '+pc+'</span><span class="due-b">⏳ বকেয়া: '+(r1.data.length-pc)+'</span></div><div style="display:flex;flex-direction:column;gap:7px">'+r1.data.map(function(s){var pay=r2.data&&r2.data.find(function(p){return p.student_id===s.id&&p.payment_month===mon;});var dueM=getDueMonths(s.id);return'<div style="background:#fff;padding:12px;border-radius:12px;border-left:4px solid '+(pay?'var(--green)':'var(--red)')+';display:flex;flex-direction:column;gap:5px"><div style="display:flex;justify-content:space-between;align-items:center"><div><p style="font-weight:700">'+e(s.name)+'</p><p style="font-size:.63rem;color:var(--muted)">রোল:'+s.roll_no+' | '+e(s.batch||'')+'</p>'+'<p style="font-size:.63rem;color:var(--muted)">📞 '+e(s.phone||'—')+'</p></div>'+'<div style="display:flex;gap:4px;align-items:center">'+(pay?'<span class="paid-b">PAID ✓</span>':'<button onclick="openFF(\''+s.id+'\',\''+e(s.name)+'\')" style="background:var(--g1);color:#fff;border:none;padding:7px 11px;border-radius:10px;font-family:var(--font);font-weight:700;font-size:.72rem;cursor:pointer">💰 ফি নিন</button>')+'<button onclick="editSwitch(stuCache['+s.id+'])" style="background:#eff6ff;color:var(--g1);border:none;padding:7px 9px;border-radius:10px;font-weight:700;font-size:.72rem;cursor:pointer">✏️</button>'+'</div>'+'</div>'+(dueM.length?'<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap"><span class="fee-due-tag">⚠️ '+dueM.length+' মাস</span><div class="due-months-bar">'+dueM.map(function(m){return'<span class="due-month-chip">'+MONTH_BN[m]+'</span>';}).join('')+'</div></div>':'<span class="fee-ok-tag">✅ সব ঠিক</span>')+'</div>';}).join('')+'</div>';}
+if(!r1.data||!r1.data.length){c.innerHTML='<p style="text-align:center;padding:26px;color:var(--muted)">নেই</p>';return;}feeCache={};if(r2.data)r2.data.forEach(function(f){if(!feeCache[f.student_id])feeCache[f.student_id]=[];if(feeCache[f.student_id].indexOf(f.payment_month)===-1)feeCache[f.student_id].push(f.payment_month);});var pc=r2.data?r2.data.filter(function(p){return p.payment_month===mon&&r1.data.some(function(s){return s.id===p.student_id;});}).length:0;c.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:13px"><span class="paid-b">✅ পরিশোধ: '+pc+'</span><span class="due-b">⏳ বকেয়া: '+(r1.data.length-pc)+'</span></div><div style="display:flex;flex-direction:column;gap:7px">'+r1.data.map(function(s){var pay=r2.data&&r2.data.find(function(p){return p.student_id===s.id&&p.payment_month===mon;});var dueM=getDueMonths(s.id);return'<div style="background:#fff;padding:12px;border-radius:12px;border-left:4px solid '+(pay?'var(--green)':'var(--red)')+';display:flex;flex-direction:column;gap:5px"><div style="display:flex;justify-content:space-between;align-items:center"><div><p style="font-weight:700">'+e(s.name)+'</p><p style="font-size:.63rem;color:var(--muted)">রোল:'+s.roll_no+' | '+e(s.batch||'')+'</p>'+'<p style="font-size:.63rem;color:var(--muted)">📞 '+e(s.phone||'—')+'</p></div>'+'<div style="display:flex;gap:4px;align-items:center">'+(pay?'<span class="paid-b">PAID ✓</span>':'<button onclick="openFF(\''+s.id+'\',\''+e(s.name)+'\')" style="background:var(--g1);color:#fff;border:none;padding:7px 11px;border-radius:10px;font-family:var(--font);font-weight:700;font-size:.72rem;cursor:pointer">💰 ফি নিন</button>')+'<button class="fee-edit-btn" data-sid="'+s.id+'" style="background:#eff6ff;color:var(--g1);border:none;padding:7px 9px;border-radius:10px;font-weight:700;font-size:.72rem;cursor:pointer">✏️</button>'+'</div>'+'</div>'+(dueM.length?'<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap"><span class="fee-due-tag">⚠️ '+dueM.length+' মাস</span><div class="due-months-bar">'+dueM.map(function(m){return'<span class="due-month-chip">'+MONTH_BN[m]+'</span>';}).join('')+'</div></div>':'<span class="fee-ok-tag">✅ সব ঠিক</span>')+'</div>';}).join('')+'</div>';
+  // Add click handlers for edit buttons
+  g('fL').querySelectorAll('.fee-edit-btn').forEach(function(btn){
+    btn.onclick=function(){editSwitch(stuCache[btn.dataset.sid]);};
+  });}
 async function openFF(id,name){selFeeId=id;g('fNm').innerText=name;g('fAm').value='';g('fMe').value='';g('fNo').value='';show('fF');g('fAm').focus();}
 async function subFee(){
   var amt=gv('fAm'),memo=gv('fMe'),mo=gv('fMo');
@@ -924,15 +987,31 @@ async function loadSetS(){
   var el=g('setL');
   if(!r.data||!r.data.length){el.innerHTML='<p style="text-align:center;color:var(--muted);padding:13px">নেই</p>';return;}
   r.data.forEach(function(s){stuCache[s.id]=s;});
-  el.innerHTML=r.data.map(function(s){
-    return '<div data-sid="'+s.id+'" data-name="'+s.name.toLowerCase()+'" data-roll="'+s.roll_no+'" style="background:#f8faff;padding:10px 12px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;border:1px solid #e0e7ff;margin-bottom:6px">'+
-      '<div><span style="font-weight:700">'+e(s.name)+'</span> '+
-      '<span style="font-size:.68rem;color:var(--muted)">'+e(s.class)+' রোল:'+s.roll_no+'</span></div>'+
-      '<div style="display:flex;gap:4px">'+
-      '<button onclick="editSwitch(stuCache['+s.id+'])" style="font-size:.7rem;color:var(--g1);font-weight:700;padding:4px 9px;background:#eff6ff;border:none;border-radius:8px;cursor:pointer">এডিট</button>'+
-      '<button onclick="delStu('+s.id+')" style="font-size:.7rem;color:var(--red);font-weight:700;padding:4px 9px;background:var(--rs);border:none;border-radius:8px;cursor:pointer">মুছুন</button>'+
-      '</div></div>';
-  }).join('');
+  el.innerHTML='';
+  r.data.forEach(function(s){
+    var row=document.createElement('div');
+    row.style.cssText='background:#f8faff;padding:10px 12px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;border:1px solid #e0e7ff;margin-bottom:6px';
+    row.dataset.sid=s.id;
+    row.dataset.name=s.name.toLowerCase();
+    row.dataset.roll=s.roll_no;
+    var info=document.createElement('div');
+    info.innerHTML='<span style="font-weight:700">'+e(s.name)+'</span> <span style="font-size:.68rem;color:var(--muted)">'+e(s.class)+' রোল:'+s.roll_no+'</span>';
+    var btns=document.createElement('div');
+    btns.style.cssText='display:flex;gap:4px';
+    var editBtn=document.createElement('button');
+    editBtn.textContent='এডিট';
+    editBtn.style.cssText='font-size:.7rem;color:var(--g1);font-weight:700;padding:4px 9px;background:#eff6ff;border:none;border-radius:8px;cursor:pointer';
+    editBtn.onclick=function(){editSwitch(stuCache[s.id]);};
+    var delBtn=document.createElement('button');
+    delBtn.textContent='মুছুন';
+    delBtn.style.cssText='font-size:.7rem;color:var(--red);font-weight:700;padding:4px 9px;background:var(--rs);border:none;border-radius:8px;cursor:pointer';
+    delBtn.onclick=function(){delStu(s.id);};
+    btns.appendChild(editBtn);
+    btns.appendChild(delBtn);
+    row.appendChild(info);
+    row.appendChild(btns);
+    el.appendChild(row);
+  });
 }
 
 async function addSet(type){var el=g(type==='class'?'nCl':'nBt'),val=el.value.trim();if(!val)return;await SB.from('academy_settings').insert([{type:type,value:val}]);el.value='';syncDrops();}
@@ -2354,6 +2433,230 @@ function initExpenseTab(){
   g('exFMo').value=mo;
   g('exDate').value=now.toISOString().split('T')[0];
   loadExpenses();
+}
+
+
+/* DAILY TEST */
+var selDTId=null,selDTTotal=100;
+
+async function createDailyTest(){
+  var name=g('dtName').value.trim(),date=g('dtDate').value,total=parseFloat(g('dtTotal').value)||100;
+  var cls=g('dtCl').value,bat=g('dtBt').value;
+  if(!name||!date){alert('নাম ও তারিখ দিন!');return;}
+  var r=await SB.from('daily_tests').insert([{test_name:name,test_date:date,class:cls,batch:bat,total_marks:total}]).select();
+  if(r.error){alert('❌ '+r.error.message);return;}
+  g('dtName').value='';
+  alert('✅ টেস্ট তৈরি হয়েছে!');
+  loadDailyTests();
+}
+
+async function loadDailyTests(){
+  var cls=g('dtLCl').value,bat=g('dtLBt').value;
+  var q=SB.from('daily_tests').select('*');
+  if(cls!=='All')q=q.eq('class',cls);
+  if(bat!=='All')q=q.eq('batch',bat);
+  var r=await q.order('test_date',{ascending:false}).limit(50);
+  var el=g('dtList');
+  if(!r.data||!r.data.length){el.innerHTML='<p style="text-align:center;color:var(--muted);padding:20px">কোনো টেস্ট নেই</p>';g('dtEntry').classList.add('hidden');return;}
+  el.innerHTML='';
+  r.data.forEach(function(t){
+    var card=document.createElement('div');
+    card.className='exam-card';
+    card.innerHTML='<p style="font-weight:700;font-size:.85rem">'+e(t.test_name)+'</p><p style="font-size:.65rem;color:var(--muted);margin-top:3px">'+fd(t.test_date)+' | নম্বর: '+t.total_marks+'</p>';
+    card.onclick=function(){selectDT(t.id,t.test_name,t.total_marks,t.class,t.batch,t.test_date);};
+    el.appendChild(card);
+  });
+}
+
+async function selectDT(id,name,total,cls,bch,date){
+  selDTId=id;selDTTotal=total;
+  g('dtSelName').innerText=name;
+  g('dtSelInfo').innerText=fd(date)+' | '+cls+' | '+bch+' | সর্বোচ্চ: '+total;
+  show('dtEntry');
+  var q=SB.from('students').select('*');
+  if(cls!=='All')q=q.eq('class',cls);
+  if(bch!=='All')q=q.eq('batch',bch);
+  var r1=await q.order('roll_no').limit(1000);
+  var r2=await SB.from('daily_test_results').select('*').eq('test_id',id).limit(1000);
+  var el=g('dtMarksList');
+  el.innerHTML='';
+  (r1.data||[]).forEach(function(s){
+    var res=r2.data&&r2.data.find(function(x){return x.student_id===s.id;});
+    var row=document.createElement('div');
+    row.className='sr fi';
+    row.style.cssText='flex-direction:row;align-items:center;gap:10px';
+    var info=document.createElement('div');
+    info.style.flex='1';
+    info.innerHTML='<p style="font-weight:700;font-size:.82rem">'+e(s.name)+'</p><p style="font-size:.6rem;color:var(--muted)">রোল:'+s.roll_no+'</p>';
+    var inp=document.createElement('input');
+    inp.type='number';inp.id='dtmk-'+s.id;inp.className='marks-inp';
+    inp.value=res?res.marks_obtained:'';inp.max=total;
+    var gr=document.createElement('div');
+    gr.id='dtgr-'+s.id;
+    gr.style.cssText='min-width:32px;text-align:center;font-size:.68rem;font-weight:700;color:#94a3b8';
+    gr.textContent=res?calcGrade((res.marks_obtained/total)*100).grade:'—';
+    inp.oninput=function(){
+      var v=parseFloat(inp.value);
+      gr.textContent=isNaN(v)?'—':calcGrade((v/total)*100).grade;
+    };
+    row.appendChild(info);row.appendChild(inp);row.appendChild(gr);
+    el.appendChild(row);
+  });
+  g('dtEntry').scrollIntoView({behavior:'smooth'});
+}
+
+async function saveDTMarks(){
+  if(!selDTId)return;
+  var recs=[];
+  g('dtMarksList').querySelectorAll('.marks-inp').forEach(function(inp){
+    var sid=parseInt(inp.id.replace('dtmk-',''));
+    var v=inp.value.trim();
+    if(v!=='')recs.push({test_id:selDTId,student_id:sid,marks_obtained:parseFloat(v)});
+  });
+  if(!recs.length){alert('কোনো নম্বর দেওয়া হয়নি!');return;}
+  var r=await SB.from('daily_test_results').upsert(recs,{onConflict:'test_id,student_id'});
+  if(r.error){alert('❌ '+r.error.message);return;}
+  alert('✅ '+recs.length+' জনের নম্বর সেভ হয়েছে!');
+  selectDT(selDTId,g('dtSelName').innerText,selDTTotal,'All','All',new Date().toISOString().split('T')[0]);
+}
+
+async function loadDTSummary(){
+  var mo=g('dtMo').value,cls=g('dtSCl').value,bat=g('dtSBt').value;
+  if(!mo){alert('মাস বেছে নিন!');return;}
+  var from=mo+'-01';
+  var d=new Date(mo+'-01');d.setMonth(d.getMonth()+1);d.setDate(0);
+  var to=mo+'-'+d.getDate();
+  var el=g('dtSummary');
+  el.innerHTML='<div class="sk" style="height:50px;width:100%"></div>';
+  // Load tests for this month+class+batch
+  var q=SB.from('daily_tests').select('*').gte('test_date',from).lte('test_date',to);
+  if(cls!=='All')q=q.eq('class',cls);
+  if(bat!=='All')q=q.eq('batch',bat);
+  var r1=await q.order('test_date').limit(200);
+  if(!r1.data||!r1.data.length){el.innerHTML='<p style="text-align:center;color:var(--muted);padding:20px">এই মাসে কোনো টেস্ট নেই</p>';return;}
+  var testIds=r1.data.map(function(t){return t.id;});
+  // Load all results
+  var r2=await SB.from('daily_test_results').select('*').in('test_id',testIds).limit(2000);
+  // Load students
+  var sq=SB.from('students').select('*');
+  if(cls!=='All')sq=sq.eq('class',cls);
+  if(bat!=='All')sq=sq.eq('batch',bat);
+  var r3=await sq.order('roll_no').limit(1000);
+  if(!r3.data||!r3.data.length){el.innerHTML='<p style="text-align:center;color:var(--muted);padding:20px">কোনো শিক্ষার্থী নেই</p>';return;}
+  // Build summary per student
+  var stuMap={};
+  r3.data.forEach(function(s){stuMap[s.id]={name:s.name,roll:s.roll_no,total:0,count:0,tests:{}};});
+  (r2.data||[]).forEach(function(res){
+    if(stuMap[res.student_id]&&res.marks_obtained!==null){
+      stuMap[res.student_id].total+=res.marks_obtained;
+      stuMap[res.student_id].count+=1;
+      stuMap[res.student_id].tests[res.test_id]=res.marks_obtained;
+    }
+  });
+  // Sort by total desc
+  var rows=Object.values(stuMap).sort(function(a,b){return b.total-a.total;});
+  rows.forEach(function(r,i){r.merit=i+1;});
+  // Build HTML
+  var maxTotal=r1.data.reduce(function(s,t){return s+t.total_marks;},0);
+  var html='<p style="font-size:.72rem;color:var(--muted);margin-bottom:10px">মোট '+r1.data.length+'টি টেস্ট | সর্বোচ্চ মোট: '+maxTotal+'</p>';
+  html+='<div style="overflow-x:auto;border-radius:12px;border:1px solid #e0e7ff"><table class="rt"><thead><tr>';
+  html+='<th>মেরিট</th><th style="text-align:left">নাম</th><th>রোল</th>';
+  r1.data.forEach(function(t){html+='<th title="'+e(t.test_name)+'">'+fd(t.test_date).split('/')[0]+'/'+fd(t.test_date).split('/')[1]+'<br><span style="font-size:.6rem">'+t.total_marks+'</span></th>';});
+  html+='<th>মোট</th><th>মেরিট</th></tr></thead><tbody>';
+  rows.forEach(function(r){
+    var mc=r.merit<=3?['#fef9c3','#e0f2fe','#fce7f3'][r.merit-1]:'';
+    html+='<tr style="background:'+mc+'">';
+    html+='<td>'+r.merit+'</td><td style="text-align:left;font-weight:600">'+e(r.name)+'</td><td>'+r.roll+'</td>';
+    r1.data.forEach(function(t){
+      var m=r.tests[t.id];
+      html+='<td>'+(m!==undefined?m:'—')+'</td>';
+    });
+    html+='<td style="font-weight:800;color:var(--g1)">'+r.total+'</td><td style="font-weight:800">🏅'+r.merit+'</td></tr>';
+  });
+  html+='</tbody></table></div>';
+  el.innerHTML=html;
+  show('dtPrint');
+}
+
+async function printDTResult(){
+  if(!selDTId)return;
+  var name=g('dtSelName').innerText,info=g('dtSelInfo').innerText;
+  var r1=await SB.from('daily_test_results').select('marks_obtained,student_id').eq('test_id',selDTId).limit(1000);
+  var r2=await SB.from('students').select('id,name,roll_no').limit(1000);
+  if(!r1.data||!r1.data.length){alert('কোনো রেজাল্ট নেই!');return;}
+  var stuMap={};
+  (r2.data||[]).forEach(function(s){stuMap[s.id]=s;});
+  var rows=[];
+  r1.data.forEach(function(d){
+    if(d.marks_obtained===null)return;
+    var s=stuMap[d.student_id];if(!s)return;
+    var pct=Math.round((d.marks_obtained/selDTTotal)*100);
+    var gr=calcGrade(pct);
+    rows.push({name:s.name,roll:s.roll_no,marks:d.marks_obtained,pct:pct,grade:gr.grade});
+  });
+  rows.sort(function(a,b){return b.marks-a.marks;});
+  rows.forEach(function(r,i){r.merit=i+1;});
+  var today=new Date();
+  var dateStr=today.getDate()+'/'+(today.getMonth()+1)+'/'+today.getFullYear();
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;margin:0;padding:10mm}h1{text-align:center;font-size:18pt;margin:0;letter-spacing:2px}.sub{text-align:center;font-size:9pt;color:#555;margin:4px 0 10px;border-bottom:2px solid #10b981;padding-bottom:6px}table{width:100%;border-collapse:collapse;font-size:9pt}thead th{background:#10b981;color:#fff;padding:6px 8px;text-align:center;border:1px solid #059669}td{padding:5px 7px;border:1px solid #ddd;text-align:center}tr:nth-child(even) td{background:#f0fdf4}.name-cell{text-align:left;font-weight:600}.m1 td{background:#fef9c3!important}.m2 td{background:#e0f2fe!important}.m3 td{background:#fce7f3!important}.footer{margin-top:6mm;display:flex;justify-content:space-between;font-size:8pt;color:#666;border-top:1px solid #ddd;padding-top:3px}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>';
+  html+='<h1>UBIQUE</h1><div class="sub">'+e(name)+' — '+e(info)+'</div>';
+  html+='<table><thead><tr><th>মেরিট</th><th style="text-align:left">নাম</th><th>রোল</th><th>নম্বর</th><th>মোট</th><th>%</th><th>গ্রেড</th></tr></thead><tbody>';
+  html+=rows.map(function(r){
+    var mc=r.merit===1?'m1':r.merit===2?'m2':r.merit===3?'m3':'';
+    return'<tr class="'+mc+'"><td>'+r.merit+'</td><td class="name-cell">'+e(r.name)+'</td><td>'+r.roll+'</td><td style="font-weight:700">'+r.marks+'</td><td>'+selDTTotal+'</td><td>'+r.pct+'%</td><td><b>'+r.grade+'</b></td></tr>';
+  }).join('');
+  html+='</tbody></table><div class="footer"><span>তারিখ: '+dateStr+'</span><span>মোট: '+rows.length+'</span><span>UBIQUE</span></div><\/body><\/html>';
+  var w=window.open('','_blank','width=900,height=700');
+  w.document.write(html);w.document.close();
+  w.onload=function(){w.focus();w.print();};
+}
+
+async function printDTSummary(){
+  var mo=g('dtMo').value,cls=g('dtSCl').value,bat=g('dtSBt').value;
+  var from=mo+'-01';
+  var d=new Date(mo+'-01');d.setMonth(d.getMonth()+1);d.setDate(0);
+  var to=mo+'-'+d.getDate();
+  var q=SB.from('daily_tests').select('*').gte('test_date',from).lte('test_date',to);
+  if(cls!=='All')q=q.eq('class',cls);
+  if(bat!=='All')q=q.eq('batch',bat);
+  var r1=await q.order('test_date').limit(200);
+  if(!r1.data||!r1.data.length){alert('কোনো টেস্ট নেই!');return;}
+  var testIds=r1.data.map(function(t){return t.id;});
+  var r2=await SB.from('daily_test_results').select('*').in('test_id',testIds).limit(2000);
+  var sq=SB.from('students').select('*');
+  if(cls!=='All')sq=sq.eq('class',cls);
+  if(bat!=='All')sq=sq.eq('batch',bat);
+  var r3=await sq.order('roll_no').limit(1000);
+  var stuMap={};
+  r3.data.forEach(function(s){stuMap[s.id]={name:s.name,roll:s.roll_no,total:0,count:0,tests:{}};});
+  (r2.data||[]).forEach(function(res){
+    if(stuMap[res.student_id]&&res.marks_obtained!==null){
+      stuMap[res.student_id].total+=res.marks_obtained;
+      stuMap[res.student_id].count+=1;
+      stuMap[res.student_id].tests[res.test_id]=res.marks_obtained;
+    }
+  });
+  var rows=Object.values(stuMap).sort(function(a,b){return b.total-a.total;});
+  rows.forEach(function(r,i){r.merit=i+1;});
+  var maxTotal=r1.data.reduce(function(s,t){return s+t.total_marks;},0);
+  var moStr=mo;
+  var today=new Date();
+  var dateStr=today.getDate()+'/'+(today.getMonth()+1)+'/'+today.getFullYear();
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;margin:0;padding:8mm;font-size:8pt}h1{text-align:center;font-size:16pt;margin:0}.sub{text-align:center;font-size:8pt;color:#555;margin:3px 0 8px;border-bottom:2px solid #6366f1;padding-bottom:4px}table{width:100%;border-collapse:collapse;font-size:7.5pt}th{background:#6366f1;color:#fff;padding:5px 4px;border:1px solid #4f46e5;white-space:nowrap}td{padding:4px 4px;border:1px solid #ddd;text-align:center}tr:nth-child(even) td{background:#f8faff}.name-cell{text-align:left;font-weight:600}.m1 td{background:#fef9c3!important}.m2 td{background:#e0f2fe!important}.m3 td{background:#fce7f3!important}.footer{margin-top:5mm;display:flex;justify-content:space-between;font-size:7pt;color:#666;border-top:1px solid #ddd;padding-top:2px}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>';
+  html+='<h1>UBIQUE</h1><div class="sub">ডেইলি টেস্ট মাসিক মেরিট — '+moStr+' | মোট '+r1.data.length+'টি টেস্ট | সর্বোচ্চ: '+maxTotal+'</div>';
+  html+='<table><thead><tr><th>মেরিট</th><th style="text-align:left">নাম</th><th>রোল</th>';
+  r1.data.forEach(function(t){html+='<th>'+fd(t.test_date).split('/')[0]+'/'+fd(t.test_date).split('/')[1]+'<br>'+t.total_marks+'</th>';});
+  html+='<th>মোট</th></tr></thead><tbody>';
+  rows.forEach(function(r){
+    var mc=r.merit===1?'m1':r.merit===2?'m2':r.merit===3?'m3':'';
+    html+='<tr class="'+mc+'"><td>'+r.merit+'</td><td class="name-cell">'+e(r.name)+'</td><td>'+r.roll+'</td>';
+    r1.data.forEach(function(t){html+='<td>'+(r.tests[t.id]!==undefined?r.tests[t.id]:'—')+'</td>';});
+    html+='<td style="font-weight:800">'+r.total+'</td></tr>';
+  });
+  html+='</tbody></table><div class="footer"><span>'+dateStr+'</span><span>UBIQUE</span></div><\/body><\/html>';
+  var w=window.open('','_blank','width=1100,height=700');
+  w.document.write(html);w.document.close();
+  w.onload=function(){w.focus();w.print();};
 }
 
 </script>
