@@ -795,16 +795,10 @@ async function loadS(){var cls=gv('aCl'),bch=gv('aBt'),sn=gv('aSN').toLowerCase(
 var dueM=getDueMonths(s.id);return'<div class="sr fi'+(hn?' hn':'')+'"><div class="sr-top"><div style="flex:1;min-width:0;cursor:pointer" onclick="openPM('+s.id+')"><p style="font-weight:700;color:var(--ink2);font-size:.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+e(s.name)+(hn?' ⚠️':'')+(totalAbsMap2[s.id]>0?' <span style="font-size:.75rem;font-weight:800;color:'+(totalAbsMap2[s.id]>5?'#dc2626':'#16a34a')+'">('+(totalAbsMap2[s.id]||0)+')</span>':'')+'</p><p style="font-size:.63rem;color:var(--muted);margin-top:1px">রোল:'+s.roll_no+' | '+e(s.class)+' | '+e(s.batch||'')+' '+getDueTag(s.id)+'</p>'+(dueM.length?'<div class="due-months-bar">'+dueM.map(function(m){return'<span class="due-month-chip">'+MONTH_BN[m]+'</span>';}).join('')+'</div>':'')+'</div><div style="display:flex;gap:4px"><button id="p-'+s.id+'" onclick="mAtt(\''+s.id+'\',\'Present\')" class="ab pb'+(pA?' on':'')+'">P</button><button id="a-'+s.id+'" onclick="mAtt(\''+s.id+'\',\'Absent\')" class="ab xb'+(aA?' on':'')+'">A</button></div></div><div class="sr-bot"><span style="font-size:.6rem;color:#94a3b8;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+e(s.phone||'')+'</span><div style="display:flex;align-items:center;gap:4px"><span style="font-size:.55rem;font-weight:700;color:#94a3b8">HW</span><button id="y-'+s.id+'" onclick="mHw(\''+s.id+'\',\'Yes\')" class="ab yb'+(yA?' on':'')+'">Y</button><button id="n-'+s.id+'" onclick="mHw(\''+s.id+'\',\'No\')" class="ab nb'+(nA?' on':'')+'">N</button></div></div></div>';}).join('');g('cP').innerText=pC;g('cA').innerText=aC;}
 function mAtt(id,s){AD[id]=s;g('p-'+id).className='ab pb'+(s==='Present'?' on':'');g('a-'+id).className='ab xb'+(s==='Absent'?' on':'');}
 function mHw(id,s){HD[id]=s;g('y-'+id).className='ab yb'+(s==='Yes'?' on':'');g('n-'+id).className='ab nb'+(s==='No'?' on':'');}
-async function subAtt(){var today=new Date().toISOString().split('T')[0];var ids=[...new Set([...Object.keys(AD),...Object.keys(HD)])];if(!ids.length){alert('মার্ক করুন!');return;}var recs=ids.map(function(id){return{student_id:parseInt(id,10),attendance_date:today,status:AD[id]||'Absent',homework_status:HD[id]||null};});if(!isOnline){
-    // Save to offline queue
-    addToQueue(recs, today);
-    alert('📵 অফলাইনে সেভ হয়েছে! ইন্টারনেট ফিরলে অটো সিঙ্ক হবে।');
-    AD={};HD={};loadS();
-  } else {
-    var r=await SB.from('attendance').upsert(recs,{onConflict:'student_id,attendance_date'});
-    if(r.error)alert(r.error.message);
-    else{alert('✅ সেভ!');AD={};HD={};loadS();}
-  }
+async function subAtt(){var today=new Date().toISOString().split('T')[0];var ids=[...new Set([...Object.keys(AD),...Object.keys(HD)])];if(!ids.length){alert('মার্ক করুন!');return;}var recs=ids.map(function(id){return{student_id:parseInt(id,10),attendance_date:today,status:AD[id]||'Absent',homework_status:HD[id]||null};});
+  var r=await SB.from('attendance').upsert(recs,{onConflict:'student_id,attendance_date'});
+  if(r.error)alert(r.error.message);
+  else{alert('✅ সেভ!');AD={};HD={};loadS();}
 }
 async function resetE(){g('eId').value='';g('eNm').value='';g('eRl').value='';g('ePh').value='';g('eT').innerText='👤 ভর্তি';hide('eCnl');var a=g('eAdm');if(a)a.selectedIndex=new Date().getMonth()+1;}
 function editStu(s){g('eId').value=s.id;g('eNm').value=s.name;g('eRl').value=s.roll_no;g('ePh').value=s.phone||'';g('eT').innerText='তথ্য সম্পাদনা';show('eCnl');openEF();setTimeout(function(){var c=g('eCl'),b=g('eBt'),a=g('eAdm');for(var i=0;i<c.options.length;i++)if(c.options[i].value===s.class)c.options[i].selected=true;for(var i=0;i<b.options.length;i++)if(b.options[i].value===s.batch)b.options[i].selected=true;if(a&&s.admission_month)for(var i=0;i<a.options.length;i++)if(a.options[i].value===s.admission_month)a.options[i].selected=true;},60);g('eNm').focus();}
