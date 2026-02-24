@@ -2766,7 +2766,7 @@ async function saveOnlineClass(){
   if(!title||!url){alert('শিরোনাম ও লিংক দিন!');return;}
   var vid=getVideoEmbed(url);
   if(!vid){alert('❌ সঠিক YouTube বা Google Drive লিংক দিন!');return;}
-  var r=await SB.from('online_classes').insert([{title:title,description:desc||null,youtube_url:vid.type+':'+vid.id,class:cls,batch:bat}]);
+  var r=await SB.from('online_classes').insert([{title:title,description:desc||null,youtube_url:vid.type+':'+vid.id,class:cls==='All'?null:cls,batch:bat==='All'?null:bat}]);
   if(r.error){alert('❌ '+r.error.message);return;}
   g('ocTitle').value='';g('ocDesc').value='';g('ocUrl').value='';
   alert('✅ ভিডিও যোগ হয়েছে!');
@@ -2776,8 +2776,8 @@ async function saveOnlineClass(){
 async function loadOnlineClasses(){
   var cls=g('ocFCl').value,bat=g('ocFBt').value;
   var q=SB.from('online_classes').select('*');
-  if(cls!=='All')q=q.eq('class',cls);
-  if(bat!=='All')q=q.eq('batch',bat);
+  if(cls&&cls!=='All')q=q.eq('class',cls);
+  if(bat&&bat!=='All')q=q.eq('batch',bat);
   var r=await q.order('created_at',{ascending:false}).limit(100);
   var el=g('ocList');
   if(!r.data||!r.data.length){
@@ -2845,9 +2845,10 @@ async function deleteOnlineClass(id,card){
 
 
 async function loadStuOnline(cls,bat){
-  var q=SB.from('online_classes').select('*');
-  if(cls&&cls!=='All')q=q.eq('class',cls);
-  var r=await q.order('created_at',{ascending:false}).limit(20);
+  // Fetch videos for this class OR 'All' class
+  var r=await SB.from('online_classes').select('*')
+    .or('class.eq.'+cls+',class.eq.All')
+    .order('created_at',{ascending:false}).limit(50);
   var el=g('sOcList');
   if(!el)return;
   if(!r.data||!r.data.length){
