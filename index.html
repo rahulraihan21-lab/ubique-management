@@ -245,6 +245,7 @@ textarea.inp{resize:none}
     <button onclick="gTab('lectureplan')" class="dt" id="d-lectureplan">📚 লেকচার</button>
     <button onclick="gTab('enroll')" class="dt" id="d-enroll">📤 বাল্ক ভর্তি</button>
     <button onclick="gTab('expense');initExpenseTab()" class="dt" id="d-expense">💸 খরচ</button>
+    <button onclick="gTab('notification')" class="dt" id="d-notification">🔔 নোটিফিকেশন</button>
     <button onclick="gTab('dailytest')" class="dt" id="d-dailytest">📝 ডেইলি টেস্ট</button>
     <button onclick="gTab('online')" class="dt" id="d-online">🎥 অনলাইন ক্লাস</button>
     <button onclick="gTab('settings')" class="dt" id="d-settings">⚙️</button>
@@ -261,7 +262,7 @@ textarea.inp{resize:none}
   </div>
 
   <!-- DAILY -->
-  <section id="sec-daily"><div class="dg"><div class="card" style="padding:18px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><div style="display:flex;align-items:center;gap:8px"><h2 style="font-family:'Sora',sans-serif;font-size:.9rem;font-weight:700;color:var(--ink2)">📋 আজকের হাজিরা</h2><button id="slToggle" onclick="toggleSL()" style="background:#f1f5f9;border:none;padding:3px 9px;border-radius:8px;font-size:.7rem;font-weight:700;color:var(--muted);cursor:pointer">▲ লুকান</button></div><button onclick="openEF()" style="background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;border:none;padding:7px 13px;border-radius:10px;font-family:'Hind Siliguri',sans-serif;font-weight:700;font-size:.76rem;cursor:pointer;box-shadow:0 3px 10px rgba(99,102,241,.28)">➕ নতুন ভর্তি</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><select id="aCl" onchange="loadS()" class="inp dynC"></select><select id="aBt" onchange="loadS()" class="inp dynB"></select></div><div style="margin-bottom:13px"><input type="text" id="aSN" oninput="loadS()" placeholder="🔍 নাম বা রোল নম্বর..." class="inp" style="width:100%;box-sizing:border-box"></div><div id="slBody"><div id="SL" style="display:flex;flex-direction:column;gap:7px;min-height:80px"></div><div style="display:flex;gap:8px;margin-top:16px">
+  <section id="sec-daily"><div class="dg"><div class="card" style="padding:18px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><div style="display:flex;align-items:center;gap:8px"><h2 style="font-family:'Sora',sans-serif;font-size:.9rem;font-weight:700;color:var(--ink2)">📋 আজকের হাজিরা</h2><button id="slToggle" onclick="toggleSL()" style="background:#f1f5f9;border:none;padding:3px 9px;border-radius:8px;font-size:.7rem;font-weight:700;color:var(--muted);cursor:pointer">▲ লুকান</button></div><button onclick="openEF()" style="background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;border:none;padding:7px 13px;border-radius:10px;font-family:'Hind Siliguri',sans-serif;font-weight:700;font-size:.76rem;cursor:pointer;box-shadow:0 3px 10px rgba(99,102,241,.28)">➕ নতুন ভর্তি</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><select id="aCl" onchange="onAClChange()" class="inp dynC"></select><select id="aBt" onchange="loadS()" class="inp dynB"></select></div><div style="margin-bottom:13px"><input type="text" id="aSN" oninput="loadS()" placeholder="🔍 নাম বা রোল নম্বর..." class="inp" style="width:100%;box-sizing:border-box"></div><div id="slBody"><div id="SL" style="display:flex;flex-direction:column;gap:7px;min-height:80px"></div><div style="display:flex;gap:8px;margin-top:16px">
   <button onclick="subAtt()" class="btn btn-p" style="flex:1">✅ জমা দিন</button>
   <button onclick="openAttEdit()" class="btn btn-ghost" style="font-size:.75rem;padding:8px 12px">✏️ সংশোধন</button>
 </div></div></div></div></section>
@@ -285,7 +286,73 @@ textarea.inp{resize:none}
   <section id="sec-modeltest" class="hidden"><div style="display:flex;flex-direction:column;gap:16px"><div class="card" style="padding:18px"><h2 class="stitle">📄 মডেল টেস্ট তৈরি (একাধিক বিষয়)</h2><div style="display:flex;flex-direction:column;gap:10px;max-width:580px"><input type="text" id="mtName" placeholder="মডেল টেস্টের নাম" class="inp"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px"><input type="date" id="mtDate" class="inp"><select id="mtCl" class="inp dynC"></select><select id="mtBt" class="inp dynB"></select></div><div style="border:1.5px solid #e0e7ff;border-radius:13px;padding:13px"><p style="font-size:.72rem;font-weight:700;color:var(--ink2);margin-bottom:8px">📚 বিষয় যোগ করুন</p><div style="display:grid;grid-template-columns:1fr 80px auto;gap:6px;margin-bottom:10px"><input type="text" id="mtSubName" placeholder="বিষয়ের নাম" class="inp" style="padding:9px 12px"><input type="number" id="mtSubMax" placeholder="নম্বর" class="inp" style="padding:9px 8px;text-align:center" value="100"><button onclick="addMTSubject()" style="background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;border:none;padding:0 14px;border-radius:11px;font-size:1.1rem;cursor:pointer;font-weight:700">+</button></div><div id="mtSubjects" style="display:flex;flex-wrap:wrap;gap:6px"></div></div><button onclick="createModelTest()" class="btn btn-p">📄 তৈরি করুন</button></div></div><div class="card" style="padding:18px"><h2 class="stitle">📋 মডেল টেস্ট তালিকা</h2><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:13px"><select id="mtLCl" onchange="loadModelTests()" class="inp dynC"></select><select id="mtLBt" onchange="loadModelTests()" class="inp dynB"></select></div><div id="mtList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-bottom:16px"></div><div id="mtEntry" class="hidden"><div style="background:linear-gradient(135deg,#fef3c7,#fef9c3);border-radius:15px;padding:15px;margin-bottom:14px;border:1.5px solid #fde68a"><h3 id="mtSelName" style="font-size:1rem;font-weight:700;color:#92400e"></h3><p id="mtSelInfo" style="font-size:.68rem;color:var(--muted);margin-top:1px"></p><div id="mtSelSubs" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px"></div></div><div style="overflow-x:auto;border-radius:12px;border:1px solid #e0e7ff;margin-bottom:14px"><table class="rt" id="mtMarksTable"><thead id="mtMarksHead"></thead><tbody id="mtMarksBody"></tbody></table></div><div style="display:flex;gap:8px"><button onclick="saveMTMarks()" class="btn btn-p" style="flex:1">💾 সেভ</button><button onclick="printMTResult()" class="btn btn-g btn-sm">🖨️ প্রিন্ট</button><button onclick="printMTCards()" class="btn btn-o btn-sm">🎴 কার্ড</button></div></div></div><div class="card" style="padding:18px"><h2 class="stitle">📊 মডেল টেস্ট ফলাফল</h2><select id="mtResSelect" onchange="loadMTResults()" class="inp" style="max-width:320px;margin-bottom:13px"><option value="">-- বেছে নিন --</option></select><div id="mtResultStats" class="hidden" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px"></div><div style="overflow-x:auto;border-radius:12px;border:1px solid #e0e7ff"><table class="rt"><thead id="mtResHead"></thead><tbody id="mtResBody"></tbody></table></div></div></div></section>
 
   <!-- NOTICE -->
-  <section id="sec-notice" class="hidden"><div class="card" style="padding:18px"><h2 class="stitle">📢 নোটিস</h2><div style="max-width:520px;display:flex;flex-direction:column;gap:10px;margin-bottom:20px"><input type="text" id="nTi" placeholder="শিরোনাম" class="inp"><textarea id="nBo" placeholder="বিস্তারিত..." class="inp" style="height:96px"></textarea><button onclick="postNotice()" class="btn btn-p">🚀 পাবলিশ</button></div><div id="nL" style="display:flex;flex-direction:column;gap:8px"></div></div></section>
+  <section id="sec-notice" class="hidden" style="padding:15px;display:flex;flex-direction:column;gap:14px">
+
+    <!-- নোটিস পোস্ট -->
+    <div class="card" style="padding:18px">
+      <h2 class="stitle" style="margin-bottom:12px">📢 নোটিস</h2>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+        <input type="text" id="nTi" placeholder="শিরোনাম" class="inp">
+        <textarea id="nBo" placeholder="বিস্তারিত..." class="inp" style="height:96px"></textarea>
+        <button onclick="postNotice()" class="btn btn-p">🚀 পাবলিশ</button>
+      </div>
+      <div id="nL" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+
+    <!-- Push নোটিফিকেশন -->
+    <div class="card" style="padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h2 class="stitle" style="margin:0">🔔 Push নোটিফিকেশন</h2>
+        <button onclick="testOneSignal()" class="btn btn-ghost btn-sm" style="font-size:.65rem">🔍 Test</button>
+      </div>
+
+      <div style="margin-bottom:12px">
+        <p style="font-size:.75rem;font-weight:700;color:#4f46e5;margin-bottom:6px">📌 কাদের পাঠাবেন?</p>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          <button onclick="setNotifTarget('all')" id="ntAll" class="btn btn-p btn-sm">🌐 সবাইকে</button>
+          <button onclick="setNotifTarget('due')" id="ntDue" class="btn btn-ghost btn-sm">💰 বকেয়া যাদের</button>
+          <button onclick="setNotifTarget('class')" id="ntCls" class="btn btn-ghost btn-sm">🏫 ক্লাস/ব্যাচ</button>
+        </div>
+        <div id="ntClsFilter" class="hidden" style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap">
+          <select id="ntCl" class="inp dynC" onchange="onNtClChange()" style="flex:1"></select>
+          <select id="ntBt" class="inp dynB" style="flex:1"></select>
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px">
+        <p style="font-size:.75rem;font-weight:700;color:#4f46e5;margin-bottom:6px">📝 টেমপ্লেট</p>
+        <div style="display:flex;flex-wrap:wrap;gap:5px">
+          <button onclick="setNotifTemplate('fee')" class="btn btn-ghost btn-sm">💰 ফি বকেয়া</button>
+          <button onclick="setNotifTemplate('exam')" class="btn btn-ghost btn-sm">📝 পরীক্ষা</button>
+          <button onclick="setNotifTemplate('result')" class="btn btn-ghost btn-sm">📊 রেজাল্ট</button>
+          <button onclick="setNotifTemplate('notice')" class="btn btn-ghost btn-sm">📢 নোটিস</button>
+          <button onclick="setNotifTemplate('holiday')" class="btn btn-ghost btn-sm">🏖️ ছুটি</button>
+          <button onclick="setNotifTemplate('absent')" class="btn btn-ghost btn-sm">❌ অনুপস্থিত</button>
+        </div>
+      </div>
+
+      <input id="ntTitle" class="inp" placeholder="নোটিফিকেশনের শিরোনাম" style="margin-bottom:8px;width:100%;box-sizing:border-box">
+
+      <!-- Dynamic fee area -->
+      <div id="ntDynArea" style="display:none;background:#fef9f0;border:1.5px solid #fed7aa;border-radius:10px;padding:10px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <input type="checkbox" id="ntDynChk" style="accent-color:#6366f1;width:16px;height:16px">
+          <label for="ntDynChk" style="font-size:.72rem;font-weight:700;color:#9a3412">Dynamic — প্রত্যেককে আলাদা বার্তা (নাম, মাস উল্লেখ সহ)</label>
+        </div>
+        <button onclick="buildDueNotifications()" class="btn btn-ghost btn-sm" style="width:100%;margin-bottom:6px">👁️ প্রিভিউ দেখুন</button>
+        <div id="ntDynamicPreview"></div>
+      </div>
+
+      <textarea id="ntMsg" class="inp" placeholder="বার্তা লিখুন..." rows="3" style="width:100%;box-sizing:border-box;resize:vertical;margin-bottom:10px"></textarea>
+      <button onclick="sendNotification()" class="btn btn-p" style="width:100%;padding:12px">🚀 পাঠান</button>
+      <div id="ntStatus" style="margin-top:8px;font-size:.78rem;text-align:center"></div>
+    </div>
+
+    <!-- ইতিহাস -->
+    <div class="card" style="padding:16px">
+      <h2 class="stitle" style="margin-bottom:10px">📋 পাঠানো নোটিফিকেশন</h2>
+      <div id="ntHistory"><p style="text-align:center;color:var(--muted);font-size:.78rem;padding:16px">কোনো ইতিহাস নেই</p></div>
+    </div>
 
   <!-- REPORT -->
   <section id="sec-report" class="hidden"><div><div class="card" style="padding:18px;margin-bottom:16px">
@@ -760,7 +827,8 @@ async function sLogin(){
 }
 function logout(){localStorage.removeItem('ub');localStorage.removeItem('ub_tname');localStorage.removeItem('ub_tcls');localStorage.removeItem('ub_sid');location.reload();}
 
-async function showAdmin(){hide('lo');g('am').style.display='block';var cur=ALL_MONTHS[new Date().getMonth()];var opts=g('fMo').options;for(var i=0;i<opts.length;i++)if(opts[i].value===cur)opts[i].selected=true;var t=new Date();g('rMo').value=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0');g('drDate').value=t.toISOString().split('T')[0];g('exDate').value=t.toISOString().split('T')[0];g('mtDate').value=t.toISOString().split('T')[0];await loadFeeData();syncDrops();loadPubNotice();}
+async function showAdmin(){
+  setTimeout(savePlayerToken, 2000);hide('lo');g('am').style.display='block';var cur=ALL_MONTHS[new Date().getMonth()];var opts=g('fMo').options;for(var i=0;i<opts.length;i++)if(opts[i].value===cur)opts[i].selected=true;var t=new Date();g('rMo').value=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0');g('drDate').value=t.toISOString().split('T')[0];g('exDate').value=t.toISOString().split('T')[0];g('mtDate').value=t.toISOString().split('T')[0];await loadFeeData();syncDrops();loadPubNotice();}
 function showTeacher(){hide('lo');g('td').style.display='block';TAD={};THD={};loadTDrops();g('tRMo').value=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');}
 
 var TABS=['daily','fee','absent','homework','exam','modeltest','dailytest','notice','report','routine','lectureplan','settings','enroll','expense','online'];
@@ -774,7 +842,11 @@ g('m-more').classList.remove('on');
   var m=g('m-'+t);if(m)m.classList.add('on');
   // If tab is in more menu, highlight more button and the item
   g('sb').style.display=t==='daily'?'grid':'none';
-  if(t==='dailytest'){loadDailyTests();var now=new Date();g('dtDate').value=now.toISOString().split('T')[0];g('dtMo').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');syncDrops();}if(t==='online'){loadOnlineClasses();syncDrops();var isA=localStorage.getItem('ub')==='a';if(g('ocAdmin'))g('ocAdmin').style.display=isA?'block':'none';}if(t==='fee')loadFee();if(t==='absent')loadAb();if(t==='homework')loadHW();if(t==='notice')loadNotices();if(t==='exam')loadExams();if(t==='modeltest'){loadModelTests();loadMTDropdown();}if(t==='routine'){syncRtDrops();loadClassDaysSettings();loadRoutineNew();}if(t==='lectureplan')syncLPDrops();
+  if(t==='dailytest'){loadDailyTests();var now=new Date();g('dtDate').value=now.toISOString().split('T')[0];g('dtMo').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');syncDrops();}if(t==='online'){loadOnlineClasses();syncDrops();var isA=localStorage.getItem('ub')==='a';if(g('ocAdmin'))g('ocAdmin').style.display=isA?'block':'none';}if(t==='fee')loadFee();if(t==='absent')loadAb();if(t==='homework')loadHW();if(t==='notice'){
+    loadNotices();setNotifTarget('all');renderNotifHistory();
+    var ntcl=g('ntCl');if(ntcl){var sc=g('sCl');if(sc)ntcl.innerHTML=sc.innerHTML;}
+    var ntbt=g('ntBt');if(ntbt)ntbt.innerHTML='<option value="All">সব ব্যাচ</option>';
+  }if(t==='exam')loadExams();if(t==='modeltest'){loadModelTests();loadMTDropdown();}if(t==='routine'){syncRtDrops();loadClassDaysSettings();loadRoutineNew();}if(t==='lectureplan')syncLPDrops();
 }
 async function tTab(id){['ta','tp','te','tr'].forEach(function(x){hide(x);var b=g('tb-'+x);if(b)b.classList.remove('on');});show(id);var b=g('tb-'+id);if(b)b.classList.add('on');if(id==='tp')loadTP();if(id==='te')loadTExams();if(id==='tr')loadTR();}
 
@@ -826,7 +898,12 @@ async function subAtt(){
   });
   var r=await SB.from('attendance').upsert(recs,{onConflict:'student_id,attendance_date'});
   if(r.error)alert(r.error.message);
-  else{alert('✅ সেভ!');AD={};HD={};loadS();}
+  else{
+    alert('✅ সেভ!');
+    // Send absent notifications
+    sendAbsentNotifications(recs);
+    AD={};HD={};loadS();
+  }
 }
 async function resetE(){g('eId').value='';g('eNm').value='';g('eRl').value='';g('ePh').value='';g('eT').innerText='👤 ভর্তি';hide('eCnl');var a=g('eAdm');if(a)a.selectedIndex=new Date().getMonth()+1;}
 function editStu(s){g('eId').value=s.id;g('eNm').value=s.name;g('eRl').value=s.roll_no;g('ePh').value=s.phone||'';g('eT').innerText='তথ্য সম্পাদনা';show('eCnl');openEF();setTimeout(function(){var c=g('eCl'),b=g('eBt'),a=g('eAdm');for(var i=0;i<c.options.length;i++)if(c.options[i].value===s.class)c.options[i].selected=true;for(var i=0;i<b.options.length;i++)if(b.options[i].value===s.batch)b.options[i].selected=true;if(a&&s.admission_month)for(var i=0;i<a.options.length;i++)if(a.options[i].value===s.admission_month)a.options[i].selected=true;},60);g('eNm').focus();}
@@ -3316,6 +3393,299 @@ function printRoutineNew(){
 }
 
 
+
+// ═══════════════════════════════════════════
+// PUSH NOTIFICATION SYSTEM
+// ═══════════════════════════════════════════
+var notifTarget = 'all';
+var EDGE_NOTIF_URL = 'https://sfsrtozgfethgdfrmskk.supabase.co/functions/v1/send-notification';
+
+async function savePlayerToken(){
+  try {
+    // Median JavaScript Bridge - get OneSignal player ID
+    var pid = null;
+
+    // Method 1: Median bridge (primary)
+    if(window.median && median.onesignal && median.onesignal.userId){
+      try { pid = await median.onesignal.userId(); } catch(e){}
+    }
+    // Method 2: Median gonative bridge
+    if(!pid && window.gonative && gonative.onesignal && gonative.onesignal.userId){
+      try { pid = await gonative.onesignal.userId(); } catch(e){}
+    }
+    // Method 3: callback style
+    if(!pid){
+      pid = await new Promise(function(resolve){
+        setTimeout(function(){ resolve(null); }, 3000);
+        try {
+          if(window.median && median.onesignal){
+            median.onesignal.userId({callback: function(data){
+              resolve(data && (data.userId || data.onesignalUserId || data.player_id) || null);
+            }});
+          } else { resolve(null); }
+        } catch(e){ resolve(null); }
+      });
+    }
+
+    console.log('Median OneSignal player_id:', pid);
+    if(!pid){ console.log('No player_id from Median bridge'); return; }
+
+    var sid = localStorage.getItem('ub_sid');
+    var rec = { player_id: pid, updated_at: new Date().toISOString() };
+    if(sid) rec.student_id = parseInt(sid);
+    var r = await SB.from('push_tokens').upsert([rec], {onConflict:'player_id'});
+    if(!r.error) showToast('\u{1F514} Notification ready!');
+    console.log('Token saved:', pid);
+  } catch(err){ console.log('token save err:', err.message); }
+}
+
+async function testOneSignal(){
+  var msg = 'median.onesignal keys: ';
+  try { msg += JSON.stringify(Object.keys(median.onesignal))+'\n'; } catch(e){ msg += 'err\n'; }
+
+  // Try callback style
+  try {
+    median.onesignal.userId({
+      callback: function(data){
+        alert('Callback data: '+JSON.stringify(data));
+      }
+    });
+  } catch(e){ msg += 'callback err: '+e.message+'\n'; }
+
+  // Try direct
+  try {
+    var r = median.onesignal.userId();
+    msg += 'direct result: '+JSON.stringify(r)+'\n';
+  } catch(e){ msg += 'direct err: '+e.message+'\n'; }
+
+  msg += 'ub_sid: '+localStorage.getItem('ub_sid');
+  alert(msg);
+}
+
+function onAClChange(){
+  var cls = gv('aCl');
+  var abt = g('aBt');
+  if(!abt) return;
+  loadS();
+  abt.innerHTML = '<option value="All">লোড হচ্ছে...</option>';
+  var q = SB.from('students').select('batch');
+  if(cls && cls!=='All') q = q.eq('class', cls);
+  q.limit(1000).then(function(r){
+    var batches = [];
+    (r.data||[]).forEach(function(s){
+      if(s.batch && batches.indexOf(s.batch)===-1) batches.push(s.batch);
+    });
+    batches.sort();
+    abt.innerHTML = '<option value="All">সব ব্যাচ</option>'
+      + batches.map(function(b){ return '<option value="'+e(b)+'">'+e(b)+'</option>'; }).join('');
+  });
+}
+function onNtClChange(){
+  var cls = g('ntCl') ? g('ntCl').value : 'All';
+  var ntbt = g('ntBt');
+  if(!ntbt) return;
+  ntbt.innerHTML = '<option value="All">লোড হচ্ছে...</option>';
+  var q = SB.from('students').select('batch');
+  if(cls && cls!=='All') q = q.eq('class', cls);
+  q.limit(1000).then(function(r){
+    var batches = [];
+    (r.data||[]).forEach(function(s){
+      if(s.batch && batches.indexOf(s.batch)===-1) batches.push(s.batch);
+    });
+    batches.sort();
+    ntbt.innerHTML = '<option value="All">সব ব্যাচ</option>'
+      + batches.map(function(b){ return '<option value="'+e(b)+'">'+e(b)+'</option>'; }).join('');
+  });
+}
+function setNotifTarget(t){
+  notifTarget = t;
+  var ids = ['ntAll','ntDue','ntCls','ntBatch'];
+  ids.forEach(function(id){
+    var btn = g(id);
+    if(btn) btn.className = 'btn btn-ghost btn-sm';
+  });
+  var map = {all:'ntAll', due:'ntDue', class:'ntCls', batch:'ntBatch'};
+  if(map[t] && g(map[t])) g(map[t]).className = 'btn btn-p btn-sm';
+  var cf = g('ntClsFilter');
+  if(cf){
+    if(t==='class'||t==='batch'){ cf.style.display='flex'; show('ntClsFilter'); }
+    else hide('ntClsFilter');
+  }
+}
+
+function setNotifTemplate(type){
+  var templates = {
+    fee:     { title:'\u{1F4B0} \u09AB\u09BF \u09AC\u0995\u09C7\u09AF\u09BC\u09BE', msg:'\u0986\u09AA\u09A8\u09BE\u09B0 \u09AE\u09BE\u09B8\u09BF\u0995 \u09AC\u09C7\u09A4\u09A8 \u09AC\u0995\u09C7\u09AF\u09BC\u09BE \u0986\u099B\u09C7\u0964 \u0985\u09A8\u09C1\u0997\u09CD\u09B0\u09B9 \u0995\u09B0\u09C7 \u09A6\u09CD\u09B0\u09C1\u09A4 \u09AA\u09B0\u09BF\u09B6\u09CB\u09A7 \u0995\u09B0\u09C1\u09A8\u0964' },
+    exam:    { title:'\u{1F4DD} \u09AA\u09B0\u09C0\u0995\u09CD\u09B7\u09BE\u09B0 \u09A8\u09CB\u099F\u09BF\u09B8', msg:'\u0986\u0997\u09BE\u09AE\u09C0\u0995\u09BE\u09B2 \u09AA\u09B0\u09C0\u0995\u09CD\u09B7\u09BE \u0986\u099B\u09C7\u0964 \u09B8\u0995\u09B2\u0995\u09C7 \u09AF\u09A5\u09BE\u09B8\u09AE\u09AF\u09BC\u09C7 \u0989\u09AA\u09B8\u09CD\u09A5\u09BF\u09A4 \u09A5\u09BE\u0995\u09A4\u09C7 \u09B9\u09AC\u09C7\u0964' },
+    result:  { title:'\u{1F4CA} \u09B0\u09C7\u099C\u09BE\u09B2\u09CD\u099F \u09AA\u09CD\u09B0\u0995\u09BE\u09B6\u09BF\u09A4', msg:'\u09AA\u09B0\u09C0\u0995\u09CD\u09B7\u09BE\u09B0 \u09AB\u09B2\u09BE\u09AB\u09B2 \u09AA\u09CD\u09B0\u0995\u09BE\u09B6\u09BF\u09A4 \u09B9\u09AF\u09BC\u09C7\u099B\u09C7\u0964 \u0985\u09CD\u09AF\u09BE\u09AA \u09A5\u09C7\u0995\u09C7 \u09A6\u09C7\u0996\u09C1\u09A8\u0964' },
+    notice:  { title:'\u{1F4E2} \u0997\u09C1\u09B0\u09C1\u09A4\u09CD\u09AC\u09AA\u09C2\u09B0\u09CD\u09A3 \u09A8\u09CB\u099F\u09BF\u09B8', msg:'\u098F\u0995\u099F\u09BF \u0997\u09C1\u09B0\u09C1\u09A4\u09CD\u09AC\u09AA\u09C2\u09B0\u09CD\u09A3 \u09A8\u09CB\u099F\u09BF\u09B8 \u09AA\u09CD\u09B0\u0995\u09BE\u09B6\u09BF\u09A4 \u09B9\u09AF\u09BC\u09C7\u099B\u09C7\u0964 \u0985\u09CD\u09AF\u09BE\u09AA \u09A5\u09C7\u0995\u09C7 \u09AC\u09BF\u09B8\u09CD\u09A4\u09BE\u09B0\u09BF\u09A4 \u09A6\u09C7\u0996\u09C1\u09A8\u0964' },
+    holiday: { title:'\u{1F3D6}\uFE0F \u099B\u09C1\u099F\u09BF\u09B0 \u09A8\u09CB\u099F\u09BF\u09B8', msg:'\u0986\u0997\u09BE\u09AE\u09C0\u0995\u09BE\u09B2 \u099B\u09C1\u099F\u09BF \u09A5\u09BE\u0995\u09AC\u09C7\u0964 \u0995\u09CB\u09A8\u09CB \u0995\u09CD\u09B2\u09BE\u09B8 \u09B9\u09AC\u09C7 \u09A8\u09BE\u0964' },
+    absent:  { title:'\u274C \u0985\u09A8\u09C1\u09AA\u09B8\u09CD\u09A5\u09BF\u09A4\u09BF\u09B0 \u09A8\u09CB\u099F\u09BF\u09B8', msg:'\u0986\u099C \u0995\u09CD\u09B2\u09BE\u09B8\u09C7 \u0985\u09A8\u09C1\u09AA\u09B8\u09CD\u09A5\u09BF\u09A4 \u099B\u09BF\u09B2\u09C7\u09A8\u0964 \u09A8\u09BF\u09AF\u09BC\u09AE\u09BF\u09A4 \u0989\u09AA\u09B8\u09CD\u09A5\u09BF\u09A4 \u09A5\u09BE\u0995\u09C1\u09A8\u0964' }
+  };
+  var t = templates[type];
+  if(t && g('ntTitle') && g('ntMsg')){
+    g('ntTitle').value = t.title;
+    g('ntMsg').value = t.msg;
+  }
+  // Show dynamic area for fee template
+  var dynArea = g('ntDynArea');
+  if(dynArea) dynArea.style.display = (type==='fee') ? 'block' : 'none';
+}
+
+async function getTargetPlayerIds(){
+  var ids = [];
+  if(notifTarget === 'all'){
+    var r = await SB.from('push_tokens').select('player_id');
+    ids = (r.data||[]).map(function(x){return x.player_id;});
+  }
+  else if(notifTarget === 'due'){
+    await loadFeeData();
+    var r2 = await SB.from('students').select('id,admission_month');
+    if(r2.data) r2.data.forEach(function(s){stuCache[s.id]=stuCache[s.id]||s;});
+    var dueSids = (r2.data||[]).filter(function(s){
+      return getDueMonths(s.id).length > 0;
+    }).map(function(s){return s.id;});
+    if(dueSids.length){
+      var r3 = await SB.from('push_tokens').select('player_id').in('student_id', dueSids);
+      ids = (r3.data||[]).map(function(x){return x.player_id;});
+    }
+  }
+  else if(notifTarget === 'class' || notifTarget === 'batch'){
+    var cls = g('ntCl') ? g('ntCl').value : 'All';
+    var bt = g('ntBt') ? g('ntBt').value : 'All';
+    var q = SB.from('students').select('id');
+    if(cls && cls !== 'All') q = q.eq('class', cls);
+    if(bt && bt !== 'All') q = q.eq('batch', bt);
+    var r4 = await q;
+    var sids = (r4.data||[]).map(function(s){return s.id;});
+    if(sids.length){
+      var r5 = await SB.from('push_tokens').select('player_id').in('student_id', sids);
+      ids = (r5.data||[]).map(function(x){return x.player_id;});
+    }
+  }
+  return ids;
+}
+
+async function sendNotification(){
+  var title = g('ntTitle') ? g('ntTitle').value.trim() : '';
+  var msg = g('ntMsg') ? g('ntMsg').value.trim() : '';
+  if(!title||!msg){alert('\u09B6\u09BF\u09B0\u09CB\u09A8\u09BE\u09AE \u0993 \u09AC\u09BE\u09B0\u09CD\u09A4\u09BE \u09A6\u09BF\u09A8!');return;}
+  var st = g('ntStatus');
+  if(st) st.innerHTML='<span style="color:#6366f1">\u23F3 \u09AA\u09BE\u09A0\u09BE\u09A8\u09CB \u09B9\u099A\u09CD\u099B\u09C7...</span>';
+  var playerIds = await getTargetPlayerIds();
+  if(!playerIds.length){
+    if(st) st.innerHTML='<span style="color:#ef4444">\u274C \u0995\u09CB\u09A8\u09CB device \u09AA\u09BE\u0993\u09AF\u09BC\u09BE \u09AF\u09BE\u09AF\u09BC\u09A8\u09BF!</span>';
+    return;
+  }
+  try {
+    var res = await fetch(EDGE_NOTIF_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({playerIds:playerIds, title:title, message:msg})
+    });
+    var data = await res.json();
+    if(data.errors && data.errors.length){
+      if(st) st.innerHTML='<span style="color:#ef4444">\u274C Error: '+JSON.stringify(data.errors)+'</span>';
+    } else {
+      if(st) st.innerHTML='<span style="color:#22c55e">\u2705 '+playerIds.length+' \u099C\u09A8\u0995\u09C7 \u09AA\u09BE\u09A0\u09BE\u09A8\u09CB \u09B9\u09AF\u09BC\u09C7\u099B\u09C7!</span>';
+      // save history
+      var hist = [];
+      try { hist = JSON.parse(localStorage.getItem('ntHist')||'[]'); } catch(e){}
+      hist.unshift({title:title, msg:msg, count:playerIds.length, time:new Date().toLocaleString()});
+      if(hist.length>20) hist=hist.slice(0,20);
+      localStorage.setItem('ntHist', JSON.stringify(hist));
+      g('ntTitle').value=''; g('ntMsg').value='';
+      renderNotifHistory();
+    }
+  } catch(err){
+    if(st) st.innerHTML='<span style="color:#ef4444">\u274C '+err.message+'</span>';
+  }
+}
+
+function renderNotifHistory(){
+  var el = g('ntHistory');
+  if(!el) return;
+  var hist = [];
+  try { hist = JSON.parse(localStorage.getItem('ntHist')||'[]'); } catch(e){}
+  if(!hist.length){
+    el.innerHTML='<p style="text-align:center;color:var(--muted);font-size:.78rem;padding:16px">\u0995\u09CB\u09A8\u09CB \u0987\u09A4\u09BF\u09B9\u09BE\u09B8 \u09A8\u09C7\u0987</p>';
+    return;
+  }
+  el.innerHTML = hist.map(function(h){
+    return '<div style="background:#f8faff;border-radius:10px;padding:10px 12px;border-left:3px solid #6366f1;margin-bottom:6px">'
+      +'<div style="display:flex;justify-content:space-between">'
+      +'<strong style="font-size:.8rem">'+e(h.title)+'</strong>'
+      +'<span style="font-size:.65rem;color:var(--muted)">'+h.count+' \u099C\u09A8</span>'
+      +'</div>'
+      +'<p style="font-size:.72rem;color:#555;margin-top:3px">'+e(h.msg)+'</p>'
+      +'<p style="font-size:.62rem;color:var(--muted);margin-top:3px">'+h.time+'</p>'
+      +'</div>';
+  }).join('');
+}
+
+
+async function sendAbsentNotifications(recs){
+  try {
+    var absentIds = recs.filter(function(r){ return r.status==='Absent'; }).map(function(r){ return r.student_id; });
+    if(!absentIds.length) return;
+    // Get push tokens for absent students
+    var tkR = await SB.from('push_tokens').select('player_id,student_id').in('student_id', absentIds);
+    if(!tkR.data || !tkR.data.length) return;
+    // Send individual notifications
+    var today = new Date();
+    var dateStr = today.getDate()+'/'+(today.getMonth()+1)+'/'+today.getFullYear();
+    for(var i=0; i<tkR.data.length; i++){
+      var tk = tkR.data[i];
+      var stu = stuCache[tk.student_id];
+      var name = stu ? stu.name : 'আপনার সন্তান';
+      await fetch(EDGE_NOTIF_URL, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          playerIds: [tk.player_id],
+          title: '❌ অনুপস্থিতির নোটিস',
+          message: name+' আজ ('+dateStr+') ক্লাসে অনুপস্থিত ছিলেন।'
+        })
+      });
+    }
+    console.log('Absent notifications sent:', tkR.data.length);
+  } catch(err){ console.log('absent notif err:', err); }
+}
+
+
+async function buildDueNotifications(){
+  var prev = g('ntDynamicPreview');
+  if(prev) prev.innerHTML = '<p style="color:#6366f1;font-size:.75rem">⏳ লোড হচ্ছে...</p>';
+
+  await loadFeeData();
+  var cls = g('ntCl') ? g('ntCl').value : 'All';
+  var bt  = g('ntBt') ? g('ntBt').value : 'All';
+  var q = SB.from('students').select('*');
+  if(cls && cls!=='All') q = q.eq('class', cls);
+  if(bt  && bt !=='All') q = q.eq('batch', bt);
+  var r = await q.order('roll_no');
+  if(!r.data){ if(prev) prev.innerHTML='<p style="color:red">❌ লোড বিফল</p>'; return []; }
+  r.data.forEach(function(s){ stuCache[s.id]=s; });
+
+  var dueStudents = r.data.filter(function(s){ return getDueMonths(s.id).length > 0; });
+
+  if(prev){
+    if(!dueStudents.length){
+      prev.innerHTML = '<p style="color:#22c55e;font-size:.75rem">✅ বকেয়া কেউ নেই!</p>';
+    } else {
+      prev.innerHTML = '<p style="font-size:.72rem;font-weight:700;color:#4f46e5;margin-bottom:6px">'+dueStudents.length+' জনের বকেয়া আছে:</p>'
+        + dueStudents.slice(0,5).map(function(s){
+            var months = getDueMonths(s.id);
+            return '<div style="font-size:.68rem;padding:4px 8px;background:#fef2f2;border-radius:6px;margin-bottom:3px">'
+              +'<strong>'+e(s.name)+'</strong> — '+months.length+' মাস ('+months.join(', ')+')'
+              +'</div>';
+          }).join('')
+        + (dueStudents.length>5 ? '<p style="font-size:.65rem;color:var(--muted)">আরও '+(dueStudents.length-5)+' জন</p>' : '');
+    }
+  }
+  return dueStudents;
+}
+
 </script>
 <!-- ATTENDANCE EDIT MODAL -->
 <div id="aeModal" style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.55);align-items:flex-start;justify-content:center;padding:12px;overflow-y:auto">
@@ -3400,5 +3770,7 @@ function printRoutineNew(){
     <div id="cnHistory" style="padding:0 18px 16px;display:flex;flex-direction:column;gap:8px;max-height:40vh;overflow-y:auto"></div>
   </div>
 </div>
+
+
 </body>
 </html>
