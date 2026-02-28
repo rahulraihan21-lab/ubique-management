@@ -3403,12 +3403,15 @@ var EDGE_NOTIF_URL = 'https://sfsrtozgfethgdfrmskk.supabase.co/functions/v1/send
 async function savePlayerToken(){
   try {
     if(!window.median || !median.onesignal) return;
-    // Use median.onesignal.info to get player ID
     var pid = await new Promise(function(resolve){
       setTimeout(function(){ resolve(null); }, 5000);
       try {
         median.onesignal.info({callback: function(data){
-          var id = data && (data.userId||data.onesignalId||data.playerId||data.player_id||data.oneSignalUserId||data.id);
+          // subscription.id is the player ID in new OneSignal model
+          var id = null;
+          if(data && data.subscription && data.subscription.id) id = data.subscription.id;
+          else if(data && data.oneSignalId) id = data.oneSignalId;
+          else if(data && data.userId) id = data.userId;
           resolve(id||null);
         }});
       } catch(e){ resolve(null); }
@@ -3424,24 +3427,21 @@ async function savePlayerToken(){
 }
 
 async function testOneSignal(){
-  // Try median.onesignal.info callback
   try {
     median.onesignal.info({
       callback: function(data){
-        alert('info data: '+JSON.stringify(data));
-        // If we get player ID, save it
-        if(data && (data.userId||data.onesignalId||data.playerId||data.player_id)){
-          var pid = data.userId||data.onesignalId||data.playerId||data.player_id;
-          var sid = localStorage.getItem('ub_sid');
-          var rec = {player_id: pid, updated_at: new Date().toISOString()};
-          if(sid) rec.student_id = parseInt(sid);
-          SB.from('push_tokens').upsert([rec],{onConflict:'player_id'}).then(function(r){
-            alert('Saved! '+(r.error?r.error.message:'OK'));
-          });
-        }
+        var pid = null;
+        if(data && data.subscription && data.subscription.id) pid = data.subscription.id;
+        else if(data && data.oneSignalId) pid = data.oneSignalId;
+        var sid = localStorage.getItem('ub_sid');
+        var rec = {player_id: pid, updated_at: new Date().toISOString()};
+        if(sid) rec.student_id = parseInt(sid);
+        SB.from('push_tokens').upsert([rec],{onConflict:'player_id'}).then(function(r){
+          alert('player_id: '+pid+'\nSaved: '+(r.error?'❌ '+r.error.message:'✅ OK'));
+        });
       }
     });
-  } catch(e){ alert('info err: '+e.message); }
+  } catch(e){ alert('err: '+e.message); }
 }
 
 function onAClChange(){
