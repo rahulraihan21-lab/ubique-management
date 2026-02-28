@@ -301,7 +301,10 @@ textarea.inp{resize:none}
 
     <!-- Push নোটিফিকেশন -->
     <div class="card" style="padding:16px">
-      <h2 class="stitle" style="margin-bottom:12px">🔔 Push নোটিফিকেশন</h2>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h2 class="stitle" style="margin:0">🔔 Push নোটিফিকেশন</h2>
+        <button onclick="testOneSignal()" class="btn btn-ghost btn-sm" style="font-size:.65rem">🔍 Test</button>
+      </div>
 
       <div style="margin-bottom:12px">
         <p style="font-size:.75rem;font-weight:700;color:#4f46e5;margin-bottom:6px">📌 কাদের পাঠাবেন?</p>
@@ -3399,21 +3402,40 @@ var EDGE_NOTIF_URL = 'https://sfsrtozgfethgdfrmskk.supabase.co/functions/v1/send
 
 async function savePlayerToken(){
   try {
-    if(!window.OneSignal) return;
-    // Wait for OneSignal to be ready
-    await new Promise(function(res){ setTimeout(res, 1500); });
-    var pid = OneSignal.User.PushSubscription.id;
-    if(!pid){
-      // Try to get it via subscription
-      try { pid = await OneSignal.User.PushSubscription.optIn(); } catch(e){}
-    }
-    if(!pid) return;
+    // Wait for OneSignal SDK to initialize
+    await new Promise(function(res){ setTimeout(res, 3000); });
+    if(!window.OneSignal){ console.log('OneSignal not loaded'); return; }
+
+    // Try multiple ways to get player ID
+    var pid = null;
+    try { pid = OneSignal.User.PushSubscription.id; } catch(e){}
+    if(!pid){ try { pid = await OneSignal.getUserId(); } catch(e){} }
+    if(!pid){ try { pid = await OneSignal.getRegistrationId(); } catch(e){} }
+
+    console.log('OneSignal player_id:', pid);
+    if(!pid){ console.log('No player_id found'); return; }
+
     var sid = localStorage.getItem('ub_sid');
     var rec = { player_id: pid, updated_at: new Date().toISOString() };
     if(sid) rec.student_id = parseInt(sid);
-    await SB.from('push_tokens').upsert([rec], {onConflict:'player_id'});
-    console.log('Token saved:', pid, 'student:', sid);
-  } catch(err){ console.log('token save err:', err); }
+    var r = await SB.from('push_tokens').upsert([rec], {onConflict:'player_id'});
+    console.log('Token save result:', r);
+    if(!r.error) showToast('\u{1F514} Notification registered!');
+  } catch(err){ console.log('token save err:', err.message); }
+}
+
+async function testOneSignal(){
+  var msg = '';
+  msg += 'OneSignal: '+(window.OneSignal ? 'YES' : 'NO')+'\n';
+  if(window.OneSignal){
+    try { msg += 'PushSubscription.id: '+OneSignal.User.PushSubscription.id+'\n'; } catch(e){ msg += 'PushSubscription error: '+e.message+'\n'; }
+    try { 
+      var perm = await OneSignal.Notifications.permission;
+      msg += 'Permission: '+perm+'\n'; 
+    } catch(e){ msg += 'Permission error: '+e.message+'\n'; }
+  }
+  msg += 'ub_sid: '+localStorage.getItem('ub_sid');
+  alert(msg);
 }
 
 function onAClChange(){
