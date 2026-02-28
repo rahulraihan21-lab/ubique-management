@@ -3402,64 +3402,46 @@ var EDGE_NOTIF_URL = 'https://sfsrtozgfethgdfrmskk.supabase.co/functions/v1/send
 
 async function savePlayerToken(){
   try {
-    // Median JavaScript Bridge - get OneSignal player ID
-    var pid = null;
-
-    // Method 1: Median bridge (primary)
-    if(window.median && median.onesignal && median.onesignal.userId){
-      try { pid = await median.onesignal.userId(); } catch(e){}
-    }
-    // Method 2: Median gonative bridge
-    if(!pid && window.gonative && gonative.onesignal && gonative.onesignal.userId){
-      try { pid = await gonative.onesignal.userId(); } catch(e){}
-    }
-    // Method 3: callback style
-    if(!pid){
-      pid = await new Promise(function(resolve){
-        setTimeout(function(){ resolve(null); }, 3000);
-        try {
-          if(window.median && median.onesignal){
-            median.onesignal.userId({callback: function(data){
-              resolve(data && (data.userId || data.onesignalUserId || data.player_id) || null);
-            }});
-          } else { resolve(null); }
-        } catch(e){ resolve(null); }
-      });
-    }
-
-    console.log('Median OneSignal player_id:', pid);
-    if(!pid){ console.log('No player_id from Median bridge'); return; }
-
+    if(!window.median || !median.onesignal) return;
+    // Use median.onesignal.info to get player ID
+    var pid = await new Promise(function(resolve){
+      setTimeout(function(){ resolve(null); }, 5000);
+      try {
+        median.onesignal.info({callback: function(data){
+          var id = data && (data.userId||data.onesignalId||data.playerId||data.player_id||data.oneSignalUserId||data.id);
+          resolve(id||null);
+        }});
+      } catch(e){ resolve(null); }
+    });
+    if(!pid) return;
     var sid = localStorage.getItem('ub_sid');
-    var rec = { player_id: pid, updated_at: new Date().toISOString() };
+    var rec = {player_id: pid, updated_at: new Date().toISOString()};
     if(sid) rec.student_id = parseInt(sid);
-    var r = await SB.from('push_tokens').upsert([rec], {onConflict:'player_id'});
+    var r = await SB.from('push_tokens').upsert([rec],{onConflict:'player_id'});
     if(!r.error) showToast('\u{1F514} Notification ready!');
     console.log('Token saved:', pid);
   } catch(err){ console.log('token save err:', err.message); }
 }
 
 async function testOneSignal(){
-  var msg = 'median.onesignal keys: ';
-  try { msg += JSON.stringify(Object.keys(median.onesignal))+'\n'; } catch(e){ msg += 'err\n'; }
-
-  // Try callback style
+  // Try median.onesignal.info callback
   try {
-    median.onesignal.userId({
+    median.onesignal.info({
       callback: function(data){
-        alert('Callback data: '+JSON.stringify(data));
+        alert('info data: '+JSON.stringify(data));
+        // If we get player ID, save it
+        if(data && (data.userId||data.onesignalId||data.playerId||data.player_id)){
+          var pid = data.userId||data.onesignalId||data.playerId||data.player_id;
+          var sid = localStorage.getItem('ub_sid');
+          var rec = {player_id: pid, updated_at: new Date().toISOString()};
+          if(sid) rec.student_id = parseInt(sid);
+          SB.from('push_tokens').upsert([rec],{onConflict:'player_id'}).then(function(r){
+            alert('Saved! '+(r.error?r.error.message:'OK'));
+          });
+        }
       }
     });
-  } catch(e){ msg += 'callback err: '+e.message+'\n'; }
-
-  // Try direct
-  try {
-    var r = median.onesignal.userId();
-    msg += 'direct result: '+JSON.stringify(r)+'\n';
-  } catch(e){ msg += 'direct err: '+e.message+'\n'; }
-
-  msg += 'ub_sid: '+localStorage.getItem('ub_sid');
-  alert(msg);
+  } catch(e){ alert('info err: '+e.message); }
 }
 
 function onAClChange(){
