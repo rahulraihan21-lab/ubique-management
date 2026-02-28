@@ -3402,40 +3402,60 @@ var EDGE_NOTIF_URL = 'https://sfsrtozgfethgdfrmskk.supabase.co/functions/v1/send
 
 async function savePlayerToken(){
   try {
-    // Wait for OneSignal SDK to initialize
-    await new Promise(function(res){ setTimeout(res, 3000); });
-    if(!window.OneSignal){ console.log('OneSignal not loaded'); return; }
-
-    // Try multiple ways to get player ID
+    // Median JavaScript Bridge - get OneSignal player ID
     var pid = null;
-    try { pid = OneSignal.User.PushSubscription.id; } catch(e){}
-    if(!pid){ try { pid = await OneSignal.getUserId(); } catch(e){} }
-    if(!pid){ try { pid = await OneSignal.getRegistrationId(); } catch(e){} }
 
-    console.log('OneSignal player_id:', pid);
-    if(!pid){ console.log('No player_id found'); return; }
+    // Method 1: Median bridge (primary)
+    if(window.median && median.onesignal && median.onesignal.userId){
+      try { pid = await median.onesignal.userId(); } catch(e){}
+    }
+    // Method 2: Median gonative bridge
+    if(!pid && window.gonative && gonative.onesignal && gonative.onesignal.userId){
+      try { pid = await gonative.onesignal.userId(); } catch(e){}
+    }
+    // Method 3: callback style
+    if(!pid){
+      pid = await new Promise(function(resolve){
+        setTimeout(function(){ resolve(null); }, 3000);
+        try {
+          if(window.median && median.onesignal){
+            median.onesignal.userId({callback: function(data){
+              resolve(data && (data.userId || data.onesignalUserId || data.player_id) || null);
+            }});
+          } else { resolve(null); }
+        } catch(e){ resolve(null); }
+      });
+    }
+
+    console.log('Median OneSignal player_id:', pid);
+    if(!pid){ console.log('No player_id from Median bridge'); return; }
 
     var sid = localStorage.getItem('ub_sid');
     var rec = { player_id: pid, updated_at: new Date().toISOString() };
     if(sid) rec.student_id = parseInt(sid);
     var r = await SB.from('push_tokens').upsert([rec], {onConflict:'player_id'});
-    console.log('Token save result:', r);
-    if(!r.error) showToast('\u{1F514} Notification registered!');
+    if(!r.error) showToast('\u{1F514} Notification ready!');
+    console.log('Token saved:', pid);
   } catch(err){ console.log('token save err:', err.message); }
 }
 
 async function testOneSignal(){
   var msg = '';
-  msg += 'OneSignal: '+(window.OneSignal ? 'YES' : 'NO')+'\n';
-  if(window.OneSignal){
-    try { msg += 'PushSubscription.id: '+OneSignal.User.PushSubscription.id+'\n'; } catch(e){ msg += 'PushSubscription error: '+e.message+'\n'; }
-    try { 
-      var perm = await OneSignal.Notifications.permission;
-      msg += 'Permission: '+perm+'\n'; 
-    } catch(e){ msg += 'Permission error: '+e.message+'\n'; }
-  }
+  msg += 'median: '+(window.median ? 'YES' : 'NO')+'\n';
+  msg += 'median.onesignal: '+(window.median&&median.onesignal ? 'YES' : 'NO')+'\n';
+  msg += 'gonative: '+(window.gonative ? 'YES' : 'NO')+'\n';
+  // Try to get player ID
+  var pid = null;
+  try {
+    if(window.median && median.onesignal && median.onesignal.userId){
+      pid = await median.onesignal.userId();
+    }
+  } catch(e){ msg += 'Error: '+e.message+'\n'; }
+  msg += 'player_id: '+JSON.stringify(pid)+'\n';
   msg += 'ub_sid: '+localStorage.getItem('ub_sid');
   alert(msg);
+  // Also try to save
+  if(pid) savePlayerToken();
 }
 
 function onAClChange(){
