@@ -245,7 +245,6 @@ textarea.inp{resize:none}
     <button onclick="gTab('lectureplan')" class="dt" id="d-lectureplan">📚 লেকচার</button>
     <button onclick="gTab('enroll')" class="dt" id="d-enroll">📤 বাল্ক ভর্তি</button>
     <button onclick="gTab('expense');initExpenseTab()" class="dt" id="d-expense">💸 খরচ</button>
-    
     <button onclick="gTab('dailytest')" class="dt" id="d-dailytest">📝 ডেইলি টেস্ট</button>
     <button onclick="gTab('online')" class="dt" id="d-online">🎥 অনলাইন ক্লাস</button>
     <button onclick="gTab('settings')" class="dt" id="d-settings">⚙️</button>
@@ -262,7 +261,7 @@ textarea.inp{resize:none}
   </div>
 
   <!-- DAILY -->
-  <section id="sec-daily"><div class="dg"><div class="card" style="padding:18px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><div style="display:flex;align-items:center;gap:8px"><h2 style="font-family:'Sora',sans-serif;font-size:.9rem;font-weight:700;color:var(--ink2)">📋 আজকের হাজিরা</h2><button id="slToggle" onclick="toggleSL()" style="background:#f1f5f9;border:none;padding:3px 9px;border-radius:8px;font-size:.7rem;font-weight:700;color:var(--muted);cursor:pointer">▲ লুকান</button></div><button onclick="openEF()" style="background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;border:none;padding:7px 13px;border-radius:10px;font-family:'Hind Siliguri',sans-serif;font-weight:700;font-size:.76rem;cursor:pointer;box-shadow:0 3px 10px rgba(99,102,241,.28)">➕ নতুন ভর্তি</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><select id="aCl" onchange="onAClChange()" class="inp dynC"></select><select id="aBt" onchange="loadS()" class="inp dynB"></select></div><div style="margin-bottom:13px"><input type="text" id="aSN" oninput="loadS()" placeholder="🔍 নাম বা রোল নম্বর..." class="inp" style="width:100%;box-sizing:border-box"></div><div id="slBody"><div id="SL" style="display:flex;flex-direction:column;gap:7px;min-height:80px"></div><div style="display:flex;gap:8px;margin-top:16px">
+  <section id="sec-daily"><div class="dg"><div class="card" style="padding:18px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><div style="display:flex;align-items:center;gap:8px"><h2 style="font-family:'Sora',sans-serif;font-size:.9rem;font-weight:700;color:var(--ink2)">📋 আজকের হাজিরা</h2><button id="slToggle" onclick="toggleSL()" style="background:#f1f5f9;border:none;padding:3px 9px;border-radius:8px;font-size:.7rem;font-weight:700;color:var(--muted);cursor:pointer">▲ লুকান</button></div><button onclick="openEF()" style="background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;border:none;padding:7px 13px;border-radius:10px;font-family:'Hind Siliguri',sans-serif;font-weight:700;font-size:.76rem;cursor:pointer;box-shadow:0 3px 10px rgba(99,102,241,.28)">➕ নতুন ভর্তি</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><select id="aCl" onchange="onAClChange_att()" class="inp dynC"></select><select id="aBt" onchange="loadS()" class="inp dynB"></select></div><div style="margin-bottom:13px"><input type="text" id="aSN" oninput="loadS()" placeholder="🔍 নাম বা রোল নম্বর..." class="inp" style="width:100%;box-sizing:border-box"></div><div id="slBody"><div id="SL" style="display:flex;flex-direction:column;gap:7px;min-height:80px"></div><div style="display:flex;gap:8px;margin-top:16px">
   <button onclick="subAtt()" class="btn btn-p" style="flex:1">✅ জমা দিন</button>
   <button onclick="openAttEdit()" class="btn btn-ghost" style="font-size:.75rem;padding:8px 12px">✏️ সংশোধন</button>
 </div></div></div></div></section>
@@ -313,9 +312,9 @@ textarea.inp{resize:none}
           <button onclick="setNotifTarget('due')" id="ntDue" class="btn btn-ghost btn-sm">💰 বকেয়া যাদের</button>
           <button onclick="setNotifTarget('class')" id="ntCls" class="btn btn-ghost btn-sm">🏫 ক্লাস/ব্যাচ</button>
         </div>
-        <div id="ntClsFilter" class="hidden" style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap">
+        <div id="ntClsFilter" class="hidden" style="gap:7px;margin-top:8px;flex-wrap:wrap">
           <select id="ntCl" class="inp dynC" onchange="onNtClChange()" style="flex:1"></select>
-          <select id="ntBt" class="inp dynB" style="flex:1"></select>
+          <select id="ntBt" class="inp" style="flex:1"><option value="All">সব ব্যাচ</option></select>
         </div>
       </div>
 
@@ -333,7 +332,6 @@ textarea.inp{resize:none}
 
       <input id="ntTitle" class="inp" placeholder="নোটিফিকেশনের শিরোনাম" style="margin-bottom:8px;width:100%;box-sizing:border-box">
 
-      <!-- Dynamic fee area -->
       <div id="ntDynArea" style="display:none;background:#fef9f0;border:1.5px solid #fed7aa;border-radius:10px;padding:10px;margin-bottom:8px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
           <input type="checkbox" id="ntDynChk" style="accent-color:#6366f1;width:16px;height:16px">
@@ -353,6 +351,8 @@ textarea.inp{resize:none}
       <h2 class="stitle" style="margin-bottom:10px">📋 পাঠানো নোটিফিকেশন</h2>
       <div id="ntHistory"><p style="text-align:center;color:var(--muted);font-size:.78rem;padding:16px">কোনো ইতিহাস নেই</p></div>
     </div>
+
+  </section>
 
   <!-- REPORT -->
   <section id="sec-report" class="hidden"><div><div class="card" style="padding:18px;margin-bottom:16px">
@@ -827,8 +827,7 @@ async function sLogin(){
 }
 function logout(){localStorage.removeItem('ub');localStorage.removeItem('ub_tname');localStorage.removeItem('ub_tcls');localStorage.removeItem('ub_sid');location.reload();}
 
-async function showAdmin(){
-  setTimeout(savePlayerToken, 2000);hide('lo');g('am').style.display='block';var cur=ALL_MONTHS[new Date().getMonth()];var opts=g('fMo').options;for(var i=0;i<opts.length;i++)if(opts[i].value===cur)opts[i].selected=true;var t=new Date();g('rMo').value=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0');g('drDate').value=t.toISOString().split('T')[0];g('exDate').value=t.toISOString().split('T')[0];g('mtDate').value=t.toISOString().split('T')[0];await loadFeeData();syncDrops();loadPubNotice();}
+async function showAdmin(){hide('lo');g('am').style.display='block';var cur=ALL_MONTHS[new Date().getMonth()];var opts=g('fMo').options;for(var i=0;i<opts.length;i++)if(opts[i].value===cur)opts[i].selected=true;var t=new Date();g('rMo').value=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0');g('drDate').value=t.toISOString().split('T')[0];g('exDate').value=t.toISOString().split('T')[0];g('mtDate').value=t.toISOString().split('T')[0];await loadFeeData();syncDrops();loadPubNotice();}
 function showTeacher(){hide('lo');g('td').style.display='block';TAD={};THD={};loadTDrops();g('tRMo').value=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');}
 
 var TABS=['daily','fee','absent','homework','exam','modeltest','dailytest','notice','report','routine','lectureplan','settings','enroll','expense','online'];
@@ -843,17 +842,11 @@ g('m-more').classList.remove('on');
   // If tab is in more menu, highlight more button and the item
   g('sb').style.display=t==='daily'?'grid':'none';
   if(t==='dailytest'){loadDailyTests();var now=new Date();g('dtDate').value=now.toISOString().split('T')[0];g('dtMo').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');syncDrops();}if(t==='online'){loadOnlineClasses();syncDrops();var isA=localStorage.getItem('ub')==='a';if(g('ocAdmin'))g('ocAdmin').style.display=isA?'block':'none';}if(t==='fee')loadFee();if(t==='absent')loadAb();if(t==='homework')loadHW();if(t==='notice'){
-    loadNotices();setNotifTarget('all');renderNotifHistory();
-    var ntcl=g('ntCl');if(ntcl){var sc=g('sCl');if(sc)ntcl.innerHTML=sc.innerHTML;}
-    var ntbt=g('ntBt');if(ntbt)ntbt.innerHTML='<option value="All">সব ব্যাচ</option>';
-  }if(t==='exam')loadExams();
-  if(t==='modeltest'){loadModelTests();loadMTDropdown();}
-  if(t==='routine'){syncRtDrops();loadClassDaysSettings();loadRoutineNew();}
-  if(t==='lectureplan')syncLPDrops();
-  if(t==='report'){loadDailyRep();loadRep();}
-  if(t==='enroll'){syncDrops();}
-  if(t==='expense'){initExpenseTab();}
-  if(t==='settings'){loadSetS();syncDrops();}
+    loadNotices();
+    try{setNotifTarget('all');}catch(e){}
+    try{renderNotifHistory();}catch(e){}
+    try{var ntcl=g('ntCl');if(ntcl){var sc=g('sCl');if(sc)ntcl.innerHTML=sc.innerHTML;}}catch(e){}
+  }if(t==='exam')loadExams();if(t==='modeltest'){loadModelTests();loadMTDropdown();}if(t==='routine'){syncRtDrops();loadClassDaysSettings();loadRoutineNew();}if(t==='lectureplan')syncLPDrops();
 }
 async function tTab(id){['ta','tp','te','tr'].forEach(function(x){hide(x);var b=g('tb-'+x);if(b)b.classList.remove('on');});show(id);var b=g('tb-'+id);if(b)b.classList.add('on');if(id==='tp')loadTP();if(id==='te')loadTExams();if(id==='tr')loadTR();}
 
@@ -905,12 +898,7 @@ async function subAtt(){
   });
   var r=await SB.from('attendance').upsert(recs,{onConflict:'student_id,attendance_date'});
   if(r.error)alert(r.error.message);
-  else{
-    alert('✅ সেভ!');
-    // Send absent notifications
-    sendAbsentNotifications(recs);
-    AD={};HD={};loadS();
-  }
+  else{alert('✅ সেভ!');try{sendAbsentNotifications(recs);}catch(e){}AD={};HD={};loadS();}
 }
 async function resetE(){g('eId').value='';g('eNm').value='';g('eRl').value='';g('ePh').value='';g('eT').innerText='👤 ভর্তি';hide('eCnl');var a=g('eAdm');if(a)a.selectedIndex=new Date().getMonth()+1;}
 function editStu(s){g('eId').value=s.id;g('eNm').value=s.name;g('eRl').value=s.roll_no;g('ePh').value=s.phone||'';g('eT').innerText='তথ্য সম্পাদনা';show('eCnl');openEF();setTimeout(function(){var c=g('eCl'),b=g('eBt'),a=g('eAdm');for(var i=0;i<c.options.length;i++)if(c.options[i].value===s.class)c.options[i].selected=true;for(var i=0;i<b.options.length;i++)if(b.options[i].value===s.batch)b.options[i].selected=true;if(a&&s.admission_month)for(var i=0;i<a.options.length;i++)if(a.options[i].value===s.admission_month)a.options[i].selected=true;},60);g('eNm').focus();}
@@ -3469,6 +3457,7 @@ function onAClChange(){
       + batches.map(function(b){ return '<option value="'+e(b)+'">'+e(b)+'</option>'; }).join('');
   });
 }
+
 function onNtClChange(){
   var cls = g('ntCl') ? g('ntCl').value : 'All';
   var ntbt = g('ntBt');
@@ -3486,20 +3475,22 @@ function onNtClChange(){
       + batches.map(function(b){ return '<option value="'+e(b)+'">'+e(b)+'</option>'; }).join('');
   });
 }
+
 function setNotifTarget(t){
   notifTarget = t;
-  var ids = ['ntAll','ntDue','ntCls','ntBatch'];
-  ids.forEach(function(id){
+  ['ntAll','ntDue','ntCls'].forEach(function(id){
     var btn = g(id);
     if(btn) btn.className = 'btn btn-ghost btn-sm';
   });
-  var map = {all:'ntAll', due:'ntDue', class:'ntCls', batch:'ntBatch'};
+  var map = {all:'ntAll', due:'ntDue', class:'ntCls'};
   if(map[t] && g(map[t])) g(map[t]).className = 'btn btn-p btn-sm';
   var cf = g('ntClsFilter');
-  if(cf){
-    if(t==='class'||t==='batch'){ cf.style.display='flex'; show('ntClsFilter'); }
-    else hide('ntClsFilter');
-  }
+  if(cf){ t==='class' ? show('ntClsFilter') : hide('ntClsFilter'); }
+  var dynArea = g('ntDynArea');
+  if(dynArea) dynArea.style.display = (t==='due') ? 'block' : 'none';
+  var prev = g('ntDynamicPreview');
+  if(prev) prev.innerHTML = '';
+  if(t==='class') onNtClChange();
 }
 
 function setNotifTemplate(type){
@@ -3612,7 +3603,6 @@ function renderNotifHistory(){
   }).join('');
 }
 
-
 async function sendAbsentNotifications(recs){
   try {
     var absentIds = recs.filter(function(r){ return r.status==='Absent'; }).map(function(r){ return r.student_id; });
@@ -3640,7 +3630,6 @@ async function sendAbsentNotifications(recs){
     console.log('Absent notifications sent:', tkR.data.length);
   } catch(err){ console.log('absent notif err:', err); }
 }
-
 
 async function buildDueNotifications(){
   var prev = g('ntDynamicPreview');
@@ -3673,6 +3662,35 @@ async function buildDueNotifications(){
     }
   }
   return dueStudents;
+}
+
+
+function saveNotifHistory(title, msg, count){
+  var hist = [];
+  try { hist = JSON.parse(localStorage.getItem('ntHist')||'[]'); } catch(e){}
+  hist.unshift({title:title, msg:msg, count:count, time:new Date().toLocaleString()});
+  if(hist.length>20) hist=hist.slice(0,20);
+  localStorage.setItem('ntHist', JSON.stringify(hist));
+  renderNotifHistory();
+}
+
+function onAClChange_att(){
+  var cls = g('aCl') ? g('aCl').value : 'All';
+  var abt = g('aBt');
+  if(!abt) return;
+  abt.innerHTML = '<option value="All">লোড হচ্ছে...</option>';
+  var q = SB.from('students').select('batch');
+  if(cls && cls!=='All') q = q.eq('class', cls);
+  q.limit(1000).then(function(r){
+    var batches = [];
+    (r.data||[]).forEach(function(s){
+      if(s.batch && batches.indexOf(s.batch)===-1) batches.push(s.batch);
+    });
+    batches.sort();
+    abt.innerHTML = '<option value="All">সব ব্যাচ</option>'
+      + batches.map(function(b){ return '<option value="'+e(b)+'">'+e(b)+'</option>'; }).join('');
+    loadS();
+  });
 }
 
 </script>
@@ -3759,7 +3777,5 @@ async function buildDueNotifications(){
     <div id="cnHistory" style="padding:0 18px 16px;display:flex;flex-direction:column;gap:8px;max-height:40vh;overflow-y:auto"></div>
   </div>
 </div>
-
-
 </body>
 </html>
