@@ -245,7 +245,7 @@ textarea.inp{resize:none}
     <button onclick="gTab('lectureplan')" class="dt" id="d-lectureplan">📚 লেকচার</button>
     <button onclick="gTab('enroll')" class="dt" id="d-enroll">📤 বাল্ক ভর্তি</button>
     <button onclick="gTab('expense');initExpenseTab()" class="dt" id="d-expense">💸 খরচ</button>
-    <button onclick="gTab('notification')" class="dt" id="d-notification">🔔 নোটিফিকেশন</button>
+    
     <button onclick="gTab('dailytest')" class="dt" id="d-dailytest">📝 ডেইলি টেস্ট</button>
     <button onclick="gTab('online')" class="dt" id="d-online">🎥 অনলাইন ক্লাস</button>
     <button onclick="gTab('settings')" class="dt" id="d-settings">⚙️</button>
@@ -846,7 +846,14 @@ g('m-more').classList.remove('on');
     loadNotices();setNotifTarget('all');renderNotifHistory();
     var ntcl=g('ntCl');if(ntcl){var sc=g('sCl');if(sc)ntcl.innerHTML=sc.innerHTML;}
     var ntbt=g('ntBt');if(ntbt)ntbt.innerHTML='<option value="All">সব ব্যাচ</option>';
-  }if(t==='exam')loadExams();if(t==='modeltest'){loadModelTests();loadMTDropdown();}if(t==='routine'){syncRtDrops();loadClassDaysSettings();loadRoutineNew();}if(t==='lectureplan')syncLPDrops();
+  }if(t==='exam')loadExams();
+  if(t==='modeltest'){loadModelTests();loadMTDropdown();}
+  if(t==='routine'){syncRtDrops();loadClassDaysSettings();loadRoutineNew();}
+  if(t==='lectureplan')syncLPDrops();
+  if(t==='report'){loadDailyRep();loadRep();}
+  if(t==='enroll'){syncDrops();}
+  if(t==='expense'){initExpenseTab();}
+  if(t==='settings'){loadSetS();syncDrops();}
 }
 async function tTab(id){['ta','tp','te','tr'].forEach(function(x){hide(x);var b=g('tb-'+x);if(b)b.classList.remove('on');});show(id);var b=g('tb-'+id);if(b)b.classList.add('on');if(id==='tp')loadTP();if(id==='te')loadTExams();if(id==='tr')loadTR();}
 
