@@ -3547,38 +3547,36 @@ async function getTargetPlayerIds(){
 }
 
 async function sendNotification(){
-  var title = g('ntTitle') ? g('ntTitle').value.trim() : '';
-  var msg = g('ntMsg') ? g('ntMsg').value.trim() : '';
+  var title=g('ntTitle')?g('ntTitle').value.trim():'';
+  var msg=g('ntMsg')?g('ntMsg').value.trim():'';
   if(!title||!msg){alert('\u09B6\u09BF\u09B0\u09CB\u09A8\u09BE\u09AE \u0993 \u09AC\u09BE\u09B0\u09CD\u09A4\u09BE \u09A6\u09BF\u09A8!');return;}
-  var st = g('ntStatus');
-  if(st) st.innerHTML='<span style="color:#6366f1">\u23F3 \u09AA\u09BE\u09A0\u09BE\u09A8\u09CB \u09B9\u099A\u09CD\u099B\u09C7...</span>';
-  var playerIds = await getTargetPlayerIds();
-  if(!playerIds.length){
-    if(st) st.innerHTML='<span style="color:#ef4444">\u274C \u0995\u09CB\u09A8\u09CB device \u09AA\u09BE\u0993\u09AF\u09BC\u09BE \u09AF\u09BE\u09AF\u09BC\u09A8\u09BF!</span>';
-    return;
-  }
-  try {
-    var res = await fetch(EDGE_NOTIF_URL, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({playerIds:playerIds, title:title, message:msg})
-    });
-    var data = await res.json();
-    if(data.errors && data.errors.length){
-      if(st) st.innerHTML='<span style="color:#ef4444">\u274C Error: '+JSON.stringify(data.errors)+'</span>';
+  var st=g('ntStatus');
+  if(st)st.innerHTML='<span style="color:#6366f1">\u23F3 \u09AA\u09BE\u09A0\u09BE\u09A8\u09CB \u09B9\u099A\u09CD\u099B\u09C7...</span>';
+  try{
+    var body;
+    if(notifTarget==='all'){
+      body={app_id:'1e13bac4-ddf2-4e76-950e-cee7e700f96b',included_segments:['Total Subscriptions'],headings:{en:title},contents:{en:msg}};
     } else {
-      if(st) st.innerHTML='<span style="color:#22c55e">\u2705 '+playerIds.length+' \u099C\u09A8\u0995\u09C7 \u09AA\u09BE\u09A0\u09BE\u09A8\u09CB \u09B9\u09AF\u09BC\u09C7\u099B\u09C7!</span>';
-      // save history
-      var hist = [];
-      try { hist = JSON.parse(localStorage.getItem('ntHist')||'[]'); } catch(e){}
-      hist.unshift({title:title, msg:msg, count:playerIds.length, time:new Date().toLocaleString()});
-      if(hist.length>20) hist=hist.slice(0,20);
-      localStorage.setItem('ntHist', JSON.stringify(hist));
-      g('ntTitle').value=''; g('ntMsg').value='';
-      renderNotifHistory();
+      var playerIds=await getTargetPlayerIds();
+      if(!playerIds.length){if(st)st.innerHTML='<span style="color:#ef4444">\u274C \u0995\u09CB\u09A8\u09CB device \u09AA\u09BE\u0993\u09AF\u09BC\u09BE \u09AF\u09BE\u09AF\u09BC\u09A8\u09BF!</span>';return;}
+      body={app_id:'1e13bac4-ddf2-4e76-950e-cee7e700f96b',include_subscription_ids:playerIds,headings:{en:title},contents:{en:msg}};
     }
-  } catch(err){
-    if(st) st.innerHTML='<span style="color:#ef4444">\u274C '+err.message+'</span>';
+    var res=await fetch('https://onesignal.com/api/v1/notifications',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Basic os_v2_app_dyj3vrg56jhhnfioz3t6oahznmkq4henqehujw4d7zizshz7voyl3r7uljulodfej7remabsvbyywdcvz3t7f6hgb2ga35ue5uvwbyy'},
+      body:JSON.stringify(body)
+    });
+    var data=await res.json();
+    var cnt=data.recipients||'?';
+    if(st)st.innerHTML='<span style="color:#22c55e">\u2705 '+cnt+' \u099C\u09A8\u0995\u09C7 \u09AA\u09BE\u09A0\u09BE\u09A8\u09CB \u09B9\u09AF\u09BC\u09C7\u099B\u09C7!</span>';
+    var hist=[];try{hist=JSON.parse(localStorage.getItem('ntHist')||'[]');}catch(e){}
+    hist.unshift({title:title,msg:msg,count:cnt,time:new Date().toLocaleString()});
+    if(hist.length>20)hist=hist.slice(0,20);
+    localStorage.setItem('ntHist',JSON.stringify(hist));
+    if(g('ntTitle'))g('ntTitle').value='';if(g('ntMsg'))g('ntMsg').value='';
+    try{renderNotifHistory();}catch(e){}
+  }catch(err){
+    if(st)st.innerHTML='<span style="color:#ef4444">\u274C '+err.message+'</span>';
   }
 }
 
