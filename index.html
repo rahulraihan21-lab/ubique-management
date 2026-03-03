@@ -1312,7 +1312,44 @@ g('stuExamList').innerHTML=stuEx.length?stuEx.map(function(ex){
 }).join(''):'<p style="text-align:center;color:var(--muted);padding:18px">নেই</p>';
 loadStuOnline(s.class,s.batch);
   var nR=await SB.from('notices').select('*').order('created_at',{ascending:false});g('sntc').innerHTML=(nR.data||[]).map(function(n){return'<div class="ni"><p style="font-weight:700">'+e(n.title)+'</p><p style="font-size:.76rem;color:var(--muted);margin-top:3px">'+e(n.content)+'</p><p style="font-size:.62rem;color:#94a3b8;margin-top:5px">'+fd(n.created_at)+'</p></div>';}).join('')||'<p style="text-align:center;color:var(--muted);padding:20px">নেই</p>';
-    var dtR=await SB.from('daily_test_results').select('*,daily_tests(test_name,test_date,subject,total_marks)').eq('student_id',s.id).order('created_at',{ascending:false}).limit(10);var dtEl=g('sDailyTest');if(dtEl){if(!dtR.data||!dtR.data.length){dtEl.innerHTML='<p style="text-align:center;color:var(--muted);padding:16px">কোনো ডেইলি টেস্ট নেই</p>';}else{dtEl.innerHTML=dtR.data.map(function(d){var dt=d.daily_tests||{};var pct=dt.total_marks>0?Math.round((d.marks_obtained/dt.total_marks)*100):0;var gr=calcGrade(pct);return'<div style="background:#f8faff;border-radius:12px;padding:12px;border:1px solid #e0e7ff;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center"><div><p style="font-weight:700;font-size:.82rem">'+e(dt.test_name||'ডেইলি টেস্ট')+'</p><p style="font-size:.68rem;color:var(--muted)">'+e(dt.subject||'')+(dt.test_date?' | '+fd(dt.test_date):'')+'</p></div><div style="text-align:center"><p style="font-size:1.1rem;font-weight:700;color:'+gr.color+'">'+gr.grade+'</p><p style="font-size:.65rem;color:var(--muted)">'+d.marks_obtained+'/'+dt.total_marks+' ('+pct+'%)</p></div></div></div>';}).join('');}}
+    var dtR=await SB.from('daily_test_results').select('*').eq('student_id',s.id).order('created_at',{ascending:false}).limit(20);var dtEl=g('sDailyTest');if(dtEl){if(!dtR.data||!dtR.data.length){dtEl.innerHTML='<p style="text-align:center;color:var(--muted);padding:16px">কোনো ডেইলি টেস্ট নেই</p>';}else{var tids=dtR.data.map(function(d){return d.test_id;});var dtInfo=await SB.from('daily_tests').select('id,test_name,test_date,total_marks').in('id',tids);var dtMap={};(dtInfo.data||[]).forEach(function(t){dtMap[t.id]=t;});window._dtMyResults=dtR.data;window._dtMap=dtMap;window._dtStuId=s.id;dtEl.innerHTML=dtR.data.map(function(d){var dt=dtMap[d.test_id]||{};var pct=dt.total_marks>0?Math.round((d.marks_obtained/dt.total_marks)*100):0;var gr=calcGrade(pct);var medal=pct>=80?'🥇':pct>=60?'🥈':pct>=40?'🥉':'';return'<div style="background:#f8faff;border-radius:14px;border:1px solid #e0e7ff;margin-bottom:8px;overflow:hidden">'+'<div onclick="toggleDTRank('+d.test_id+','+s.id+')" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer">'+'<div><p style="font-weight:700;font-size:.83rem">'+e(dt.test_name||'ডেইলি টেস্ট')+'</p><p style="font-size:.63rem;color:var(--muted)">'+(dt.test_date?fd(dt.test_date):'')+'</p></div>'+'<div style="display:flex;align-items:center;gap:8px">'+'<div style="text-align:center"><p style="font-size:.85rem;font-weight:700;color:'+gr.color+'">'+medal+' '+gr.grade+'</p><p style="font-size:.6rem;color:var(--muted)">'+d.marks_obtained+'/'+(dt.total_marks||'?')+'</p></div>'+'<span style="font-size:.7rem;color:#94a3b8">▼</span>'+'</div></div>'+'<div id="dtr-'+d.test_id+'" style="display:none;padding:0 12px 12px"></div>'+'</div>';}).join('');}}
+}
+
+async function toggleDTRank(testId,stuId){
+  var el=g('dtr-'+testId);if(!el)return;
+  if(el.style.display!=='none'){el.style.display='none';return;}
+  el.style.display='block';
+  if(el.dataset.loaded){return;}
+  el.dataset.loaded='1';
+  el.innerHTML='<p style="text-align:center;padding:10px;color:var(--muted)">লোড হচ্ছে...</p>';
+  var dt=(window._dtMap||{})[testId]||{};
+  var allR=await SB.from('daily_test_results').select('student_id,marks_obtained').eq('test_id',testId);
+  var stuR=await SB.from('students').select('id,name,roll_no');
+  var stuMap={};(stuR.data||[]).forEach(function(x){stuMap[x.id]=x;});
+  var list=(allR.data||[]).slice().sort(function(a,b){return b.marks_obtained-a.marks_obtained;});
+  var myPos=list.findIndex(function(x){return x.student_id===stuId;})+1;
+  var medal=myPos===1?'🥇 ':myPos===2?'🥈 ':myPos===3?'🥉 ':'#'+myPos+' ';
+  var rows=list.map(function(r,i){
+    var isMe=r.student_id===stuId;
+    var sn=stuMap[r.student_id]||{name:'?',roll_no:''};
+    var pct=dt.total_marks>0?Math.round((r.marks_obtained/dt.total_marks)*100):0;
+    var gr=calcGrade(pct);
+    var pos=i+1;
+    var posStr=pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':pos+'';
+    return'<tr style="background:'+(isMe?'#dbeafe':i%2===0?'#fff':'#f8faff')+';font-weight:'+(isMe?'700':'400')+'">'
+      +'<td style="padding:5px 6px;text-align:center;font-size:.72rem">'+posStr+'</td>'
+      +'<td style="padding:5px 6px;font-size:.75rem">'+e(sn.name)+'</td>'
+      +'<td style="padding:5px 6px;text-align:center;font-size:.72rem">'+r.marks_obtained+'</td>'
+      +'<td style="padding:5px 6px;text-align:center;font-size:.72rem;color:'+gr.color+';font-weight:700">'+gr.grade+'</td>'
+      +'</tr>';
+  }).join('');
+  el.innerHTML='<div style="background:#eff6ff;border-radius:8px;padding:8px 12px;margin-bottom:8px;text-align:center">'
+    +'<p style="font-weight:700;font-size:.85rem">'+medal+'আপনার পজিশন: '+myPos+'/'+list.length+'</p></div>'
+    +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">'
+    +'<thead><tr style="font-size:.62rem;color:var(--muted);border-bottom:1px solid #e0e7ff">'
+    +'<th style="padding:4px 6px">পজিশন</th><th style="padding:4px 6px;text-align:left">নাম</th>'
+    +'<th style="padding:4px 6px">নম্বর</th><th style="padding:4px 6px">গ্রেড</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody></table></div>';
 }
 
 /* INIT */
