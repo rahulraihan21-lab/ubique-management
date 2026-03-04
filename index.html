@@ -281,7 +281,7 @@ textarea.inp{resize:none}
   <section id="sec-fee" class="hidden"><div class="card" style="padding:18px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
   <h2 class="stitle" style="margin:0">💰 ফি কালেকশন</h2>
   <button onclick="printDueCards()" class="btn btn-ghost btn-sm">🖨️ বকেয়া কার্ড</button>
-</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px"><input id="fSearch" class="inp" placeholder="🔍 নাম বা রোল নম্বর..." oninput="loadFee()" style="flex:1;min-width:150px"><select id="fCl" onchange="loadFee()" class="inp dynC" style="width:auto;min-width:110px"></select><select id="fBt" onchange="loadFee()" class="inp dynB" style="width:auto;min-width:110px"></select><select id="fMo" onchange="loadFee()" class="inp"><option value="January">জানুয়ারি</option><option value="February">ফেব্রুয়ারি</option><option value="March">মার্চ</option><option value="April">এপ্রিল</option><option value="May">মে</option><option value="June">জুন</option><option value="July">জুলাই</option><option value="August">আগস্ট</option><option value="September">সেপ্টেম্বর</option><option value="October">অক্টোবর</option><option value="November">নভেম্বর</option><option value="December">ডিসেম্বর</option></select></div><div id="fL"></div></div><div id="fF" class="hidden card" style="padding:17px;border:2px solid #c7d2fe;position:sticky;bottom:74px;z-index:50;margin-top:13px"><div style="display:flex;justify-content:space-between;margin-bottom:11px"><div><p style="font-size:.58rem;font-weight:700;color:var(--muted);text-transform:uppercase">ফি নেওয়া হচ্ছে</p><h3 id="fNm" style="font-size:.9rem;font-weight:700;color:var(--g1);margin-top:2px"></h3></div><button onclick="hide('fF')" style="width:27px;height:27px;border-radius:99px;background:#f1f5f9;border:none;cursor:pointer;color:var(--muted);font-weight:700">✕</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><input type="number" id="fAm" placeholder="টাকা" class="inp" onkeydown="if(event.key==='Enter')subFee()"><input type="text" id="fMe" placeholder="মেমো" class="inp" onkeydown="if(event.key==='Enter')subFee()"></div><input type="text" id="fNo" placeholder="নোট" class="inp" style="margin-bottom:10px"><button onclick="subFee()" class="btn btn-p">✅ জমা</button></div></section>
+</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px"><input id="fSearch" class="inp" placeholder="🔍 নাম বা রোল নম্বর..." oninput="loadFee()" style="flex:1;min-width:150px"><select id="fCl" onchange="loadFee()" class="inp dynC" style="width:auto;min-width:110px"></select><select id="fBt" onchange="loadFee()" class="inp dynB" style="width:auto;min-width:110px"></select><select id="fMo" onchange="loadFee()" class="inp"><option value="January">জানুয়ারি</option><option value="February">ফেব্রুয়ারি</option><option value="March">মার্চ</option><option value="April">এপ্রিল</option><option value="May">মে</option><option value="June">জুন</option><option value="July">জুলাই</option><option value="August">আগস্ট</option><option value="September">সেপ্টেম্বর</option><option value="October">অক্টোবর</option><option value="November">নভেম্বর</option><option value="December">ডিসেম্বর</option></select></div><div id="fL"></div></div><div id="fF" class="hidden card" style="padding:17px;border:2px solid #c7d2fe;position:sticky;bottom:74px;z-index:50;margin-top:13px"><div style="display:flex;justify-content:space-between;margin-bottom:11px"><div><p style="font-size:.58rem;font-weight:700;color:var(--muted);text-transform:uppercase">ফি নেওয়া হচ্ছে</p><h3 id="fNm" style="font-size:.9rem;font-weight:700;color:var(--g1);margin-top:2px"></h3></div><button onclick="hide('fF')" style="width:27px;height:27px;border-radius:99px;background:#f1f5f9;border:none;cursor:pointer;color:var(--muted);font-weight:700">✕</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><input type="number" id="fAm" placeholder="টাকা" class="inp"><input type="text" id="fMe" placeholder="মেমো" class="inp"></div><input type="text" id="fNo" placeholder="নোট" class="inp" style="margin-bottom:10px"><div style="margin-bottom:10px"><p style="font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:6px">মাস বেছে নিন:</p><div id="fMonthChecks" style="display:flex;flex-wrap:wrap;gap:6px"></div></div><button onclick="subFee()" class="btn btn-p">✅ জমা</button></div></section>
 
   <!-- ABSENT CALL -->
   <section id="sec-absent" class="hidden"><div class="card" style="padding:18px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:13px"><div style="width:38px;height:38px;border-radius:11px;background:var(--rs);display:flex;align-items:center;justify-content:center;font-size:1rem">🚨</div><div><h2 style="font-family:'Sora',sans-serif;font-size:.92rem;font-weight:700;color:var(--red)">আজকের কল লিস্ট</h2><p style="font-size:.68rem;color:var(--muted)">অনুপস্থিত শিক্ষার্থীদের কল করুন</p></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:13px"><select id="abCl" onchange="loadAb()" class="inp dynC"></select><select id="abBt" onchange="loadAb()" class="inp dynB"></select></div><div id="abL" style="display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(210px,1fr))"></div></div></section>
@@ -304,6 +304,10 @@ textarea.inp{resize:none}
       <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
         <input type="text" id="nTi" placeholder="শিরোনাম" class="inp">
         <textarea id="nBo" placeholder="বিস্তারিত..." class="inp" style="height:96px"></textarea>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <select id="nCls" class="inp dynC"><option value="All">সব ক্লাস</option></select>
+          <select id="nBat" class="inp dynB"><option value="All">সব ব্যাচ</option></select>
+        </div>
         <button onclick="postNotice()" class="btn btn-p">🚀 পাবলিশ</button>
       </div>
       <div id="nL" style="display:flex;flex-direction:column;gap:8px"></div>
@@ -367,6 +371,20 @@ textarea.inp{resize:none}
 
   <!-- REPORT -->
   <section id="sec-report" class="hidden"><div><div class="card" style="padding:18px;margin-bottom:16px">
+  <h2 class="stitle">⚠️ বকেয়া ফি রিপোর্ট</h2>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+    <select id="drCl" class="inp dynC" style="width:auto;min-width:110px"></select>
+    <select id="drBt" class="inp dynB" style="width:auto;min-width:110px"></select>
+    <select id="drMin" class="inp" style="width:auto">
+      <option value="2">২+ মাস বাকি</option>
+      <option value="1">১+ মাস বাকি</option>
+      <option value="3">৩+ মাস বাকি</option>
+    </select>
+    <button onclick="loadDueReport()" class="btn btn-p btn-sm">🔄 লোড</button>
+    <button onclick="printDueReport()" id="drPrintBtn" class="btn btn-g btn-sm hidden">🖨️ প্রিন্ট</button>
+  </div>
+  <div id="drList"></div>
+</div><div class="card" style="padding:18px;margin-bottom:16px">
   <h2 class="stitle">📅 দৈনিক হাজিরা রিপোর্ট</h2>
   <div style="display:flex;flex-wrap:wrap;gap:7px;margin:12px 0">
     <input type="date" id="drDate" class="inp" style="width:auto;min-width:148px">
@@ -1060,52 +1078,26 @@ c.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:13px"
   g('fL').querySelectorAll('.fee-edit-btn').forEach(function(btn){
     btn.onclick=function(){editSwitch(stuCache[btn.dataset.sid]);};
   });}
-async function openFF(id,name){selFeeId=id;g('fNm').innerText=name;g('fAm').value='';g('fMe').value='';g('fNo').value='';show('fF');g('fAm').focus();}
-async function subFee(){
-  var amt=gv('fAm'),memo=gv('fMe'),mo=gv('fMo');
-  if(!amt){alert('টাকার পরিমাণ দিন!');return;}
-
-  if(!mo){alert('মাস বেছে নিন!');return;}
-  if(!selFeeId){alert('কোনো student select হয়নি!');return;}
-  var payload={
-    student_id:selFeeId,
-    amount:parseFloat(amt),
-    memo_no:memo||null,
-    payment_month:mo,
-    payment_year:new Date().getFullYear().toString(),
-    payment_date:new Date().toISOString().split('T')[0],
-    fee_type:'Monthly',
-    memo_note:gv('fNo')||''
-  };
-  var r=await SB.from('fees_collection').insert([payload]);
-  if(r.error){
-    alert('❌ সেভ হয়নি: '+r.error.message);
-    console.error('Fee insert error:', r.error);
-    return;
-  }
-  alert('✅ ফি এন্ট্রি সফল!');
-  hide('fF');
-  await loadFeeData();
-  loadFee();
-  loadS();
-}
-
-/* ABSENT CALL */
+async /* openFF moved */
+/* subFee moved */
 async function loadAb(){var today=new Date().toISOString().split('T')[0],cls=gv('abCl'),bch=gv('abBt');var c=g('abL');c.innerHTML='<div class="sk" style="height:56px;width:100%"></div>';var r1=await SB.from('attendance').select('student_id').eq('attendance_date',today).eq('status','Absent');if(!r1.data||!r1.data.length){c.innerHTML='<p style="text-align:center;padding:26px;color:var(--muted)">🎉 কেউ অনুপস্থিত নেই!</p>';return;}var q=SB.from('students').select('*').in('id',r1.data.map(function(a){return a.student_id;}));if(cls!=='All')q=q.eq('class',cls);if(bch!=='All')q=q.eq('batch',bch);var r2=await q.order('roll_no');if(!r2.data||!r2.data.length){c.innerHTML='<p style="text-align:center;padding:26px;color:var(--muted)">নেই</p>';return;}c.innerHTML=r2.data.map(function(s){return'<div style="background:#fff;padding:13px;border-radius:12px;border-left:4px solid var(--red);display:flex;justify-content:space-between;align-items:center"><div><p style="font-weight:700">'+e(s.name)+'</p><p style="font-size:.68rem;color:var(--muted)">'+e(s.class)+' | রোল:'+s.roll_no+'</p><p style="font-size:.73rem;color:var(--g1);font-weight:700;margin-top:2px">'+e(s.phone)+'</p></div><a href="tel:'+e(s.phone)+'" style="width:36px;height:36px;background:var(--rs);border-radius:99px;display:flex;align-items:center;justify-content:center;font-size:.95rem;text-decoration:none">📞</a></div>';}).join('');}
 
 /* HOMEWORK */
 async function loadHW(){var today=new Date().toISOString().split('T')[0],cls=gv('hwCl'),bch=gv('hwBt');var c=g('hwL');c.innerHTML='<div class="sk" style="height:56px;width:100%;grid-column:1/-1"></div>';var r1=await SB.from('attendance').select('student_id,homework_status').eq('attendance_date',today).not('homework_status','is',null);var q=SB.from('students').select('*');if(cls!=='All')q=q.eq('class',cls);if(bch!=='All')q=q.eq('batch',bch);var r2=await q;if(!r1.data||!r1.data.length){c.innerHTML='<p style="grid-column:1/-1;text-align:center;padding:26px;color:var(--muted)">আজ কোনো HW এন্ট্রি নেই।</p>';return;}var sIds=new Set((r2.data||[]).map(function(s){return s.id;}));var f=r1.data.filter(function(a){return sIds.has(a.student_id);});if(!f.length){c.innerHTML='<p style="grid-column:1/-1;text-align:center;padding:26px;color:var(--muted)">এই ফিল্টারে নেই।</p>';return;}c.innerHTML=f.map(function(a){var s=(r2.data||[]).find(function(x){return x.id===a.student_id;});if(!s)return'';var d=a.homework_status==='Yes';return'<div style="padding:12px;background:#fff;border-radius:12px;border-left:4px solid '+(d?'var(--green)':'var(--amber)')+'"><p style="font-weight:700">'+e(s.name)+' <span style="color:var(--muted);font-size:.73rem">('+s.roll_no+')</span></p><p style="font-size:.75rem;font-weight:700;margin-top:3px;color:'+(d?'var(--green)':'var(--amber)')+'">'+(d?'✅ জমা দিয়েছেন':'⏳ জমা দেননি')+'</p><p style="font-size:.62rem;color:#94a3b8;margin-top:3px">'+e(s.class)+'</p></div>';}).join('');}
 
 /* NOTICE */
-async function postNotice(){var ti=gv('nTi').trim(),bo=g('nBo').value.trim();if(!ti||!bo){alert('দিন!');return;}await SB.from('notices').insert([{title:ti,content:bo}]);alert('✅');g('nTi').value='';g('nBo').value='';loadNotices();}
+/* postNotice moved */
 async function loadNotices(){var r=await SB.from('notices').select('*').order('created_at',{ascending:false}).limit(10);g('nL').innerHTML=(r.data||[]).map(function(n){return'<div class="ni" style="display:flex;justify-content:space-between"><div style="flex:1"><p style="font-weight:700">'+e(n.title)+'</p><p style="font-size:.75rem;color:var(--muted);margin-top:3px">'+e(n.content.substring(0,100))+'</p><p style="font-size:.62rem;color:#94a3b8;margin-top:5px">'+fd(n.created_at)+'</p></div><button onclick="delNotice(\''+n.id+'\')" style="color:var(--red);background:transparent;border:none;cursor:pointer;font-weight:700;margin-left:9px">✕</button></div>';}).join('')||'<p style="text-align:center;color:var(--muted);padding:13px">নেই</p>';}
 async function delNotice(id){if(!confirm('মুছবেন?'))return;var r=await SB.from('notices').delete().eq('id',id);if(r.error){alert('❌ Error: '+r.error.message);}else{loadNotices();}}
 
 /* EXAM */
 async function createExam(){var name=gv('exName').trim(),date=gv('exDate'),total=parseInt(gv('exTotal'),10)||100;if(!name||!date){alert('নাম ও তারিখ দিন!');return;}await SB.from('exams').insert([{exam_name:name,exam_date:date,class:gv('exCl'),batch:gv('exBt'),total_marks:total}]);alert('✅');g('exName').value='';loadExams();}
-async function loadExams(){var cls=gv('exLCl'),bch=gv('exLBt');var c=g('examList');var q=SB.from('exams').select('*').order('exam_date',{ascending:false});if(cls!=='All')q=q.eq('class',cls);if(bch!=='All')q=q.eq('batch',bch);var r=await q;if(!r.data||!r.data.length){c.innerHTML='<p style="grid-column:1/-1;text-align:center;padding:26px;color:var(--muted)">নেই</p>';hide('marksEntry');return;}c.innerHTML=r.data.map(function(ex){return'<div class="exam-card fi" onclick="selectExam('+ex.id+',\''+e(ex.exam_name).replace(/'/g,'')+'\','+ex.total_marks+',\''+e(ex.class)+'\',\''+e(ex.batch||'All')+'\',\''+ex.exam_date+'\')"><p style="font-weight:700">'+e(ex.exam_name)+'</p><p style="font-size:.63rem;color:var(--muted)">'+fd(ex.exam_date)+' | '+e(ex.class)+' | '+ex.total_marks+'</p><div style="display:flex;gap:5px;margin-top:8px"><button onclick="event.stopPropagation()" style="flex:1;background:var(--g1);color:#fff;border:none;padding:5px;border-radius:8px;font-weight:700;font-size:.68rem;cursor:pointer">📝</button><button onclick="event.stopPropagation();delExam('+ex.id+')" style="background:var(--rs);color:var(--red);border:none;padding:5px 8px;border-radius:8px;font-weight:700;font-size:.68rem;cursor:pointer">🗑</button></div></div>';}).join('');}
+async function loadExams(){var cls=gv('exLCl'),bch=gv('exLBt');var c=g('examList');var q=SB.from('exams').select('*').order('exam_date',{ascending:false});if(cls!=='All')q=q.eq('class',cls);if(bch!=='All')q=q.eq('batch',bch);var r=await q;if(!r.data||!r.data.length){c.innerHTML='<p style="grid-column:1/-1;text-align:center;padding:26px;color:var(--muted)">নেই</p>';hide('marksEntry');return;}c.innerHTML=r.data.map(function(ex){return'<div class="exam-card fi" data-id="'+ex.id+'" data-name="'+e(ex.exam_name)+'" data-total="'+ex.total_marks+'" data-cls="'+e(ex.class)+'" data-bch="'+e(ex.batch||'All')+'" data-date="'+ex.exam_date+'" onclick="selectExamEl(this)"><p style="font-weight:700">'+e(ex.exam_name)+'</p><p style="font-size:.63rem;color:var(--muted)">'+fd(ex.exam_date)+' | '+e(ex.class)+' | '+ex.total_marks+'</p><div style="display:flex;gap:5px;margin-top:8px"><button onclick="event.stopPropagation()" style="flex:1;background:var(--g1);color:#fff;border:none;padding:5px;border-radius:8px;font-weight:700;font-size:.68rem;cursor:pointer">📝</button><button onclick="event.stopPropagation();delExam('+ex.id+')" style="background:var(--rs);color:var(--red);border:none;padding:5px 8px;border-radius:8px;font-weight:700;font-size:.68rem;cursor:pointer">🗑</button></div></div>';}).join('');}
 async function delExam(id){if(!confirm('মুছবেন?'))return;await SB.from('exam_results').delete().eq('exam_id',id);await SB.from('exams').delete().eq('id',id);selExamId=null;hide('marksEntry');loadExams();}
-async function selectExam(id,name,total,cls,bch,date){selExamId=id;selExamTotal=total;g('selExName').innerText=name;g('selExInfo').innerText=fd(date)+' | '+cls+' | সর্বোচ্চ: '+total;show('marksEntry');var q=SB.from('students').select('*');if(cls!=='All')q=q.eq('class',cls);if(bch!=='All')q=q.eq('batch',bch);var r1=await q.order('roll_no').limit(1000);var r2=await SB.from('exam_results').select('*').eq('exam_id',id).limit(1000);g('marksList').innerHTML=(r1.data||[]).map(function(s){var res=r2.data&&r2.data.find(function(x){return x.student_id===s.id;});return'<div class="sr fi" style="flex-direction:row;align-items:center;gap:10px"><div style="flex:1"><p style="font-weight:700;font-size:.82rem">'+e(s.name)+'</p><p style="font-size:.6rem;color:var(--muted)">রোল:'+s.roll_no+'</p></div><input type="number" id="mk-'+s.id+'" class="marks-inp" value="'+(res?res.marks_obtained:'')+'" max="'+total+'"><div id="gr-'+s.id+'" style="min-width:32px;text-align:center;font-size:.68rem;font-weight:700;color:#94a3b8">'+(res?calcGrade((res.marks_obtained/total)*100).grade:'—')+'</div></div>';}).join('');g('marksEntry').scrollIntoView({behavior:'smooth'});}
+function selectExamEl(el){
+  selectExam(el.dataset.id,el.dataset.name,el.dataset.total,el.dataset.cls,el.dataset.bch,el.dataset.date);
+}
+async function selectExam(id,name,total,cls,bch,date){selExamId=id;selExamTotal=total;g('selExName').innerText=name;g('selExInfo').innerText=fd(date)+' | '+cls+' | সর্বোচ্চ: '+total;show('marksEntry');var q=SB.from('students').select('*');if(cls&&cls!=='All')q=q.eq('class',cls);if(bch&&bch!=='All')q=q.eq('batch',bch);var r1=await q.order('roll_no').limit(1000);var r2=await SB.from('exam_results').select('*').eq('exam_id',id).limit(1000);g('marksList').innerHTML=(r1.data||[]).map(function(s){var res=r2.data&&r2.data.find(function(x){return x.student_id===s.id;});return'<div class="sr fi" style="flex-direction:row;align-items:center;gap:10px"><div style="flex:1"><p style="font-weight:700;font-size:.82rem">'+e(s.name)+'</p><p style="font-size:.6rem;color:var(--muted)">রোল:'+s.roll_no+'</p></div><input type="number" id="mk-'+s.id+'" class="marks-inp" value="'+(res?res.marks_obtained:'')+'" max="'+total+'"><div id="gr-'+s.id+'" style="min-width:32px;text-align:center;font-size:.68rem;font-weight:700;color:#94a3b8">'+(res?calcGrade((res.marks_obtained/total)*100).grade:'—')+'</div></div>';}).join('');g('marksEntry').scrollIntoView({behavior:'smooth'});}
 async function saveMarks(){if(!selExamId)return;var inps=g('marksList').querySelectorAll('.marks-inp');var recs=[];inps.forEach(function(inp){var sid=parseInt(inp.id.replace('mk-',''),10);if(inp.value!==''){var m=parseFloat(inp.value)||0;recs.push({exam_id:selExamId,student_id:sid,marks_obtained:m,grade:calcGrade((m/selExamTotal)*100).grade});}});if(!recs.length){alert('নম্বর দিন!');return;}var r=await SB.from('exam_results').upsert(recs,{onConflict:'exam_id,student_id'});if(r.error)alert(r.error.message);else alert('✅ সেভ!');}
 function exportExamXls(){if(!selExamId)return;var inps=g('marksList').querySelectorAll('.marks-inp');var data=[['নাম','রোল','নম্বর','গ্রেড']];inps.forEach(function(inp){var row=inp.closest('.sr');data.push([row.querySelector('p').innerText,row.querySelectorAll('p')[1].innerText.replace('রোল:',''),inp.value||'',g('gr-'+inp.id.replace('mk-','')).innerText]);});var ws=XLSX.utils.aoa_to_sheet(data);var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Results');XLSX.writeFile(wb,'Exam.xlsx');}
 
@@ -1374,7 +1366,7 @@ g('stuExamList').innerHTML=stuEx.length?stuEx.map(function(ex){
   return html;
 }).join(''):'<p style="text-align:center;color:var(--muted);padding:18px">নেই</p>';
 loadStuOnline(s.class,s.batch);
-  var nR=await SB.from('notices').select('*').order('created_at',{ascending:false});g('sntc').innerHTML=(nR.data||[]).map(function(n){return'<div class="ni"><p style="font-weight:700">'+e(n.title)+'</p><p style="font-size:.76rem;color:var(--muted);margin-top:3px">'+e(n.content)+'</p><p style="font-size:.62rem;color:#94a3b8;margin-top:5px">'+fd(n.created_at)+'</p></div>';}).join('')||'<p style="text-align:center;color:var(--muted);padding:20px">নেই</p>';
+  var nR=await SB.from('notices').select('*').order('created_at',{ascending:false});var stuCls=s.class,stuBat=s.batch;g('sntc').innerHTML=(nR.data||[]).filter(function(n){var tc=n.target_class||'All',tb=n.target_batch||'All';return(tc==='All'||tc===stuCls)&&(tb==='All'||tb===stuBat);}).map(function(n){return'<div class="ni"><p style="font-weight:700">'+e(n.title)+'</p><p style="font-size:.76rem;color:var(--muted);margin-top:3px">'+e(n.content)+'</p><p style="font-size:.62rem;color:#94a3b8;margin-top:5px">'+fd(n.created_at)+'</p></div>';}).join('')||'<p style="text-align:center;color:var(--muted);padding:20px">নেই</p>';
     var dtR=await SB.from('daily_test_results').select('*').eq('student_id',s.id).order('created_at',{ascending:false}).limit(20);var dtEl=g('sDailyTest');if(dtEl){if(!dtR.data||!dtR.data.length){dtEl.innerHTML='<p style="text-align:center;color:var(--muted);padding:16px">কোনো ডেইলি টেস্ট নেই</p>';}else{var tids=dtR.data.map(function(d){return d.test_id;});var dtInfo=await SB.from('daily_tests').select('id,test_name,test_date,total_marks').in('id',tids);var dtMap={};(dtInfo.data||[]).forEach(function(t){dtMap[t.id]=t;});window._dtMyResults=dtR.data;window._dtMap=dtMap;window._dtStuId=s.id;dtEl.innerHTML=dtR.data.map(function(d){var dt=dtMap[d.test_id]||{};var pct=dt.total_marks>0?Math.round((d.marks_obtained/dt.total_marks)*100):0;var gr=calcGrade(pct);var medal=pct>=80?'🥇':pct>=60?'🥈':pct>=40?'🥉':'';return'<div style="background:#f8faff;border-radius:14px;border:1px solid #e0e7ff;margin-bottom:8px;overflow:hidden">'+'<div onclick="toggleDTRank('+d.test_id+','+s.id+')" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer">'+'<div><p style="font-weight:700;font-size:.83rem">'+e(dt.test_name||'ডেইলি টেস্ট')+'</p><p style="font-size:.63rem;color:var(--muted)">'+(dt.test_date?fd(dt.test_date):'')+'</p></div>'+'<div style="display:flex;align-items:center;gap:8px">'+'<div style="text-align:center"><p style="font-size:.85rem;font-weight:700;color:'+gr.color+'">'+medal+' '+gr.grade+'</p><p style="font-size:.6rem;color:var(--muted)">'+d.marks_obtained+'/'+(dt.total_marks||'?')+'</p></div>'+'<span style="font-size:.7rem;color:#94a3b8">▼</span>'+'</div></div>'+'<div id="dtr-'+d.test_id+'" style="display:none;padding:0 12px 12px"></div>'+'</div>';}).join('');}}
 }
 
@@ -1551,6 +1543,119 @@ async function checkForceLogout(){
     alert('⚠️ Admin আপনাকে লগআউট করেছেন। আবার PIN দিয়ে ঢুকুন।');
     forceLogoutClean();
   }
+}
+
+/* FEE MULTI-MONTH */
+function openFF(id,name){
+  selFeeId=id;
+  g('fNm').innerText=name;
+  g('fAm').value='';g('fMe').value='';g('fNo').value='';
+  // due মাসগুলো checkbox হিসেবে দেখাই
+  var due=getDueMonths(id);
+  var allM=ALL_MONTHS;
+  var MONTH_BN2={January:'জানুয়ারি',February:'ফেব্রুয়ারি',March:'মার্চ',April:'এপ্রিল',May:'মে',June:'জুন',July:'জুলাই',August:'আগস্ট',September:'সেপ্টেম্বর',October:'অক্টোবর',November:'নভেম্বর',December:'ডিসেম্বর'};
+  g('fMonthChecks').innerHTML=due.map(function(m){
+    return '<label style="display:flex;align-items:center;gap:5px;background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:.75rem;font-weight:700">'
+      +'<input type="checkbox" value="'+m+'" checked style="accent-color:var(--g1)"> '+(MONTH_BN2[m]||m)+'</label>';
+  }).join('');
+  if(!due.length){
+    g('fMonthChecks').innerHTML='<p style="font-size:.72rem;color:var(--green)">✅ কোনো বকেয়া নেই</p>';
+  }
+  show('fF');g('fAm').focus();
+}
+
+async function subFee(){
+  var amt=gv('fAm'),memo=gv('fMe');
+  if(!amt){alert('টাকার পরিমাণ দিন!');return;}
+  // checked মাসগুলো নিই
+  var checks=g('fMonthChecks').querySelectorAll('input[type=checkbox]:checked');
+  var selectedMonths=Array.from(checks).map(function(cb){return cb.value;});
+  if(!selectedMonths.length){alert('কমপক্ষে একটি মাস বেছে নিন!');return;}
+  if(!selFeeId){alert('Student select হয়নি!');return;}
+  var yr=new Date().getFullYear().toString();
+  var date=new Date().toISOString().split('T')[0];
+  var payloads=selectedMonths.map(function(mo){
+    return{student_id:selFeeId,amount:parseFloat(amt),memo_no:memo||null,payment_month:mo,payment_year:yr,payment_date:date,fee_type:'Monthly',memo_note:gv('fNo')||''};
+  });
+  var r=await SB.from('fees_collection').insert(payloads);
+  if(r.error){alert('❌ সেভ হয়নি: '+r.error.message);return;}
+  hide('fF');
+  showToast('✅ '+selectedMonths.length+' মাসের ফি জমা হয়েছে!');
+  feeCache={};loadFee();
+}
+
+/* DUE REPORT */
+async function loadDueReport(){
+  var cls=g('drCl')?g('drCl').value:'All';
+  var bat=g('drBt')?g('drBt').value:'All';
+  var minDue=parseInt(g('drMin').value)||2;
+  var el=g('drList');
+  el.innerHTML='<div class="sk" style="height:50px;width:100%"></div>';
+  var q=SB.from('students').select('*');
+  if(cls!=='All')q=q.eq('class',cls);
+  if(bat!=='All')q=q.eq('batch',bat);
+  var r1=await q.order('roll_no').limit(1000);
+  if(!r1.data||!r1.data.length){el.innerHTML='<p style="text-align:center;padding:20px;color:var(--muted)">কোনো শিক্ষার্থী নেই</p>';return;}
+  var ids=r1.data.map(function(s){return s.id;});
+  var yr=new Date().getFullYear().toString();
+  var fR=await SB.from('fees_collection').select('student_id,payment_month').eq('payment_year',yr).in('student_id',ids);
+  var tmpCache={};
+  (fR.data||[]).forEach(function(f){
+    if(!tmpCache[f.student_id])tmpCache[f.student_id]=[];
+    tmpCache[f.student_id].push(f.payment_month);
+  });
+  r1.data.forEach(function(s){stuCache[s.id]=s;});
+  var dueList=r1.data.map(function(s){
+    var paid=tmpCache[s.id]||[];
+    var admMonth=s.admission_month||ALL_MONTHS[0];
+    var admIdx=ALL_MONTHS.indexOf(admMonth);if(admIdx<0)admIdx=0;
+    var curIdx=new Date().getMonth();
+    var expected=ALL_MONTHS.slice(admIdx,curIdx+1);
+    var due=expected.filter(function(m){return paid.indexOf(m)===-1;});
+    return{s:s,due:due,cnt:due.length};
+  }).filter(function(x){return x.cnt>=minDue;}).sort(function(a,b){return b.cnt-a.cnt;});
+  if(!dueList.length){el.innerHTML='<p style="text-align:center;padding:20px;color:var(--green)">✅ কেউ '+minDue+'+ মাস বাকি নেই!</p>';hide('drPrintBtn');return;}
+  window._dueReportData=dueList;
+  show('drPrintBtn');
+  var MONTH_BN2={January:'জানুয়ারি',February:'ফেব্রুয়ারি',March:'মার্চ',April:'এপ্রিল',May:'মে',June:'জুন',July:'জুলাই',August:'আগস্ট',September:'সেপ্টেম্বর',October:'অক্টোবর',November:'নভেম্বর',December:'ডিসেম্বর'};
+  el.innerHTML='<p style="font-size:.72rem;color:var(--muted);margin-bottom:8px">মোট <strong>'+dueList.length+'</strong> জনের বকেয়া আছে</p>'
+    +dueList.map(function(x){
+      return '<div style="background:#fff;padding:12px;border-radius:12px;border-left:4px solid var(--red);margin-bottom:7px;display:flex;justify-content:space-between;align-items:center">'
+        +'<div><p style="font-weight:700;font-size:.85rem">'+e(x.s.name)+'</p>'
+        +'<p style="font-size:.65rem;color:var(--muted)">রোল: '+x.s.roll_no+' | '+e(x.s.class)+' | '+e(x.s.batch||'')+'</p>'
+        +'<p style="font-size:.68rem;color:#ef4444;font-weight:700;margin-top:2px">⚠️ '+x.cnt+' মাস বাকি: '+x.due.map(function(m){return MONTH_BN2[m]||m;}).join(', ')+'</p>'
+        +'</div>'
+        +'<a href="tel:'+e(x.s.phone||'')+'" style="background:#f0fdf4;color:#16a34a;border:none;padding:8px 12px;border-radius:10px;font-weight:700;font-size:.78rem;text-decoration:none;white-space:nowrap">📞 কল</a>'
+        +'</div>';
+    }).join('');
+}
+
+function printDueReport(){
+  var data=window._dueReportData||[];
+  var MONTH_BN2={January:'জানুয়ারি',February:'ফেব্রুয়ারি',March:'মার্চ',April:'এপ্রিল',May:'মে',June:'জুন',July:'জুলাই',August:'আগস্ট',September:'সেপ্টেম্বর',October:'অক্টোবর',November:'নভেম্বর',December:'ডিসেম্বর'};
+  var rows=data.map(function(x,i){
+    return '<tr><td>'+(i+1)+'</td><td>'+x.s.name+'</td><td>'+x.s.roll_no+'</td><td>'+x.s.class+' | '+(x.s.batch||'')+'</td><td>'+x.due.map(function(m){return MONTH_BN2[m]||m;}).join(', ')+'</td><td>'+x.cnt+'</td><td>'+(x.s.phone||'-')+'</td></tr>';
+  }).join('');
+  var win=window.open('','_blank');
+  win.document.write('<html><head><title>বকেয়া ফি রিপোর্ট</title><style>body{font-family:sans-serif;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:7px;font-size:13px;text-align:left}th{background:#f0f0f0}@media print{button{display:none}}</style></head><body>');
+  win.document.write('<h2>⚠️ বকেয়া ফি রিপোর্ট — '+new Date().toLocaleDateString('bn-BD')+'</h2>');
+  win.document.write('<table><thead><tr><th>#</th><th>নাম</th><th>রোল</th><th>ক্লাস/ব্যাচ</th><th>বাকি মাস</th><th>সংখ্যা</th><th>ফোন</th></tr></thead><tbody>'+rows+'</tbody></table>');
+  win.document.write('<br><button onclick="window.print()">🖨️ প্রিন্ট</button></body></html>');
+  win.document.close();
+}
+
+/* NOTICE CLASS/BATCH */
+async function postNotice(){
+  var ti=gv('nTi').trim(),bo=g('nBo').value.trim();
+  var cls=g('nCls')?g('nCls').value:'All';
+  var bat=g('nBat')?g('nBat').value:'All';
+  if(!ti||!bo){alert('শিরোনাম ও বিস্তারিত দিন!');return;}
+  await SB.from('notices').insert([{title:ti,content:bo,target_class:cls,target_batch:bat}]);
+  showToast('✅ নোটিস পাবলিশ হয়েছে!');
+  g('nTi').value='';g('nBo').value='';
+  if(g('nCls'))g('nCls').value='All';
+  if(g('nBat'))g('nBat').value='All';
+  loadNotices();
 }
 
 /* INIT */
@@ -2753,7 +2858,7 @@ async function openAttEdit(){
 }
 function closeAttEdit(){g('aeModal').style.display='none';}
 
-window.onload=function(){
+window.onload=async function(){
   loadClassDaysFromDB();
   if(isOnline && getQueue().length) setTimeout(syncOfflineQueue, 2000);
   updateOfflineBar();
