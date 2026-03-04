@@ -223,41 +223,7 @@ textarea.inp{resize:none}
   </div>
 </div>
 
-<!-- ASSIGNMENT SECTION -->
-<section id="sec-assignment" class="hidden">
-  <div class="card" style="padding:18px;margin-bottom:12px" id="asgAdminArea">
-    <h2 class="stitle">📋 নতুন এসাইনমেন্ট</h2>
-    <input id="asgTitle" class="inp" placeholder="এসাইনমেন্টের শিরোনাম" style="margin-bottom:8px">
-    <textarea id="asgDesc" class="inp" placeholder="বিস্তারিত..." rows="2" style="margin-bottom:8px;resize:none;width:100%"></textarea>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-      <select id="asgCl" class="inp dynC"></select>
-      <select id="asgBt" class="inp dynB"></select>
-    </div>
-    <input id="asgDl" type="date" class="inp" style="margin-bottom:10px">
-    <button onclick="createAssignment()" class="btn btn-p" style="width:100%">📋 এসাইনমেন্ট দিন</button>
-  </div>
-  <div class="card" style="padding:18px">
-    <h2 class="stitle" style="margin-bottom:12px">📋 এসাইনমেন্ট তালিকা</h2>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-      <select id="asgFCl" onchange="loadAssignments()" class="inp dynC"></select>
-      <select id="asgFBt" onchange="loadAssignments()" class="inp dynB"></select>
-    </div>
-    <div id="asgList"></div>
-  </div>
-  <div id="asgSubPanel" class="hidden card" style="padding:18px;margin-top:12px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <div><h3 id="asgSubTitle" style="font-weight:700;font-size:.9rem"></h3><p id="asgSubInfo" style="font-size:.65rem;color:var(--muted)"></p></div>
-      <button onclick="hide('asgSubPanel')" style="background:#f1f5f9;border:none;border-radius:99px;width:28px;height:28px;cursor:pointer;font-weight:700">✕</button>
-    </div>
-    <div style="display:flex;gap:8px;margin-bottom:10px">
-      <span id="asgSubCount" style="background:#dcfce7;color:#16a34a;padding:4px 10px;border-radius:99px;font-size:.72rem;font-weight:700"></span>
-      <span id="asgNotSubCount" style="background:#ffe4e6;color:#be123c;padding:4px 10px;border-radius:99px;font-size:.72rem;font-weight:700"></span>
-    </div>
-    <input type="text" class="inp" placeholder="🔍 নাম বা রোল খুঁজুন..." style="margin-bottom:8px" oninput="renderAsgSubList(this.value)">
-    <div id="asgSubList" style="display:flex;flex-direction:column;gap:6px"></div>
-    <button onclick="saveSubmissions()" class="btn btn-p" style="width:100%;margin-top:12px">✅ সেভ করুন</button>
-  </div>
-</section>
+
 
 <!-- TEACHER DASHBOARD -->
 <div id="td">
@@ -568,6 +534,41 @@ textarea.inp{resize:none}
   </div>
 </section>
 
+<!-- ASSIGNMENT SECTION -->
+<section id="sec-assignment" class="hidden">
+  <div class="card" style="padding:18px;margin-bottom:12px" id="asgAdminArea">
+    <h2 class="stitle">📋 নতুন এসাইনমেন্ট</h2>
+    <input id="asgTitle" class="inp" placeholder="এসাইনমেন্টের শিরোনাম" style="margin-bottom:8px">
+    <textarea id="asgDesc" class="inp" placeholder="বিস্তারিত..." rows="2" style="margin-bottom:8px;resize:none;width:100%"></textarea>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <select id="asgCl" class="inp dynC"></select>
+      <select id="asgBt" class="inp dynB"></select>
+    </div>
+    <input id="asgDl" type="date" class="inp" style="margin-bottom:10px">
+    <button onclick="createAssignment()" class="btn btn-p" style="width:100%">📋 এসাইনমেন্ট দিন</button>
+  </div>
+  <div class="card" style="padding:18px">
+    <h2 class="stitle" style="margin-bottom:12px">📋 এসাইনমেন্ট তালিকা</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <select id="asgFCl" onchange="loadAssignments()" class="inp dynC"></select>
+      <select id="asgFBt" onchange="loadAssignments()" class="inp dynB"></select>
+    </div>
+    <div id="asgList"></div>
+  </div>
+  <div id="asgSubPanel" class="hidden card" style="padding:18px;margin-top:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div><h3 id="asgSubTitle" style="font-weight:700;font-size:.9rem"></h3><p id="asgSubInfo" style="font-size:.65rem;color:var(--muted)"></p></div>
+      <button onclick="hide('asgSubPanel')" style="background:#f1f5f9;border:none;border-radius:99px;width:28px;height:28px;cursor:pointer;font-weight:700">✕</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <span id="asgSubCount" style="background:#dcfce7;color:#16a34a;padding:4px 10px;border-radius:99px;font-size:.72rem;font-weight:700"></span>
+      <span id="asgNotSubCount" style="background:#ffe4e6;color:#be123c;padding:4px 10px;border-radius:99px;font-size:.72rem;font-weight:700"></span>
+    </div>
+    <input type="text" class="inp" placeholder="🔍 নাম বা রোল খুঁজুন..." style="margin-bottom:8px" oninput="renderAsgSubList(this.value)">
+    <div id="asgSubList" style="display:flex;flex-direction:column;gap:6px"></div>
+    <button onclick="saveSubmissions()" class="btn btn-p" style="width:100%;margin-top:12px">✅ সেভ করুন</button>
+  </div>
+</section>
 <section id="sec-settings" class="hidden"><div style="display:flex;flex-direction:column;gap:16px"><div class="card" style="padding:17px">
   <h2 class="stitle" style="margin-bottom:12px">👨‍🏫 শিক্ষক ব্যবস্থাপনা</h2>
   <div style="display:flex;gap:7px;margin-bottom:7px">
