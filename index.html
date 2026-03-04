@@ -385,20 +385,14 @@ textarea.inp{resize:none}
   </div>
   <div id="drList"></div>
 </div><div class="card" style="padding:18px;margin-bottom:16px">
-  <h2 class="stitle">📅 দৈনিক হাজিরা রিপোর্ট</h2>
+  <h2 class="stitle">📅 আজকের হাজিরা সারসংক্ষেপ</h2>
   <div style="display:flex;flex-wrap:wrap;gap:7px;margin:12px 0">
     <input type="date" id="drDate" class="inp" style="width:auto;min-width:148px">
     <select id="drCl" class="inp dynC" style="width:auto;min-width:118px"></select>
     <select id="drBt" class="inp dynB" style="width:auto;min-width:118px"></select>
-    <button onclick="loadDailyRep()" class="btn btn-p btn-sm">🔄 লোড</button>
-    <button onclick="printDailyRep()" id="drPrint" class="btn btn-ghost btn-sm hidden">🖨️ প্রিন্ট</button>
-    <button onclick="exportDailyXls()" id="drXls" class="btn btn-g btn-sm hidden">📥 Excel</button>
+    <button onclick="loadDailyCount()" class="btn btn-p btn-sm">🔄 লোড</button>
   </div>
-  <div id="drLd" class="hidden"><div class="sk" style="height:28px;width:100%"></div></div>
-  <div style="overflow-x:auto;border-radius:12px;border:1px solid #e0e7ff">
-    <table class="rt"><thead id="drH"></thead><tbody id="drB"></tbody></table>
-  </div>
-  <div id="drS" class="hidden" style="margin-top:14px;display:flex;flex-wrap:wrap;gap:8px"></div>
+  <div id="drCount" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px"></div>
 </div>
 </div><div class="card" style="padding:18px"><h2 class="stitle">📊 মাসিক রিপোর্ট</h2><div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px"><input type="month" id="rMo" class="inp" style="width:auto;min-width:148px"><select id="rCl" class="inp dynC" style="width:auto;min-width:118px"></select><select id="rBt" class="inp dynB" style="width:auto;min-width:118px"></select><button onclick="loadRep()" class="btn btn-p btn-sm">🔄 লোড</button><button onclick="exportXls()" id="xBtn" class="btn btn-g btn-sm hidden">📥 Excel</button></div><div id="rLd" class="hidden"><div class="sk" style="height:28px;width:100%"></div></div><div style="overflow-x:auto;border-radius:12px;border:1px solid #e0e7ff"><table class="rt"><thead id="rH"></thead><tbody id="rB"></tbody></table></div><div id="rS" class="hidden" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:13px"></div></div></section>
 
@@ -914,7 +908,30 @@ function forceLogoutClean(){
   localStorage.removeItem('ub_sid');location.reload();
 }
 
-async function showAdmin(){setTimeout(function(){try{savePlayerToken();}catch(e){}},3000);hide('lo');g('am').style.display='block';var cur=ALL_MONTHS[new Date().getMonth()];var opts=g('fMo').options;for(var i=0;i<opts.length;i++)if(opts[i].value===cur)opts[i].selected=true;var t=new Date();g('rMo').value=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0');g('drDate').value=t.toISOString().split('T')[0];g('exDate').value=t.toISOString().split('T')[0];g('mtDate').value=t.toISOString().split('T')[0];await loadFeeData();syncDrops();loadPubNotice();}
+async function showAdmin(){
+  try{
+    setTimeout(function(){try{savePlayerToken();}catch(e){}},3000);
+    hide('lo');
+    g('am').style.display='block';
+    var cur=ALL_MONTHS[new Date().getMonth()];
+    var opts=g('fMo')?g('fMo').options:[];
+    for(var i=0;i<opts.length;i++)if(opts[i].value===cur)opts[i].selected=true;
+    var t=new Date();
+    var mo=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0');
+    if(g('rMo'))g('rMo').value=mo;
+    if(g('drDate'))g('drDate').value=t.toISOString().split('T')[0];
+    if(g('exDate'))g('exDate').value=t.toISOString().split('T')[0];
+    if(g('mtDate'))g('mtDate').value=t.toISOString().split('T')[0];
+    try{await loadFeeData();}catch(e){console.log('loadFeeData err:',e);}
+    try{syncDrops();}catch(e){console.log('syncDrops err:',e);}
+    try{loadPubNotice();}catch(e){}
+  }catch(err){
+    console.error('showAdmin error:',err);
+    // তবুও admin panel দেখাই
+    hide('lo');
+    if(g('am'))g('am').style.display='block';
+  }
+}
 function showTeacher(){hide('lo');g('td').style.display='block';TAD={};THD={};loadTDrops();g('tRMo').value=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');startFLCheck();}
 
 var TABS=['daily','fee','absent','homework','exam','modeltest','dailytest','notice','report','routine','lectureplan','settings','enroll','expense','online','assignment'];
@@ -1828,112 +1845,26 @@ function changeAdminPin(){
 // ── DAILY ATTENDANCE REPORT ──
 var drData = [];
 
-async function loadDailyRep(){
+async function loadDailyCount(){
   var date=gv('drDate'),cls=gv('drCl'),bch=gv('drBt');
   if(!date){alert('তারিখ দিন!');return;}
-  show('drLd');
-  g('drH').innerHTML='';g('drB').innerHTML='';
-  hide('drPrint');hide('drXls');hide('drS');
-
-  var q=SB.from('students').select('*');
+  var q=SB.from('students').select('id');
   if(cls!=='All')q=q.eq('class',cls);
   if(bch!=='All')q=q.eq('batch',bch);
-  var r1=await q.order('roll_no');
-  if(!r1.data||!r1.data.length){hide('drLd');g('drB').innerHTML='<tr><td style="text-align:center;padding:26px;color:var(--muted)">শিক্ষার্থী নেই</td></tr>';return;}
-
-  var r2=await SB.from('attendance').select('student_id,status,homework_status').eq('attendance_date',date).in('student_id',r1.data.map(function(s){return s.id;}));
-  hide('drLd');
-
-  var attMap={};
-  if(r2.data)r2.data.forEach(function(a){attMap[a.student_id]=a;});
-
-  // Header
-  g('drH').innerHTML='<tr>'+
-    '<th style="text-align:left;min-width:110px">নাম</th>'+
-    '<th>রোল</th>'+
-    '<th>ক্লাস</th>'+
-    '<th>ব্যাচ</th>'+
-    '<th>উপস্থিতি</th>'+
-    '<th>HW</th>'+
-    '</tr>';
-
-  var pC=0,aB=0,nE=0;
-  drData=[];
-
-  g('drB').innerHTML=r1.data.map(function(s){
-    var att=attMap[s.id];
-    var st=att?att.status:'—';
-    var hw=att?att.homework_status:'—';
-    if(st==='Present')pC++;
-    else if(st==='Absent')aB++;
-    else nE++;
-    drData.push({name:s.name,roll:s.roll_no,class:s.class,batch:s.batch||'',status:st,hw:hw});
-    var sc=st==='Present'?'var(--green)':st==='Absent'?'var(--red)':'#94a3b8';
-    return '<tr>'+
-      '<td style="font-weight:600">'+e(s.name)+'</td>'+
-      '<td style="text-align:center">'+s.roll_no+'</td>'+
-      '<td>'+e(s.class)+'</td>'+
-      '<td>'+e(s.batch||'')+'</td>'+
-      '<td style="text-align:center;font-weight:700;color:'+sc+'">'+st+'</td>'+
-      '<td style="text-align:center;color:'+(hw==='Yes'?'var(--green)':hw==='No'?'var(--amber)':'#94a3b8')+'">'+hw+'</td>'+
-      '</tr>';
-  }).join('');
-
-  // Summary
-  var drSEl=g('drS');
-  drSEl.innerHTML=
-    '<span class="paid-b">✅ উপস্থিত: '+pC+'</span>'+
-    '<span class="due-b">❌ অনুপস্থিত: '+aB+'</span>'+
-    '<span style="background:#f1f5f9;color:#64748b;padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:700">— এন্ট্রি নেই: '+nE+'</span>';
-  show('drS');show('drPrint');show('drXls');
+  var r1=await q;
+  var ids=(r1.data||[]).map(function(s){return s.id;});
+  if(!ids.length){g('drCount').innerHTML='<p>কোনো শিক্ষার্থী নেই</p>';return;}
+  var r2=await SB.from('attendance').select('student_id,status').eq('attendance_date',date).in('student_id',ids);
+  var att=r2.data||[];
+  var total=ids.length;
+  var present=att.filter(function(a){return a.status==='Present';}).length;
+  var absent=att.filter(function(a){return a.status==='Absent';}).length;
+  g('drCount').innerHTML=
+    '<div style="background:#f0fdf4;border-radius:12px;padding:14px;text-align:center"><p style="font-size:1.5rem;font-weight:800;color:#16a34a">'+present+'</p><p style="font-size:.72rem;color:#16a34a;font-weight:700">&#x2705; উপস্থিত</p></div>'+
+    '<div style="background:#fff1f2;border-radius:12px;padding:14px;text-align:center"><p style="font-size:1.5rem;font-weight:800;color:#ef4444">'+absent+'</p><p style="font-size:.72rem;color:#ef4444;font-weight:700">&#x274C; অনুপস্থিত</p></div>'+
+    '<div style="background:#f8faff;border-radius:12px;padding:14px;text-align:center"><p style="font-size:1.5rem;font-weight:800;color:#334155">'+total+'</p><p style="font-size:.72rem;color:#64748b;font-weight:700">&#x1F465; মোট</p></div>';
 }
-
-function printDailyRep(){
-  var date=gv('drDate'),cls=gv('drCl'),bch=gv('drBt');
-  var title='দৈনিক হাজিরা — '+date+(cls&&cls!=='All'?' | '+cls:'')+(bch&&bch!=='All'?' | '+bch:'');
-  var rows=drData.map(function(r,i){
-    var sc=r.status==='Present'?'#065f46':r.status==='Absent'?'#9f1239':'#94a3b8';
-    return '<tr style="border-bottom:1px solid #e2e8f0">'+
-      '<td style="padding:6px 10px">'+(i+1)+'</td>'+
-      '<td style="padding:6px 10px;font-weight:600">'+r.name+'</td>'+
-      '<td style="padding:6px 10px;text-align:center">'+r.roll+'</td>'+
-      '<td style="padding:6px 10px">'+r.class+'</td>'+
-      '<td style="padding:6px 10px">'+r.batch+'</td>'+
-      '<td style="padding:6px 10px;text-align:center;font-weight:700;color:'+sc+'">'+r.status+'</td>'+
-      '<td style="padding:6px 10px;text-align:center">'+r.hw+'</td>'+
-      '</tr>';
-  }).join('');
-
-  var pC=drData.filter(function(r){return r.status==='Present';}).length;
-  var aB=drData.filter(function(r){return r.status==='Absent';}).length;
-
-  var html='<html><head><meta charset="UTF-8">'+
-    '<style>body{font-family:"Hind Siliguri",sans-serif;padding:20px;color:#1e293b}'+
-    'h2{margin:0 0 4px;font-size:1.1rem}p{margin:0 0 16px;font-size:.8rem;color:#64748b}'+
-    'table{width:100%;border-collapse:collapse}th{background:#4f46e5;color:#fff;padding:8px 10px;text-align:left;font-size:.8rem}'+
-    'tr:nth-child(even){background:#f8faff}.summary{margin-top:16px;display:flex;gap:16px;font-size:.82rem;font-weight:700}'+
-    '.p{color:#065f46}.a{color:#9f1239}@media print{button{display:none}}</style></head>'+
-    '<body><h2>UBIQUE — দৈনিক হাজিরা রিপোর্ট</h2>'+
-    '<p>'+title+'</p>'+
-    '<table><thead><tr>'+
-    '<th>#</th><th>নাম</th><th>রোল</th><th>ক্লাস</th><th>ব্যাচ</th><th>উপস্থিতি</th><th>HW</th>'+
-    '</tr></thead><tbody>'+rows+'</tbody></table>'+
-    '<div class="summary"><span class="p">✅ উপস্থিত: '+pC+'</span><span class="a">❌ অনুপস্থিত: '+aB+'</span></div>'+
-    '</body></html>';
-
-  doPrint(html);
-}
-
-function exportDailyXls(){
-  var date=gv('drDate'),cls=gv('drCl'),bch=gv('drBt');
-  var wsData=[['নাম','রোল','ক্লাস','ব্যাচ','উপস্থিতি','HW']].concat(
-    drData.map(function(r){return[r.name,r.roll,r.class,r.batch,r.status,r.hw];})
-  );
-  var ws=XLSX.utils.aoa_to_sheet(wsData);
-  var wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,'হাজিরা');
-  XLSX.writeFile(wb,'হাজিরা_'+date+(cls!=='All'?'_'+cls:'')+(bch!=='All'?'_'+bch:'')+'.xlsx');
-}
+async function loadDailyRep(){loadDailyCount();}
 
 
 async function loadStuAtt(){
@@ -2881,7 +2812,13 @@ window.onload=async function(){
     });
     return;
   }
-  loadPubNotice();loadLoginCls();var auth=localStorage.getItem('ub');if(auth==='a')showAdmin();else if(auth==='t'){if(localStorage.getItem('ub_away')==='1'){localStorage.removeItem('ub_away');showTeacher();}else{showTeacher();}}
+  loadPubNotice();loadLoginCls();
+  var auth=localStorage.getItem('ub');
+  console.log('Auth on load:', auth);
+  try{
+    if(auth==='a')showAdmin();
+    else if(auth==='t'){if(localStorage.getItem('ub_away')==='1'){localStorage.removeItem('ub_away');showTeacher();}else{showTeacher();}}
+  }catch(err){console.error('Auth restore error:',err);}
 };
 </script>
 <script>
@@ -3136,7 +3073,7 @@ async function loadDailyTests(){
     card.style.cssText='position:relative';
     card.innerHTML='<p style="font-weight:700;font-size:.85rem">'+e(t.test_name)+'</p><p style="font-size:.65rem;color:var(--muted);margin-top:3px">'+fd(t.test_date)+' | নম্বর: '+t.total_marks+'</p>'
       +'<button onclick="event.stopPropagation();delDT('+t.id+')" style="position:absolute;top:8px;right:8px;background:var(--rs);color:var(--red);border:none;padding:3px 8px;border-radius:8px;font-size:.68rem;font-weight:700;cursor:pointer">🗑</button>';
-    card.onclick=function(){selectDT(t.id,t.test_name,t.total_marks,t.class,t.batch,t.test_date);};
+    card.dataset.id=t.id;card.dataset.name=t.test_name;card.dataset.total=t.total_marks;card.dataset.cls=t.class||'All';card.dataset.bch=t.batch||'All';card.dataset.date=t.test_date;card.onclick=function(){selectDT(this.dataset.id,this.dataset.name,this.dataset.total,this.dataset.cls,this.dataset.bch,this.dataset.date);};
     el.appendChild(card);
   });
 }
