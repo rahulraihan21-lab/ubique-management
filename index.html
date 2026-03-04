@@ -290,6 +290,7 @@ textarea.inp{resize:none}
     <button onclick="gTab('enroll')" class="dt" id="d-enroll">📤 বাল্ক ভর্তি</button>
     <button onclick="gTab('expense');initExpenseTab()" class="dt" id="d-expense">💸 খরচ</button>
     <button onclick="gTab('dailytest')" class="dt" id="d-dailytest">📝 ডেইলি টেস্ট</button>
+    <button onclick="gTab('assignment')" class="dt" id="d-assignment">📋 এসাইনমেন্ট</button>
     <button onclick="gTab('online')" class="dt" id="d-online">🎥 অনলাইন ক্লাস</button>
     <button onclick="gTab('settings')" class="dt" id="d-settings">⚙️</button>
     <button onclick="logout()" class="dt" style="color:#ef4444">🚪 লগআউট</button>
@@ -420,19 +421,6 @@ textarea.inp{resize:none}
   
   <!-- ROUTINE -->
   <section id="sec-routine" class="hidden" style="padding:15px;display:flex;flex-direction:column;gap:14px">
-
-    <!-- Teacher Management -->
-    <div class="card" style="padding:16px">
-      <h2 class="stitle" style="margin-bottom:12px">👨‍🏫 শিক্ষক ব্যবস্থাপনা</h2>
-      <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:7px">
-        <input id="tchName" class="inp" placeholder="শিক্ষকের নাম" style="flex:1;min-width:130px">
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px">
-        <button onclick="saveTeacher()" class="btn btn-p btn-sm">➕ যোগ করুন</button>
-      </div>
-      <div id="tchList" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto"></div>
-    </div>
-
 
     <!-- Routine Builder -->
     <div class="card" style="padding:16px">
@@ -581,7 +569,22 @@ textarea.inp{resize:none}
 </section>
 
 <section id="sec-settings" class="hidden"><div style="display:flex;flex-direction:column;gap:16px"><div class="card" style="padding:17px">
-  <h3 class="stitle" style="margin-bottom:12px">🔐 অ্যাডমিন PIN</h3>
+  <h2 class="stitle" style="margin-bottom:12px">👨‍🏫 শিক্ষক ব্যবস্থাপনা</h2>
+  <div style="display:flex;gap:7px;margin-bottom:7px">
+    <input id="tchName2" class="inp" placeholder="শিক্ষকের নাম" style="flex:1">
+    <button onclick="saveTeacher2()" class="btn btn-p btn-sm">➕ যোগ</button>
+  </div>
+  <p style="font-size:.65rem;color:var(--muted);margin-bottom:8px">যোগ করার পরে ✏️ দিয়ে PIN ও ক্লাস/ব্যাচ assign করুন</p>
+  <div id="tchList2" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto"></div>
+</div><div class="card" style="padding:17px">
+  <h3 class="stitle" style="margin-bottom:12px">🚪 টিচার সেশন নিয়ন্ত্রণ</h3>
+  <p style="font-size:.72rem;color:var(--muted);margin-bottom:12px">এই বাটন চাপলে সব টিচার অ্যাপ থেকে তাৎক্ষণিক লগআউট হয়ে যাবে।</p>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <button onclick="forceLogoutTeachers()" class="btn" style="background:#fff1f2;color:#ef4444;border:1.5px solid #fecdd3;font-weight:700">🚪 সব টিচার লগআউট করুন</button>
+    <span id="flStatus" style="font-size:.72rem;color:var(--muted)"></span>
+  </div>
+</div><div class="card" style="padding:17px">
+<h3 class="stitle" style="margin-bottom:12px">🔐 অ্যাডমিন PIN</h3>
   <p style="font-size:.72rem;color:var(--muted);margin-bottom:10px">এডিট ও ডিলিট সুরক্ষায় PIN ব্যবহার হয়</p>
   <p style="font-size:.75rem;color:var(--muted);background:#f8faff;padding:10px 12px;border-radius:10px;border:1px solid #e0e7ff">🔑 PIN পরিবর্তন করতে <strong>Supabase → academy_settings</strong> table এ <strong>admin_pin</strong> row এর value বদলান।</p>
 </div>
@@ -851,7 +854,7 @@ async function aLogin(){
   if(pin===stored){localStorage.setItem('ub','a');showAdmin();}
   else{g('lerr').innerText='❌ পিন ভুল!';show('lerr');g('aPass').value='';}
 }
-async function tLogin(){var pin=gv('tPass').trim();if(!pin){g('lerr').innerText='❌ পিন দিন!';show('lerr');return;}var r=await SB.from('teachers').select('*').eq('pin',pin).single();if(r.data){localStorage.setItem('ub','t');localStorage.setItem('ub_tname',r.data.name||'টিচার');localStorage.setItem('ub_tcls',r.data.assigned_class||'All');localStorage.setItem('ub_tbat',r.data.assigned_batch||'All');showTeacher();}else{g('lerr').innerText='❌ পিন ভুল!';show('lerr');g('tPass').value='';}}
+async function tLogin(){var pin=gv('tPass').trim();if(!pin){g('lerr').innerText='❌ পিন দিন!';show('lerr');return;}var r=await SB.from('teachers').select('*').eq('pin',pin).single();if(r.data){localStorage.setItem('ub','t');localStorage.setItem('ub_tname',r.data.name||'টিচার');localStorage.setItem('ub_tcls',r.data.assigned_class||'All');localStorage.setItem('ub_tbat',r.data.assigned_batch||'All');localStorage.setItem('ub_lt',Date.now().toString());showTeacher();startFLCheck();}else{g('lerr').innerText='❌ পিন ভুল!';show('lerr');g('tPass').value='';}}
 async function sLogin(){
   var cls=gv('sClass'),roll=gv('sRoll'),ph=gv('sPhone').trim();
   if(!cls||!roll||!ph){alert('ক্লাস, রোল ও ফোন নম্বর দিন!');return;}
@@ -871,10 +874,29 @@ async function sLogin(){
     g('lerr').innerText='❌ ফোন নম্বর মেলেনি!';show('lerr');
   }
 }
-function logout(){localStorage.removeItem('ub');localStorage.removeItem('ub_tname');localStorage.removeItem('ub_tcls');localStorage.removeItem('ub_tbat');localStorage.removeItem('ub_sid');location.reload();}
+function logout(){
+  var isTeacher=localStorage.getItem('ub')==='t';
+  if(isTeacher){
+    // Teacher নিজে বের হলে — ub রেখে দিই, পরে PIN ছাড়া ঢুকবে
+    localStorage.setItem('ub_away','1');
+    location.reload();
+  } else {
+    localStorage.removeItem('ub');localStorage.removeItem('ub_tname');
+    localStorage.removeItem('ub_tcls');localStorage.removeItem('ub_tbat');
+    localStorage.removeItem('ub_lt');localStorage.removeItem('ub_sid');
+    location.reload();
+  }
+}
+function forceLogoutClean(){
+  // Admin force করলে সব clear
+  localStorage.removeItem('ub');localStorage.removeItem('ub_tname');
+  localStorage.removeItem('ub_tcls');localStorage.removeItem('ub_tbat');
+  localStorage.removeItem('ub_lt');localStorage.removeItem('ub_away');
+  localStorage.removeItem('ub_sid');location.reload();
+}
 
 async function showAdmin(){setTimeout(function(){try{savePlayerToken();}catch(e){}},3000);hide('lo');g('am').style.display='block';var cur=ALL_MONTHS[new Date().getMonth()];var opts=g('fMo').options;for(var i=0;i<opts.length;i++)if(opts[i].value===cur)opts[i].selected=true;var t=new Date();g('rMo').value=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0');g('drDate').value=t.toISOString().split('T')[0];g('exDate').value=t.toISOString().split('T')[0];g('mtDate').value=t.toISOString().split('T')[0];await loadFeeData();syncDrops();loadPubNotice();}
-function showTeacher(){hide('lo');g('td').style.display='block';TAD={};THD={};loadTDrops();g('tRMo').value=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');}
+function showTeacher(){hide('lo');g('td').style.display='block';TAD={};THD={};loadTDrops();g('tRMo').value=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');startFLCheck();}
 
 var TABS=['daily','fee','absent','homework','exam','modeltest','dailytest','notice','report','routine','lectureplan','settings','enroll','expense','online','assignment'];
 function gTab(t){closeMM();
@@ -887,7 +909,7 @@ g('m-more').classList.remove('on');
   var m=g('m-'+t);if(m)m.classList.add('on');
   // If tab is in more menu, highlight more button and the item
   g('sb').style.display=t==='daily'?'grid':'none';
-  if(t==='assignment'){loadAssignments();syncDrops();var isA=localStorage.getItem('ub')==='a';if(g('asgAdminArea'))g('asgAdminArea').style.display=isA?'block':'none';}if(t==='dailytest'){loadDailyTests();var now=new Date();g('dtDate').value=now.toISOString().split('T')[0];g('dtMo').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');syncDrops();}if(t==='online'){loadOnlineClasses();syncDrops();var isA=localStorage.getItem('ub')==='a';if(g('ocAdmin'))g('ocAdmin').style.display=isA?'block':'none';}if(t==='fee')loadFee();if(t==='absent')loadAb();if(t==='homework')loadHW();if(t==='notice'){
+  if(t==='assignment'){loadAssignments();syncDrops();var isA=localStorage.getItem('ub')==='a';if(g('asgAdminArea'))g('asgAdminArea').style.display=isA?'block':'none';}if(t==='settings'){loadTeachers2();}if(t==='dailytest'){loadDailyTests();var now=new Date();g('dtDate').value=now.toISOString().split('T')[0];g('dtMo').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');syncDrops();}if(t==='online'){loadOnlineClasses();syncDrops();var isA=localStorage.getItem('ub')==='a';if(g('ocAdmin'))g('ocAdmin').style.display=isA?'block':'none';}if(t==='fee')loadFee();if(t==='absent')loadAb();if(t==='homework')loadHW();if(t==='notice'){
     loadNotices();
     try{setNotifTarget('all');}catch(e){}
     try{renderNotifHistory();}catch(e){}
@@ -1497,6 +1519,39 @@ async function loadStuAssignments(s){
   }).join('');
 }
 
+/* FORCE LOGOUT */
+async function forceLogoutTeachers(){
+  if(!confirm('সব টিচারকে লগআউট করবেন?'))return;
+  var ts=Date.now().toString();
+  // আগের force_logout entry মুছে নতুন দিই
+  await SB.from('academy_settings').delete().eq('type','system');
+  await SB.from('academy_settings').insert([{type:'system',value:'force_logout:'+ts}]);
+  g('flStatus').innerText='✅ লগআউট সিগনাল পাঠানো হয়েছে! ৩০ সেকেন্ডের মধ্যে কার্যকর হবে।';
+  setTimeout(function(){if(g('flStatus'))g('flStatus').innerText='';},5000);
+}
+async function getFL(){
+  var r=await SB.from('academy_settings').select('value').eq('type','system').single();
+  return r.data?r.data.value:'';
+}
+var _flTimer=null;
+function startFLCheck(){
+  if(_flTimer)clearInterval(_flTimer);
+  _flTimer=setInterval(checkForceLogout,30000);
+  checkForceLogout();
+}
+async function checkForceLogout(){
+  if(localStorage.getItem('ub')!=='t')return;
+  var loginTime=parseInt(localStorage.getItem('ub_lt')||'0');
+  var r=await SB.from('academy_settings').select('value').eq('type','system').like('value','force_logout:%');
+  if(!r.data||!r.data.length)return;
+  var latest=r.data.map(function(x){return parseInt(x.value.replace('force_logout:',''))||0;}).sort().reverse()[0];
+  if(latest>loginTime){
+    clearInterval(_flTimer);
+    alert('⚠️ Admin আপনাকে লগআউট করেছেন। আবার PIN দিয়ে ঢুকুন।');
+    forceLogoutClean();
+  }
+}
+
 /* INIT */
 async function loadLoginCls(){var r=await SB.from('academy_settings').select('*').eq('type','class').order('value');g('sClass').innerHTML=(r.data||[]).length?'<option value="">-- ক্লাস --</option>'+r.data.map(function(x){return'<option>'+e(x.value)+'</option>';}).join(''):'<option value="">নেই</option>';}
 
@@ -2098,6 +2153,35 @@ function renderTeacherList(){
   }).join('');
 }
 
+async function saveTeacher2(){
+  var name=g('tchName2').value.trim();
+  if(!name){alert('শিক্ষকের নাম দিন!');return;}
+  var r=await SB.from('teachers').insert([{name:name,pin:'0000'}]);
+  if(r.error){alert('❌ '+r.error.message);return;}
+  g('tchName2').value='';
+  loadTeachers2();showToast('✅ শিক্ষক যোগ হয়েছে!');
+}
+async function loadTeachers2(){
+  var r=await SB.from('teachers').select('*').order('name');
+  teachersList=r.data||[];
+  renderTeacherList2();
+}
+function renderTeacherList2(){
+  var el=g('tchList2');if(!el)return;
+  if(!teachersList.length){el.innerHTML='<p style="text-align:center;color:var(--muted);font-size:.78rem;padding:10px">কোনো শিক্ষক নেই</p>';return;}
+  el.innerHTML=teachersList.map(function(t){
+    var cls=t.assigned_class&&t.assigned_class!=='All'?t.assigned_class:'সব';
+    var bat=t.assigned_batch&&t.assigned_batch!=='All'?t.assigned_batch:'সব';
+    return '<div style="padding:10px 12px;background:#f8faff;border-radius:10px;border:1px solid #e0e7ff;margin-bottom:4px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center">'
+      +'<div><p style="font-weight:700;font-size:.83rem">'+e(t.name)+'</p>'
+      +'<p style="font-size:.62rem;color:var(--muted)">PIN: '+e(t.pin||'0000')+' | ক্লাস: '+cls+' | ব্যাচ: '+bat+'</p></div>'
+      +'<div style="display:flex;gap:4px">'
+      +'<button onclick="openTchEdit(\''+t.id+'\')" style="background:#eff6ff;color:var(--g1);border:none;padding:5px 10px;border-radius:8px;font-size:.75rem;cursor:pointer;font-weight:700">✏️ Edit</button>'
+      +'<button onclick="delTeacher(\''+t.id+'\')" style="background:#fff1f2;color:#ef4444;border:none;padding:5px 9px;border-radius:8px;font-size:.7rem;cursor:pointer">✕</button>'
+      +'</div></div></div>';
+  }).join('');
+}
 async function saveTeacher(){
   var name = g('tchName').value.trim();
   if(!name){alert('শিক্ষকের নাম দিন!');return;}
@@ -2105,7 +2189,7 @@ async function saveTeacher(){
   if(r.error){alert('❌ '+r.error.message);return;}
   g('tchName').value='';
   if(g('tchSubs'))g('tchSubs').value='';
-  loadTeachers();
+  loadTeachers();loadTeachers2();
 }
 
 function openTchEdit(id){
@@ -2121,7 +2205,7 @@ function openTchEdit(id){
       +'<h3 style="font-weight:700;font-size:.95rem;margin-bottom:14px">✏️ শিক্ষক সম্পাদনা</h3>'
       +'<input id="teId" type="hidden">'
       +'<input id="teName" class="inp" placeholder="নাম" style="margin-bottom:8px">'
-      +'<input id="tePin" class="inp" placeholder="PIN (৪ সংখ্যা)" maxlength="6" style="margin-bottom:8px">'
+      +'<input id="tePin" class="inp" placeholder="PIN (যেকোনো সংখ্যা)" maxlength="20" style="margin-bottom:8px">'
       +'<select id="teCls" class="inp dynC" style="margin-bottom:8px"></select>'
       +'<select id="teBat" class="inp dynB" style="margin-bottom:14px"></select>'
       +'<div style="display:flex;gap:8px">'
@@ -2157,14 +2241,14 @@ async function saveTchEdit(){
   var cls=g('teCls').value;
   var bat=g('teBat').value;
   if(!name){alert('নাম দিন!');return;}
-  if(pin&&(pin.length<4||isNaN(pin))){alert('PIN কমপক্ষে ৪ সংখ্যার হতে হবে!');return;}
+  if(pin&&isNaN(pin)){alert('PIN শুধু সংখ্যা হতে হবে!');return;}
   var upd={name:name,assigned_class:cls,assigned_batch:bat};
   if(pin)upd.pin=pin;
   var r=await SB.from('teachers').update(upd).eq('id',id);
   if(r.error){alert('❌ '+r.error.message);return;}
   hide('tchEditModal');
   showToast('✅ সেভ হয়েছে!');
-  loadTeachers();
+  loadTeachers();loadTeachers2();
 }
 
 async function delTeacher(id){
@@ -2691,7 +2775,8 @@ window.onload=function(){
     });
     return;
   }
-  loadPubNotice();loadLoginCls();var auth=localStorage.getItem('ub');if(auth==='a')showAdmin();else if(auth==='t')showTeacher();};
+  loadPubNotice();loadLoginCls();var auth=localStorage.getItem('ub');if(auth==='a')showAdmin();else if(auth==='t'){if(localStorage.getItem('ub_away')==='1'){localStorage.removeItem('ub_away');showTeacher();}else{showTeacher();}}
+};
 </script>
 <script>
 var AE_CHANGES={};
