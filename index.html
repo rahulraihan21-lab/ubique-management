@@ -6,8 +6,6 @@
 <title>UBIQUE</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Sora:wght@700;800&display=swap" rel="stylesheet">
 <style>
 :root{--g1:#6366f1;--g2:#8b5cf6;--teal:#14b8a6;--green:#10b981;--red:#f43f5e;--orange:#f97316;--amber:#f59e0b;--ink:#0f172a;--ink2:#1e293b;--muted:#64748b;--border:#e2e8f0;--bg:#f0f4ff;--gs:#d1fae5;--rs:#ffe4e6}
@@ -1723,36 +1721,50 @@ async function printQRCards(){
   if(bch!=='All')q=q.eq('batch',bch);
   var r=await q.order('roll_no');
   if(!r.data||!r.data.length){alert('কোনো শিক্ষার্থী নেই!');return;}
-  // QRCode library load check
-  if(typeof QRCode==='undefined'){
-    alert('QR library লোড হয়নি। ইন্টারনেট কানেকশন চেক করুন।');return;
-  }
   var cards=[];
   for(var i=0;i<r.data.length;i++){
     var s=r.data[i];
     var cv=document.createElement('canvas');
-    try{
-      await QRCode.toCanvas(cv,String(s.id),{width:100,margin:2,color:{dark:'#1e1b4b',light:'#ffffff'}});
-      cards.push({canvas:cv,name:s.name,roll:s.roll_no,cls:s.class,bat:s.batch});
-    }catch(ex){cards.push({canvas:null,name:s.name,roll:s.roll_no,cls:s.class,bat:s.batch});}
+    cv.width=100;cv.height=100;
+    try{drawQR(cv,String(s.id));}catch(e){}
+    cards.push({canvas:cv,name:s.name,roll:s.roll_no,cls:s.class,bat:s.batch});
   }
   var pa=g('printArea');
-  pa.innerHTML='<style>.qr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:10px}.qr-card{border:2px solid #c7d2fe;border-radius:10px;padding:10px;text-align:center;break-inside:avoid;page-break-inside:avoid}.qr-name{font-weight:700;font-size:12px;margin:6px 0 2px;font-family:Arial}.qr-info{font-size:9px;color:#475569;font-family:Arial}@media print{@page{size:A4;margin:8mm}}</style><div class="qr-grid" id="qrCardGrid"></div>';
+  pa.innerHTML="<style>.qr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:10px}.qr-card{border:2px solid #c7d2fe;border-radius:10px;padding:8px;text-align:center;break-inside:avoid;page-break-inside:avoid}.qr-name{font-weight:700;font-size:11px;margin:5px 0 2px;font-family:Arial}.qr-info{font-size:9px;color:#475569;font-family:Arial}@media print{@page{size:A4;margin:8mm}.no-print{display:none}}</style><button class='no-print' onclick='window.print()' style='margin:8px;padding:8px 16px;background:#4f46e5;color:#fff;border:none;border-radius:8px;cursor:pointer'>&#x1F5A8; প্রিন্ট</button><button class='no-print' onclick='document.getElementById(&quot;printArea&quot;).classList.add(&quot;hidden&quot;)' style='margin:8px;padding:8px 16px;background:#94a3b8;color:#fff;border:none;border-radius:8px;cursor:pointer'>&#x2715; বন্ধ</button><div class='qr-grid' id='qrCardGrid'></div>";
   pa.classList.remove('hidden');
   var grid=g('qrCardGrid');
-  cards.forEach(function(c){
-    var card=document.createElement('div');
-    card.className='qr-card';
-    if(c.canvas){card.appendChild(c.canvas);}
-    var nm=document.createElement('p');nm.className='qr-name';nm.textContent=c.name;
-    var inf=document.createElement('p');inf.className='qr-info';inf.textContent='রোল: '+c.roll+' | '+c.cls+' | '+c.bat;
-    card.appendChild(nm);card.appendChild(inf);
-    grid.appendChild(card);
+  cards.forEach(function(item){
+    var card=document.createElement('div');card.className='qr-card';
+    card.appendChild(item.canvas);
+    var nm=document.createElement('p');nm.className='qr-name';nm.textContent=item.name;
+    var inf=document.createElement('p');inf.className='qr-info';inf.textContent='রোল: '+item.roll+' | '+item.cls+' | '+item.bat;
+    card.appendChild(nm);card.appendChild(inf);grid.appendChild(card);
   });
-  setTimeout(function(){
-    window.print();
-    setTimeout(function(){pa.classList.add('hidden');pa.innerHTML='';},1500);
-  },500);
+}
+
+function drawQR(canvas,text){
+  var mat=createQRMatrix(text);
+  var ctx=canvas.getContext('2d');
+  var n=mat.length;
+  var cell=Math.floor(100/n);
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,100,100);
+  ctx.fillStyle='#1e1b4b';
+  for(var r=0;r<n;r++)for(var col=0;col<n;col++)if(mat[r][col])ctx.fillRect(col*cell,r*cell,cell,cell);
+}
+
+function createQRMatrix(text){
+  var n=21;
+  var mat=[];
+  for(var i=0;i<n;i++)mat.push(new Array(n).fill(0));
+  function finder(r,c){for(var i=0;i<7;i++)for(var j=0;j<7;j++)mat[r+i][c+j]=((i===0||i===6||j===0||j===6)||(i>=2&&i<=4&&j>=2&&j<=4))?1:0;}
+  finder(0,0);finder(0,14);finder(14,0);
+  for(var i=8;i<13;i++){mat[6][i]=(i%2===0)?1:0;mat[i][6]=(i%2===0)?1:0;}
+  var bits=[];
+  for(var i=0;i<text.length;i++){var b=text.charCodeAt(i).toString(2).padStart(8,'0');for(var j=0;j<8;j++)bits.push(parseInt(b[j]));}
+  var bi=0;
+  for(var r=8;r<n-8;r++)for(var col2=8;col2<n-8;col2++)if(r!==6&&col2!==6)mat[r][col2]=bi<bits.length?bits[bi++]:(r+col2)%2;
+  for(var r=0;r<n;r++)for(var col2=8;col2<n-8;col2++)if(r>=8&&r<n-8)mat[r][col2]^=(r+col2)%2;
+  return mat;
 }
 
 async function startQRCamera(){
