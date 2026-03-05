@@ -1728,44 +1728,35 @@ async function printQRCards(){
   var seen={};
   var students=r.data.filter(function(s){if(seen[s.id])return false;seen[s.id]=true;return true;});
 
-  // নতুন window তে print করব
-  var win=window.open('','_blank','width=900,height=700');
-  var css=[
-    '@page{size:A4 portrait;margin:5mm}',
-    'body{margin:0;padding:3mm;font-family:Arial,sans-serif;background:#fff}',
-    '.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3mm}',
-    '.card{border:1px solid #c7d2fe;border-radius:6px;padding:4px;text-align:center;break-inside:avoid;page-break-inside:avoid}',
-    '.card img{width:100%;height:auto;display:block}',
-    '.nm{font-weight:700;font-size:7.5pt;margin:3px 0 1px;line-height:1.2}',
-    '.inf{font-size:6.5pt;color:#475569;line-height:1.2}',
-    '@media print{@page{size:A4 portrait;margin:5mm}}'
-  ].join('');
-
   var cardsHTML=students.map(function(s){
-    var qrUrl='https://chart.googleapis.com/chart?chs=120x120&cht=qr&chl='+encodeURIComponent(String(s.id))+'&choe=UTF-8&chld=M|1';
-    return '<div class="card">'
-      +'<img src="'+qrUrl+'" width="120" height="120">'
-      +'<p class="nm">'+s.name+'</p>'
-      +'<p class="inf">'+'\u09B0\u09CB\u09B2: '+s.roll_no+' | '+s.class+' | '+(s.batch||'')+'</p>'
+    var qrUrl='https://chart.googleapis.com/chart?chs=130x130&cht=qr&chl='+encodeURIComponent(String(s.id))+'&choe=UTF-8&chld=M|1';
+    return '<div class="qrc">'
+      +'<img src="'+qrUrl+'" width="130" height="130">'
+      +'<p class="qrnm">'+s.name+'</p>'
+      +'<p class="qrinf">\u09B0\u09CB\u09B2: '+s.roll_no+' | '+s.class+' | '+(s.batch||'')+'</p>'
       +'</div>';
   }).join('');
 
-  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><style>'+css+'</style></head>'
-    +'<body><div class="grid">'+cardsHTML+'</div></body></html>';
+  var pa=g('printArea');
+  pa.innerHTML='<style>'
+    +'@media print{@page{size:A4 portrait;margin:5mm}.no-print{display:none}}'
+    +'.qr-pg{padding:4mm;font-family:Arial,sans-serif}'
+    +'.qr-grid{display:grid;grid-template-columns:repeat(4,47mm);gap:3mm;justify-content:center}'
+    +'.qrc{width:47mm;border:1px solid #c7d2fe;border-radius:6px;padding:3px;text-align:center;break-inside:avoid;page-break-inside:avoid;box-sizing:border-box}'
+    +'.qrc img{width:41mm;height:41mm;display:block;margin:0 auto}'
+    +'.qrnm{font-weight:700;font-size:7pt;margin:3px 0 1px;line-height:1.2;overflow:hidden}'
+    +'.qrinf{font-size:6pt;color:#475569;line-height:1.2}'
+    +'</style>'
+    +'<div class="no-print" style="padding:10px;display:flex;gap:8px;align-items:center">'
+    +'<span style="font-size:.8rem;color:#475569">মোট: '+students.length+' জন</span>'
+    +'<button onclick="window.print()" style="background:#4f46e5;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:700">🖨️ প্রিন্ট</button>'
+    +'<button onclick="document.getElementById(\'printArea\').classList.add(\'hidden\');_qrPrinting=false;" style="background:#94a3b8;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:700">✕ বন্ধ</button>'
+    +'</div>'
+    +'<div class="qr-pg"><div class="qr-grid">'+cardsHTML+'</div></div>';
 
-  win.document.write(html);
-  win.document.close();
-  // সব image load হলে print
-  win.onload=function(){
-    var imgs=win.document.querySelectorAll('img');
-    var total=imgs.length, loaded=0;
-    function tryP(){loaded++;if(loaded>=total){setTimeout(function(){win.focus();win.print();_qrPrinting=false;},300);}}
-    if(!total){win.focus();win.print();_qrPrinting=false;}
-    else imgs.forEach(function(img){
-      if(img.complete&&img.naturalWidth>0)tryP();
-      else{img.onload=tryP;img.onerror=tryP;}
-    });
-  };
+  pa.classList.remove('hidden');
+  pa.scrollIntoView({behavior:'smooth'});
+  _qrPrinting=false;
 }
 
 // Minimal QR Code encoder - numeric/alphanumeric mode
@@ -1856,6 +1847,29 @@ return{render:function(canvas,text){
 }());
 
 function drawQR(canvas,text){QRMini.render(canvas,text);}
+
+function printSingleQR(sid,name,roll,cls,bat){
+  var qrUrl='https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl='+encodeURIComponent(String(sid))+'&choe=UTF-8&chld=M|1';
+  var pa=g('printArea');
+  pa.innerHTML='<style>'
+    +'@media print{@page{size:A4;margin:10mm}.no-print{display:none}}'
+    +'.sq-wrap{display:flex;align-items:center;justify-content:center;min-height:80vh}'
+    +'.sq-card{border:2px solid #4f46e5;border-radius:12px;padding:16px;text-align:center;width:200px}'
+    +'.sq-name{font-weight:700;font-size:12pt;margin:8px 0 3px;font-family:Arial}'
+    +'.sq-info{font-size:9pt;color:#475569;font-family:Arial}'
+    +'</style>'
+    +'<div class="no-print" style="padding:10px;display:flex;gap:8px">'
+    +'<button onclick="window.print()" style="background:#4f46e5;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:700">🖨️ প্রিন্ট</button>'
+    +'<button onclick="g(&quot;printArea&quot;).classList.add(&quot;hidden&quot;);_qrPrinting=false;" style="background:#94a3b8;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:700">&#x2715; বন্ধ</button>'
+    +'</div>'
+    +'<div class="sq-wrap"><div class="sq-card">'
+    +'<img src="'+qrUrl+'" width="200" height="200" style="display:block;margin:0 auto">'
+    +'<p class="sq-name">'+name+'</p>'
+    +'<p class="sq-info">রোল: '+roll+' | '+cls+' | '+bat+'</p>'
+    +'</div></div>';
+  pa.classList.remove('hidden');
+  pa.scrollIntoView({behavior:'smooth'});
+}
 
 function openQRScan(){
   var today=new Date().toISOString().split('T')[0];
