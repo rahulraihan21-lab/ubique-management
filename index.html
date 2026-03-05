@@ -1866,21 +1866,22 @@ async function startQRCamera(){
   }
 }
 
+var _barcodeDetector=null;
 function scanQRFrame(){
   if(!qrScanning)return;
   var vid=g('qrVideo');
-  if(vid.readyState!==vid.HAVE_ENOUGH_DATA){requestAnimationFrame(scanQRFrame);return;}
-  var canvas=document.createElement('canvas');
-  canvas.width=vid.videoWidth;canvas.height=vid.videoHeight;
-  canvas.getContext('2d').drawImage(vid,0,0);
-  try{
-    if(typeof jsQR!=='undefined'){
-      var imageData=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height);
-      var code=jsQR(imageData.data,imageData.width,imageData.height);
-      if(code&&code.data){processQRCode(code.data);}
-    }
-  }catch(e){}
-  if(qrScanning)setTimeout(scanQRFrame,300);
+  if(vid.readyState!==vid.HAVE_ENOUGH_DATA){setTimeout(scanQRFrame,200);return;}
+  // BarcodeDetector API - Chrome/Android built-in
+  if(typeof BarcodeDetector!=='undefined'){
+    if(!_barcodeDetector)_barcodeDetector=new BarcodeDetector({formats:['qr_code']});
+    _barcodeDetector.detect(vid).then(function(codes){
+      if(codes&&codes.length>0){processQRCode(codes[0].rawValue);}
+      if(qrScanning)setTimeout(scanQRFrame,300);
+    }).catch(function(){if(qrScanning)setTimeout(scanQRFrame,300);});
+  }else{
+    g('qrResult').innerHTML='<span style="color:var(--red)">&#x274C; এই browser এ QR scan সাপোর্ট নেই। Chrome ব্যবহার করুন।</span>';
+    qrScanning=false;
+  }
 }
 
 async function processQRCode(data){
