@@ -1729,7 +1729,7 @@ async function printQRCards(){
   var students=r.data.filter(function(s){if(seen[s.id])return false;seen[s.id]=true;return true;});
 
   var cardsHTML=students.map(function(s){
-    var qrUrl='https://chart.googleapis.com/chart?chs=130x130&cht=qr&chl='+encodeURIComponent(String(s.id))+'&choe=UTF-8&chld=M|1';
+    var qrUrl='https://api.qrserver.com/v1/create-qr-code/?size=130x130&data='+encodeURIComponent(String(s.id))+'';
     return '<div class="qrc">'
       +'<img src="'+qrUrl+'" width="130" height="130">'
       +'<p class="qrnm">'+s.name+'</p>'
@@ -1849,7 +1849,7 @@ return{render:function(canvas,text){
 function drawQR(canvas,text){QRMini.render(canvas,text);}
 
 function printSingleQR(sid,name,roll,cls,bat){
-  var qrUrl='https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl='+encodeURIComponent(String(sid))+'&choe=UTF-8&chld=M|1';
+  var qrUrl='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='+encodeURIComponent(String(sid))+'';
   var pa=g('printArea');
   pa.innerHTML='<style>'
     +'@media print{@page{size:A4;margin:10mm}.no-print{display:none}}'
