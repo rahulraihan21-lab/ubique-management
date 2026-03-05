@@ -1723,64 +1723,36 @@ async function printQRCards(){
   if(bch!=='All')q=q.eq('batch',bch);
   var r=await q.order('roll_no');
   if(!r.data||!r.data.length){alert('কোনো শিক্ষার্থী নেই!');return;}
-  alert('QR কার্ড তৈরি হচ্ছে... একটু অপেক্ষা করুন।');
-  var container=document.createElement('div');
-  container.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px';
+  // QRCode library load check
+  if(typeof QRCode==='undefined'){
+    alert('QR library লোড হয়নি। ইন্টারনেট কানেকশন চেক করুন।');return;
+  }
+  var cards=[];
   for(var i=0;i<r.data.length;i++){
     var s=r.data[i];
-    var wrap=document.createElement('div');
-    wrap.style.cssText='border:1.5px solid #c7d2fe;border-radius:10px;padding:10px;text-align:center;break-inside:avoid';
-    var qrDiv=document.createElement('div');
+    var cv=document.createElement('canvas');
     try{
-      if(typeof QRCode==='undefined') throw new Error('QRCode not loaded');
-      var cv=document.createElement('canvas');
-      await QRCode.toCanvas(cv,String(s.id),{width:90,margin:1,color:{dark:'#3730a3',light:'#fff'}});
-      qrDiv.appendChild(cv);
-    }catch(ex){
-      // Fallback: Google Charts QR API
-      var img=document.createElement('img');
-      img.src='https://chart.googleapis.com/chart?chs=90x90&cht=qr&chl='+s.id+'&choe=UTF-8';
-      img.width=90; img.height=90;
-      qrDiv.appendChild(img);
-    }
-    var nm=document.createElement('p');
-    nm.style.cssText='font-weight:700;font-size:11px;margin:5px 0 2px';
-    nm.innerText=s.name;
-    var inf=document.createElement('p');
-    inf.style.cssText='font-size:9px;color:#64748b';
-    inf.innerText='রোল: '+s.roll_no+' | '+s.class+' | '+s.batch;
-    wrap.appendChild(qrDiv);
-    wrap.appendChild(nm);
-    wrap.appendChild(inf);
-    container.appendChild(wrap);
+      await QRCode.toCanvas(cv,String(s.id),{width:100,margin:2,color:{dark:'#1e1b4b',light:'#ffffff'}});
+      cards.push({canvas:cv,name:s.name,roll:s.roll_no,cls:s.class,bat:s.batch});
+    }catch(ex){cards.push({canvas:null,name:s.name,roll:s.roll_no,cls:s.class,bat:s.batch});}
   }
   var pa=g('printArea');
-  pa.innerHTML='';
-  pa.appendChild(container);
+  pa.innerHTML='<style>.qr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:10px}.qr-card{border:2px solid #c7d2fe;border-radius:10px;padding:10px;text-align:center;break-inside:avoid;page-break-inside:avoid}.qr-name{font-weight:700;font-size:12px;margin:6px 0 2px;font-family:Arial}.qr-info{font-size:9px;color:#475569;font-family:Arial}@media print{@page{size:A4;margin:8mm}}</style><div class="qr-grid" id="qrCardGrid"></div>';
   pa.classList.remove('hidden');
+  var grid=g('qrCardGrid');
+  cards.forEach(function(c){
+    var card=document.createElement('div');
+    card.className='qr-card';
+    if(c.canvas){card.appendChild(c.canvas);}
+    var nm=document.createElement('p');nm.className='qr-name';nm.textContent=c.name;
+    var inf=document.createElement('p');inf.className='qr-info';inf.textContent='রোল: '+c.roll+' | '+c.cls+' | '+c.bat;
+    card.appendChild(nm);card.appendChild(inf);
+    grid.appendChild(card);
+  });
   setTimeout(function(){
     window.print();
-    setTimeout(function(){pa.classList.add('hidden');pa.innerHTML='';},1000);
-  },600);
-}
-
-// ===== QR SCANNER =====
-var qrStream=null, qrScanning=false, qrRecentIds={};
-
-function openQRScan(){
-  var today=new Date().toISOString().split('T')[0];
-  g('qrScanDate').innerText='তারিখ: '+today;
-  g('qrResult').innerHTML='';
-  g('qrLog').innerHTML='';
-  qrRecentIds={};
-  g('qrModal').style.display='flex';
-  startQRCamera();
-}
-
-function closeQRScan(){
-  g('qrModal').style.display='none';
-  if(qrStream){qrStream.getTracks().forEach(function(t){t.stop();});qrStream=null;}
-  qrScanning=false;
+    setTimeout(function(){pa.classList.add('hidden');pa.innerHTML='';},1500);
+  },500);
 }
 
 async function startQRCamera(){
