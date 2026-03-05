@@ -1727,32 +1727,45 @@ async function printQRCards(){
   if(!r.data||!r.data.length){alert('কোনো শিক্ষার্থী নেই!');_qrPrinting=false;return;}
   var seen={};
   var students=r.data.filter(function(s){if(seen[s.id])return false;seen[s.id]=true;return true;});
-  var cards=[];
-  for(var i=0;i<students.length;i++){
-    var s=students[i];
-    cards.push({imgUrl:'https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl='+s.id+'&choe=UTF-8&chld=M|1',name:s.name,roll:s.roll_no,cls:s.class,bat:s.batch});
-  }
-  var pa=g('printArea');
-  pa.innerHTML="<style>.qr-wrap{width:100%;background:#fff}.qr-grid{display:flex;flex-wrap:wrap;padding:4mm;box-sizing:border-box}.qr-card{width:44mm;height:52mm;border:1px solid #c7d2fe;border-radius:4px;padding:3px;text-align:center;box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:1mm;flex-shrink:0}.qr-card canvas{width:38mm!important;height:38mm!important}.qr-name{font-weight:700;font-size:7pt;margin:2px 0 1px;font-family:Arial;word-break:break-word;line-height:1.1}.qr-info{font-size:6pt;color:#475569;font-family:Arial;line-height:1.1}@media print{@page{size:A4 portrait;margin:0}.no-print{display:none}.qr-wrap{width:210mm}.qr-grid{width:210mm;padding:5mm}.qr-card{width:44mm;height:52mm;margin:1mm}}</style><button class='no-print' onclick='window.print()' style='margin:8px;padding:8px 16px;background:#4f46e5;color:#fff;border:none;border-radius:8px;cursor:pointer'>&#x1F5A8; প্রিন্ট</button><button class='no-print' onclick='document.getElementById(&quot;printArea&quot;).classList.add(&quot;hidden&quot;);_qrPrinting=false;' style='margin:8px;padding:8px 16px;background:#94a3b8;color:#fff;border:none;border-radius:8px;cursor:pointer'>&#x2715; বন্ধ</button><div class='qr-wrap'><div class='qr-grid' id='qrCardGrid'></div></div>";
-  pa.classList.remove('hidden');
-  var grid=g('qrCardGrid');
-  cards.forEach(function(item){
-    var card=document.createElement('div');card.className='qr-card';
-    var img=document.createElement('img');
-    img.src=item.imgUrl;img.width=120;img.height=120;
-    img.style.cssText='display:block;margin:0 auto';
-    card.appendChild(img);
-    var nm=document.createElement('p');nm.className='qr-name';nm.textContent=item.name;
-    var inf=document.createElement('p');inf.className='qr-info';inf.textContent='রোল: '+item.roll+' | '+item.cls+' | '+item.bat;
-    card.appendChild(nm);card.appendChild(inf);grid.appendChild(card);
-  });
-  // Wait for images to load before printing
-  var imgs=pa.querySelectorAll('img');
-  var loaded=0;
-  function tryPrint(){loaded++;if(loaded>=imgs.length)setTimeout(function(){window.print();setTimeout(function(){pa.classList.add('hidden');pa.innerHTML='';_qrPrinting=false;},1500);},300);}
-  if(imgs.length===0){setTimeout(function(){window.print();setTimeout(function(){pa.classList.add('hidden');pa.innerHTML='';_qrPrinting=false;},1500);},300);}
-  else{imgs.forEach(function(img){if(img.complete)tryPrint();else{img.onload=tryPrint;img.onerror=tryPrint;}});}
-  return;
+
+  // নতুন window তে print করব
+  var win=window.open('','_blank','width=900,height=700');
+  var css=[
+    '@page{size:A4 portrait;margin:5mm}',
+    'body{margin:0;padding:3mm;font-family:Arial,sans-serif;background:#fff}',
+    '.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3mm}',
+    '.card{border:1px solid #c7d2fe;border-radius:6px;padding:4px;text-align:center;break-inside:avoid;page-break-inside:avoid}',
+    '.card img{width:100%;height:auto;display:block}',
+    '.nm{font-weight:700;font-size:7.5pt;margin:3px 0 1px;line-height:1.2}',
+    '.inf{font-size:6.5pt;color:#475569;line-height:1.2}',
+    '@media print{@page{size:A4 portrait;margin:5mm}}'
+  ].join('');
+
+  var cardsHTML=students.map(function(s){
+    var qrUrl='https://chart.googleapis.com/chart?chs=120x120&cht=qr&chl='+encodeURIComponent(String(s.id))+'&choe=UTF-8&chld=M|1';
+    return '<div class="card">'
+      +'<img src="'+qrUrl+'" width="120" height="120">'
+      +'<p class="nm">'+s.name+'</p>'
+      +'<p class="inf">'+'\u09B0\u09CB\u09B2: '+s.roll_no+' | '+s.class+' | '+(s.batch||'')+'</p>'
+      +'</div>';
+  }).join('');
+
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><style>'+css+'</style></head>'
+    +'<body><div class="grid">'+cardsHTML+'</div></body></html>';
+
+  win.document.write(html);
+  win.document.close();
+  // সব image load হলে print
+  win.onload=function(){
+    var imgs=win.document.querySelectorAll('img');
+    var total=imgs.length, loaded=0;
+    function tryP(){loaded++;if(loaded>=total){setTimeout(function(){win.focus();win.print();_qrPrinting=false;},300);}}
+    if(!total){win.focus();win.print();_qrPrinting=false;}
+    else imgs.forEach(function(img){
+      if(img.complete&&img.naturalWidth>0)tryP();
+      else{img.onload=tryP;img.onerror=tryP;}
+    });
+  };
 }
 
 // Minimal QR Code encoder - numeric/alphanumeric mode
