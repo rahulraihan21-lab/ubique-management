@@ -6,6 +6,8 @@
 <title>UBIQUE</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Sora:wght@700;800&display=swap" rel="stylesheet">
 <style>
 :root{--g1:#6366f1;--g2:#8b5cf6;--teal:#14b8a6;--green:#10b981;--red:#f43f5e;--orange:#f97316;--amber:#f59e0b;--ink:#0f172a;--ink2:#1e293b;--muted:#64748b;--border:#e2e8f0;--bg:#f0f4ff;--gs:#d1fae5;--rs:#ffe4e6}
@@ -272,7 +274,7 @@ textarea.inp{resize:none}
   </div>
 
   <!-- DAILY -->
-  <section id="sec-daily"><div class="dg"><div class="card" style="padding:18px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><div style="display:flex;align-items:center;gap:8px"><h2 style="font-family:'Sora',sans-serif;font-size:.9rem;font-weight:700;color:var(--ink2)">📋 আজকের হাজিরা</h2><button id="slToggle" onclick="toggleSL()" style="background:#f1f5f9;border:none;padding:3px 9px;border-radius:8px;font-size:.7rem;font-weight:700;color:var(--muted);cursor:pointer">▲ লুকান</button></div><button onclick="openEF()" style="background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;border:none;padding:7px 13px;border-radius:10px;font-family:'Hind Siliguri',sans-serif;font-weight:700;font-size:.76rem;cursor:pointer;box-shadow:0 3px 10px rgba(99,102,241,.28)">➕ নতুন ভর্তি</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><select id="aCl" onchange="onAClChange_att()" class="inp dynC"></select><select id="aBt" onchange="loadS()" class="inp dynB"></select></div><div style="margin-bottom:13px"><input type="text" id="aSN" oninput="loadS()" placeholder="🔍 নাম বা রোল নম্বর..." class="inp" style="width:100%;box-sizing:border-box"></div><div id="slBody"><div id="SL" style="display:flex;flex-direction:column;gap:7px;min-height:80px"></div><div style="display:flex;gap:8px;margin-top:16px">
+  <section id="sec-daily"><div class="dg"><div class="card" style="padding:18px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><div style="display:flex;align-items:center;gap:8px"><h2 style="font-family:'Sora',sans-serif;font-size:.9rem;font-weight:700;color:var(--ink2)">📋 আজকের হাজিরা</h2><button onclick="openQRScan()" style="background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;border:none;padding:4px 10px;border-radius:8px;font-size:.7rem;font-weight:700;cursor:pointer">&#x1F4F7; QR স্ক্যান</button><button id="slToggle" onclick="toggleSL()" style="background:#f1f5f9;border:none;padding:3px 9px;border-radius:8px;font-size:.7rem;font-weight:700;color:var(--muted);cursor:pointer">▲ লুকান</button></div><button onclick="openEF()" style="background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;border:none;padding:7px 13px;border-radius:10px;font-family:'Hind Siliguri',sans-serif;font-weight:700;font-size:.76rem;cursor:pointer;box-shadow:0 3px 10px rgba(99,102,241,.28)">➕ নতুন ভর্তি</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><select id="aCl" onchange="onAClChange_att()" class="inp dynC"></select><select id="aBt" onchange="loadS()" class="inp dynB"></select></div><div style="margin-bottom:13px"><input type="text" id="aSN" oninput="loadS()" placeholder="🔍 নাম বা রোল নম্বর..." class="inp" style="width:100%;box-sizing:border-box"></div><div id="slBody"><div id="SL" style="display:flex;flex-direction:column;gap:7px;min-height:80px"></div><div style="display:flex;gap:8px;margin-top:16px">
   <button onclick="subAtt()" class="btn btn-p" style="flex:1">✅ জমা দিন</button>
   <button onclick="openAttEdit()" class="btn btn-ghost" style="font-size:.75rem;padding:8px 12px">✏️ সংশোধন</button>
 </div></div></div></div></section>
@@ -581,7 +583,17 @@ textarea.inp{resize:none}
     <button onclick="saveSubmissions()" class="btn btn-p" style="width:100%;margin-top:12px">✅ সেভ করুন</button>
   </div>
 </section>
-<section id="sec-settings" class="hidden"><div style="display:flex;flex-direction:column;gap:16px"><div class="card" style="padding:17px">
+<section id="sec-settings" class="hidden"><div style="display:flex;flex-direction:column;gap:16px">
+<div class="card" style="padding:17px">
+  <h2 class="stitle" style="margin-bottom:12px">&#x1F4C7; QR হাজিরা কার্ড</h2>
+  <p style="font-size:.75rem;color:var(--muted);margin-bottom:12px">ক্লাস/ব্যাচ বেছে সব student এর QR card প্রিন্ট করুন</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+    <select id="qrCl" class="inp dynC"></select>
+    <select id="qrBt" class="inp dynB"></select>
+  </div>
+  <button onclick="printQRCards()" class="btn btn-p">&#x1F5A8;&#xFE0F; QR কার্ড প্রিন্ট</button>
+</div>
+<div class="card" style="padding:17px">
   <h2 class="stitle" style="margin-bottom:12px">👨‍🏫 শিক্ষক ব্যবস্থাপনা</h2>
   <div style="display:flex;gap:7px;margin-bottom:7px">
     <input id="tchName2" class="inp" placeholder="শিক্ষকের নাম" style="flex:1">
@@ -925,6 +937,10 @@ async function showAdmin(){
     try{await loadFeeData();}catch(e){console.log('loadFeeData err:',e);}
     try{syncDrops();}catch(e){console.log('syncDrops err:',e);}
     try{loadPubNotice();}catch(e){}
+    try{setupRealtime();}catch(e){}
+    // Restore last tab
+    var savedTab=localStorage.getItem('ub_tab');
+    if(savedTab)setTimeout(function(){try{gTab(savedTab);}catch(e){gTab('daily');}},300);
   }catch(err){
     console.error('showAdmin error:',err);
     // তবুও admin panel দেখাই
@@ -938,6 +954,7 @@ var TABS=['daily','fee','absent','homework','exam','modeltest','dailytest','noti
 function gTab(t){closeMM();
   var mp=g('morePanel');if(mp)mp.style.display='none';
 g('m-more').classList.remove('on');
+  try{localStorage.setItem('ub_tab',t);}catch(e){}
   TABS.forEach(function(id){hide('sec-'+id);var d=g('d-'+id);if(d)d.classList.remove('on');var m=g('m-'+id);if(m)m.classList.remove('on');});
   // Also clear more menu highlights
   show('sec-'+t);
@@ -1087,7 +1104,7 @@ if(r1.data)r1.data.forEach(function(s){stuCache[s.id]=s;});
 if(!r1.data||!r1.data.length){c.innerHTML='<p style="text-align:center;padding:26px;color:var(--muted)">নেই</p>';return;}feeCache={};if(r2.data)r2.data.forEach(function(f){if(!feeCache[f.student_id])feeCache[f.student_id]=[];if(feeCache[f.student_id].indexOf(f.payment_month)===-1)feeCache[f.student_id].push(f.payment_month);});var pc=r2.data?r2.data.filter(function(p){return p.payment_month===mon&&r1.data.some(function(s){return s.id===p.student_id;});}).length:0;
 // Selected মাসে কে বকেয়া সেটা count করি (admission month check সহ)
 var selMonIdx=ALL_MONTHS.indexOf(mon);var dueStuCount=r1.data.filter(function(s){var admIdx=ALL_MONTHS.indexOf(s.admission_month||ALL_MONTHS[0]);if(selMonIdx<admIdx)return false;var paid=feeCache[s.id]||[];return paid.indexOf(mon)===-1;}).length;
-c.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:13px"><span class="paid-b">✅ পরিশোধ: '+pc+'</span><span class="due-b">⏳ বকেয়া আছে: '+dueStuCount+' জন</span></div><div style="display:flex;flex-direction:column;gap:7px">'+r1.data.map(function(s){var pay=r2.data&&r2.data.find(function(p){return p.student_id===s.id&&p.payment_month===mon;});var admIdx2=ALL_MONTHS.indexOf(s.admission_month||ALL_MONTHS[0]);var notYetAdmitted=selMonIdx<admIdx2;var dueM=getDueMonths(s.id);var borderColor=notYetAdmitted?'#e2e8f0':pay?'var(--green)':'var(--red)';return'<div style="background:#fff;padding:12px;border-radius:12px;border-left:4px solid '+borderColor+';display:flex;flex-direction:column;gap:5px"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px"><div style="flex:1;min-width:0"><p style="font-weight:700;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+e(s.name)+'</p><p style="font-size:.63rem;color:var(--muted)">রোল:'+s.roll_no+' | '+e(s.batch||'')+'</p>'+'<p style="font-size:.63rem;color:var(--muted)">📞 '+e(s.phone||'—')+'</p></div>'+'<div style="display:flex;gap:3px;align-items:center;flex-shrink:0">'+(notYetAdmitted?'<span style="background:#f1f5f9;color:#94a3b8;padding:3px 8px;border-radius:8px;font-size:.68rem;font-weight:700">N/A</span>':pay?'<span class="paid-b">PAID ✓</span>':'<button onclick="openFF(\''+s.id+'\',\''+e(s.name)+'\')" style="background:var(--g1);color:#fff;border:none;padding:6px 10px;border-radius:10px;font-family:var(--font);font-weight:700;font-size:.7rem;cursor:pointer;white-space:nowrap">💰 ফি নিন</button>')+'<button class="fee-edit-btn" data-sid="'+s.id+'" style="background:#eff6ff;color:var(--g1);border:none;padding:7px 9px;border-radius:10px;font-weight:700;font-size:.72rem;cursor:pointer">✏️</button>'+'<button onclick="openCallNote('+s.id+',\''+e(s.name)+'\')" style="background:#f0fdf4;color:#16a34a;border:none;padding:7px 9px;border-radius:10px;font-weight:700;font-size:.72rem;cursor:pointer">📝</button>'+'</div>'+'</div>'+(dueM.length?'<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap"><span class="fee-due-tag">⚠️ '+dueM.length+' মাস</span><div class="due-months-bar">'+dueM.map(function(m){return'<span class="due-month-chip">'+MONTH_BN[m]+'</span>';}).join('')+'</div></div>':'<span class="fee-ok-tag">✅ সব ঠিক</span>')+
+c.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:13px"><span class="paid-b">✅ পরিশোধ: '+pc+'</span><span class="due-b">⏳ বকেয়া আছে: '+dueStuCount+' জন</span></div><div style="display:flex;flex-direction:column;gap:7px">'+r1.data.map(function(s){var pay=r2.data&&r2.data.find(function(p){return p.student_id===s.id&&p.payment_month===mon;});var admIdx2=ALL_MONTHS.indexOf(s.admission_month||ALL_MONTHS[0]);var notYetAdmitted=selMonIdx<admIdx2;var dueM=getDueMonths(s.id);var borderColor=notYetAdmitted?'#e2e8f0':pay?'var(--green)':'var(--red)';return'<div style="background:#fff;padding:12px;border-radius:12px;border-left:4px solid '+borderColor+';display:flex;flex-direction:column;gap:5px"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px"><div style="flex:1;min-width:0"><p style="font-weight:700;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+e(s.name)+'</p><p style="font-size:.63rem;color:var(--muted)">রোল:'+s.roll_no+' | '+e(s.class)+' | '+e(s.batch||'')+'</p>'+'<p style="font-size:.63rem;color:var(--muted)">📞 '+e(s.phone||'—')+'</p></div>'+'<div style="display:flex;gap:3px;align-items:center;flex-shrink:0">'+(notYetAdmitted?'<span style="background:#f1f5f9;color:#94a3b8;padding:3px 8px;border-radius:8px;font-size:.68rem;font-weight:700">N/A</span>':pay?'<span class="paid-b">PAID ✓</span>':'<button onclick="openFF(\''+s.id+'\',\''+e(s.name)+'\')" style="background:var(--g1);color:#fff;border:none;padding:6px 10px;border-radius:10px;font-family:var(--font);font-weight:700;font-size:.7rem;cursor:pointer;white-space:nowrap">💰 ফি নিন</button>')+'<button class="fee-edit-btn" data-sid="'+s.id+'" style="background:#eff6ff;color:var(--g1);border:none;padding:7px 9px;border-radius:10px;font-weight:700;font-size:.72rem;cursor:pointer">✏️</button>'+'<button onclick="openCallNote('+s.id+',\''+e(s.name)+'\')" style="background:#f0fdf4;color:#16a34a;border:none;padding:7px 9px;border-radius:10px;font-weight:700;font-size:.72rem;cursor:pointer">📝</button>'+'</div>'+'</div>'+(dueM.length?'<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap"><span class="fee-due-tag">⚠️ '+dueM.length+' মাস</span><div class="due-months-bar">'+dueM.map(function(m){return'<span class="due-month-chip">'+MONTH_BN[m]+'</span>';}).join('')+'</div></div>':'<span class="fee-ok-tag">✅ সব ঠিক</span>')+
 (absentMap[s.id]>0?'<div style="display:flex;align-items:center;gap:6px;margin-top:2px"><span style="font-size:.65rem;font-weight:700;color:'+(absentMap[s.id]>5?'#dc2626':'#16a34a')+'">'+( absentMap[s.id]>5?'⚠️ অনিয়মিত':'✅ নিয়মিত')+'</span><span style="font-size:.63rem;color:#64748b">অনুপস্থিত: '+absentMap[s.id]+' দিন</span></div>':'')+
 (noteMap[s.id]?'<div style="margin-top:5px;padding:7px 9px;background:#f8faff;border-radius:8px;border-left:3px solid #6366f1"><p style="font-size:.6rem;color:#94a3b8;margin-bottom:2px">📝 '+new Date(noteMap[s.id].created_at).toLocaleDateString('bn-BD')+'</p><p style="font-size:.72rem;color:#1e1b4b;line-height:1.4">'+e(noteMap[s.id].note)+'</p></div>':'')+
 '</div>';}).join('')+'</div>';
@@ -1657,8 +1674,163 @@ function printDueReport(){
   win.document.write('<html><head><title>বকেয়া ফি রিপোর্ট</title><style>body{font-family:sans-serif;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:7px;font-size:13px;text-align:left}th{background:#f0f0f0}@media print{button{display:none}}</style></head><body>');
   win.document.write('<h2>⚠️ বকেয়া ফি রিপোর্ট — '+new Date().toLocaleDateString('bn-BD')+'</h2>');
   win.document.write('<table><thead><tr><th>#</th><th>নাম</th><th>রোল</th><th>ক্লাস/ব্যাচ</th><th>বাকি মাস</th><th>সংখ্যা</th><th>ফোন</th></tr></thead><tbody>'+rows+'</tbody></table>');
-  win.document.write('<br><button onclick="window.print()">🖨️ প্রিন্ট</button></body></html>');
+  win.document.write('<br><button onclick="window.print()" style="padding:8px 16px;background:#4f46e5;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">&#x1F5A8;&#xFE0F; প্রিন্ট</button></body></html>');
   win.document.close();
+}
+
+// ===== REALTIME SUBSCRIPTIONS =====
+var _realtimeChannels=[];
+function setupRealtime(){
+  // আগের subscription বন্ধ করি
+  _realtimeChannels.forEach(function(ch){try{SB.removeChannel(ch);}catch(e){}});
+  _realtimeChannels=[];
+
+  // Attendance realtime
+  var attCh=SB.channel('att-changes')
+    .on('postgres_changes',{event:'*',schema:'public',table:'attendance'},function(){
+      var auth=localStorage.getItem('ub');
+      if(auth==='a'){try{loadS();}catch(e){}}
+      else if(auth==='t'){try{loadTS();}catch(e){}}
+    })
+    .subscribe();
+  _realtimeChannels.push(attCh);
+
+  // Fee realtime
+  var feeCh=SB.channel('fee-changes')
+    .on('postgres_changes',{event:'*',schema:'public',table:'fees_collection'},function(){
+      var auth=localStorage.getItem('ub');
+      if(auth==='a'){try{loadFee();loadFeeData();}catch(e){}}
+    })
+    .subscribe();
+  _realtimeChannels.push(feeCh);
+
+  // Students realtime  
+  var stuCh=SB.channel('stu-changes')
+    .on('postgres_changes',{event:'*',schema:'public',table:'students'},function(){
+      var auth=localStorage.getItem('ub');
+      if(auth==='a'){try{loadS();loadFee();}catch(e){}}
+      else if(auth==='t'){try{loadTS();}catch(e){}}
+    })
+    .subscribe();
+  _realtimeChannels.push(stuCh);
+}
+
+// ===== QR CARD PRINT =====
+async function printQRCards(){
+  var cls=g('qrCl').value, bch=g('qrBt').value;
+  var q=SB.from('students').select('id,name,roll_no,class,batch');
+  if(cls!=='All')q=q.eq('class',cls);
+  if(bch!=='All')q=q.eq('batch',bch);
+  var r=await q.order('roll_no');
+  if(!r.data||!r.data.length){alert('কোনো শিক্ষার্থী নেই!');return;}
+  alert('QR কার্ড তৈরি হচ্ছে... একটু অপেক্ষা করুন।');
+  var container=document.createElement('div');
+  container.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px';
+  for(var i=0;i<r.data.length;i++){
+    var s=r.data[i];
+    var wrap=document.createElement('div');
+    wrap.style.cssText='border:1.5px solid #c7d2fe;border-radius:10px;padding:10px;text-align:center;break-inside:avoid';
+    var qrDiv=document.createElement('div');
+    try{
+      if(typeof QRCode==='undefined') throw new Error('QRCode not loaded');
+      var cv=document.createElement('canvas');
+      await QRCode.toCanvas(cv,String(s.id),{width:90,margin:1,color:{dark:'#3730a3',light:'#fff'}});
+      qrDiv.appendChild(cv);
+    }catch(ex){
+      // Fallback: Google Charts QR API
+      var img=document.createElement('img');
+      img.src='https://chart.googleapis.com/chart?chs=90x90&cht=qr&chl='+s.id+'&choe=UTF-8';
+      img.width=90; img.height=90;
+      qrDiv.appendChild(img);
+    }
+    var nm=document.createElement('p');
+    nm.style.cssText='font-weight:700;font-size:11px;margin:5px 0 2px';
+    nm.innerText=s.name;
+    var inf=document.createElement('p');
+    inf.style.cssText='font-size:9px;color:#64748b';
+    inf.innerText='রোল: '+s.roll_no+' | '+s.class+' | '+s.batch;
+    wrap.appendChild(qrDiv);
+    wrap.appendChild(nm);
+    wrap.appendChild(inf);
+    container.appendChild(wrap);
+  }
+  var pa=g('printArea');
+  pa.innerHTML='';
+  pa.appendChild(container);
+  pa.classList.remove('hidden');
+  setTimeout(function(){
+    window.print();
+    setTimeout(function(){pa.classList.add('hidden');pa.innerHTML='';},1000);
+  },600);
+}
+
+// ===== QR SCANNER =====
+var qrStream=null, qrScanning=false, qrRecentIds={};
+
+function openQRScan(){
+  var today=new Date().toISOString().split('T')[0];
+  g('qrScanDate').innerText='তারিখ: '+today;
+  g('qrResult').innerHTML='';
+  g('qrLog').innerHTML='';
+  qrRecentIds={};
+  g('qrModal').style.display='flex';
+  startQRCamera();
+}
+
+function closeQRScan(){
+  g('qrModal').style.display='none';
+  if(qrStream){qrStream.getTracks().forEach(function(t){t.stop();});qrStream=null;}
+  qrScanning=false;
+}
+
+async function startQRCamera(){
+  try{
+    qrStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    var vid=g('qrVideo');
+    vid.srcObject=qrStream;
+    vid.play();
+    qrScanning=true;
+    scanQRFrame();
+  }catch(e){
+    g('qrResult').innerHTML='<span style="color:var(--red)">&#x274C; ক্যামেরা অ্যাক্সেস দিন!</span>';
+  }
+}
+
+function scanQRFrame(){
+  if(!qrScanning)return;
+  var vid=g('qrVideo');
+  if(vid.readyState!==vid.HAVE_ENOUGH_DATA){requestAnimationFrame(scanQRFrame);return;}
+  var canvas=document.createElement('canvas');
+  canvas.width=vid.videoWidth;canvas.height=vid.videoHeight;
+  canvas.getContext('2d').drawImage(vid,0,0);
+  try{
+    if(typeof jsQR!=='undefined'){
+      var imageData=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height);
+      var code=jsQR(imageData.data,imageData.width,imageData.height);
+      if(code&&code.data){processQRCode(code.data);}
+    }
+  }catch(e){}
+  if(qrScanning)setTimeout(scanQRFrame,300);
+}
+
+async function processQRCode(data){
+  var sid=parseInt(data);
+  if(!sid||isNaN(sid))return;
+  if(qrRecentIds[sid])return;
+  qrRecentIds[sid]=true;
+  setTimeout(function(){delete qrRecentIds[sid];},5000);
+  var today=new Date().toISOString().split('T')[0];
+  var rs=await SB.from('students').select('name,roll_no,class,batch').eq('id',sid).single();
+  if(!rs.data){g('qrResult').innerHTML='<span style="color:var(--red)">&#x274C; পাওয়া যায়নি</span>';return;}
+  var s=rs.data;
+  await SB.from('attendance').upsert([{student_id:sid,attendance_date:today,status:'Present'}],{onConflict:'student_id,attendance_date'});
+  var log=g('qrLog');
+  var item=document.createElement('div');
+  item.style.cssText='background:#f0fdf4;border-radius:8px;padding:6px 10px;font-size:.75rem;display:flex;justify-content:space-between;align-items:center;margin-bottom:3px';
+  item.innerHTML='<span><b>'+s.name+'</b> (রোল:'+s.roll_no+')</span><span style="color:#16a34a;font-weight:700">&#x2705;</span>';
+  log.insertBefore(item,log.firstChild);
+  g('qrResult').innerHTML='<span style="color:#16a34a">&#x2705; '+s.name+' উপস্থিত!</span>';
+  setTimeout(function(){g('qrResult').innerHTML='';},2000);
 }
 
 /* NOTICE CLASS/BATCH */
@@ -4096,6 +4268,23 @@ function onAClChange_att(){
 }
 
 </script>
+
+<!-- QR SCANNER MODAL -->
+<div id="qrModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:20px;padding:20px;width:90%;max-width:420px;position:relative">
+    <button onclick="closeQRScan()" style="position:absolute;top:12px;right:12px;background:#f1f5f9;border:none;border-radius:99px;width:30px;height:30px;cursor:pointer;font-weight:700;color:#64748b">&#x2715;</button>
+    <h3 style="font-weight:700;margin-bottom:6px">&#x1F4F7; QR স্ক্যান</h3>
+    <p style="font-size:.72rem;color:var(--muted);margin-bottom:12px" id="qrScanDate"></p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <select id="qrScanCl" class="inp dynC"></select>
+      <select id="qrScanBt" class="inp dynB"></select>
+    </div>
+    <video id="qrVideo" style="width:100%;border-radius:12px;background:#000;aspect-ratio:1" playsinline></video>
+    <div id="qrResult" style="margin-top:10px;min-height:36px;text-align:center;font-weight:700;font-size:.85rem"></div>
+    <div id="qrLog" style="margin-top:8px;display:flex;flex-direction:column;gap:4px;max-height:120px;overflow-y:auto"></div>
+  </div>
+</div>
+
 <!-- ATTENDANCE EDIT MODAL -->
 <div id="aeModal" style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.55);align-items:flex-start;justify-content:center;padding:12px;overflow-y:auto">
   <div style="background:#fff;border-radius:20px;width:100%;max-width:480px;margin:auto;box-shadow:0 24px 80px rgba(0,0,0,.25)">
