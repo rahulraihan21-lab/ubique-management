@@ -1714,23 +1714,29 @@ function setupRealtime(){
 }
 
 // ===== QR CARD PRINT =====
+var _qrPrinting=false;
 async function printQRCards(){
+  if(_qrPrinting)return;
+  _qrPrinting=true;
   var cls=g('qrCl').value, bch=g('qrBt').value;
+  if(cls==='All'){alert('একটি নির্দিষ্ট ক্লাস বেছে নিন!');_qrPrinting=false;return;}
   var q=SB.from('students').select('id,name,roll_no,class,batch');
-  if(cls!=='All')q=q.eq('class',cls);
+  q=q.eq('class',cls);
   if(bch!=='All')q=q.eq('batch',bch);
   var r=await q.order('roll_no');
-  if(!r.data||!r.data.length){alert('কোনো শিক্ষার্থী নেই!');return;}
+  if(!r.data||!r.data.length){alert('কোনো শিক্ষার্থী নেই!');_qrPrinting=false;return;}
+  var seen={};
+  var students=r.data.filter(function(s){if(seen[s.id])return false;seen[s.id]=true;return true;});
   var cards=[];
-  for(var i=0;i<r.data.length;i++){
-    var s=r.data[i];
+  for(var i=0;i<students.length;i++){
+    var s=students[i];
     var cv=document.createElement('canvas');
     cv.width=100;cv.height=100;
     try{drawQR(cv,String(s.id));}catch(e){}
     cards.push({canvas:cv,name:s.name,roll:s.roll_no,cls:s.class,bat:s.batch});
   }
   var pa=g('printArea');
-  pa.innerHTML="<style>.qr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:10px}.qr-card{border:2px solid #c7d2fe;border-radius:10px;padding:8px;text-align:center;break-inside:avoid;page-break-inside:avoid}.qr-name{font-weight:700;font-size:11px;margin:5px 0 2px;font-family:Arial}.qr-info{font-size:9px;color:#475569;font-family:Arial}@media print{@page{size:A4;margin:8mm}.no-print{display:none}}</style><button class='no-print' onclick='window.print()' style='margin:8px;padding:8px 16px;background:#4f46e5;color:#fff;border:none;border-radius:8px;cursor:pointer'>&#x1F5A8; প্রিন্ট</button><button class='no-print' onclick='document.getElementById(&quot;printArea&quot;).classList.add(&quot;hidden&quot;)' style='margin:8px;padding:8px 16px;background:#94a3b8;color:#fff;border:none;border-radius:8px;cursor:pointer'>&#x2715; বন্ধ</button><div class='qr-grid' id='qrCardGrid'></div>";
+  pa.innerHTML="<style>.qr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:8px}.qr-card{border:1.5px solid #c7d2fe;border-radius:8px;padding:6px;text-align:center;break-inside:avoid;page-break-inside:avoid;width:100%;box-sizing:border-box}.qr-card canvas{max-width:100%;height:auto}.qr-name{font-weight:700;font-size:10px;margin:4px 0 1px;font-family:Arial;word-break:break-word}.qr-info{font-size:8px;color:#475569;font-family:Arial}@media print{@page{size:A4 portrait;margin:6mm}.no-print{display:none}.qr-grid{grid-template-columns:repeat(4,1fr)}}</style><button class='no-print' onclick='window.print()' style='margin:8px;padding:8px 16px;background:#4f46e5;color:#fff;border:none;border-radius:8px;cursor:pointer'>&#x1F5A8; প্রিন্ট</button><button class='no-print' onclick='document.getElementById(&quot;printArea&quot;).classList.add(&quot;hidden&quot;)' style='margin:8px;padding:8px 16px;background:#94a3b8;color:#fff;border:none;border-radius:8px;cursor:pointer'>&#x2715; বন্ধ</button><div class='qr-grid' id='qrCardGrid'></div>";
   pa.classList.remove('hidden');
   var grid=g('qrCardGrid');
   cards.forEach(function(item){
@@ -1742,30 +1748,94 @@ async function printQRCards(){
   });
 }
 
-function drawQR(canvas,text){
-  var mat=createQRMatrix(text);
-  var ctx=canvas.getContext('2d');
-  var n=mat.length;
-  var cell=Math.floor(100/n);
-  ctx.fillStyle='#fff';ctx.fillRect(0,0,100,100);
-  ctx.fillStyle='#1e1b4b';
-  for(var r=0;r<n;r++)for(var col=0;col<n;col++)if(mat[r][col])ctx.fillRect(col*cell,r*cell,cell,cell);
-}
+// Minimal QR Code encoder - numeric/alphanumeric mode
+// Based on Reed-Solomon error correction
+var QRMini=(function(){
+var GF={};
+GF.exp=new Uint8Array(512);
+GF.log=new Uint8Array(256);
+(function(){var x=1;for(var i=0;i<255;i++){GF.exp[i]=x;GF.log[x]=i;x<<=1;if(x&256)x^=285;}for(var i=255;i<512;i++)GF.exp[i]=GF.exp[i-255];}());
+GF.mul=function(x,y){if(x===0||y===0)return 0;return GF.exp[(GF.log[x]+GF.log[y])%255];};
+GF.poly_mul=function(p,q){var r=new Uint8Array(p.length+q.length-1);for(var i=0;i<p.length;i++)for(var j=0;j<q.length;j++)r[i+j]^=GF.mul(p[i],q[j]);return r;};
+GF.poly_rem=function(dividend,divisor){var r=new Uint8Array(dividend);for(var i=0;i<dividend.length-divisor.length+1;i++){var c=r[i];if(c!==0)for(var j=1;j<divisor.length;j++)if(divisor[j]!==0)r[i+j]^=GF.mul(divisor[j],c);}return r.slice(dividend.length-divisor.length+1);};
+function genPoly(n){var g=new Uint8Array([1]);for(var i=0;i<n;i++)g=GF.poly_mul(g,new Uint8Array([1,GF.exp[i]]));return g;}
 
-function createQRMatrix(text){
-  var n=21;
+function encode(text){
+  // Version 1, ECC level M: 16 data codewords, 10 ECC
+  var data=[];
+  // Byte mode
+  data.push(0x40|(text.length>>4));
+  data.push((text.length&0xF)<<4);
+  for(var i=0;i<text.length;i++){
+    data[data.length-1]|=text.charCodeAt(i)>>4;
+    data.push((text.charCodeAt(i)&0xF)<<4);
+  }
+  // Pad to 16 codewords
+  while(data.length<16)data.push(data.length%2===0?0xEC:0x11);
+  data=data.slice(0,16);
+  // ECC
+  var ecc=GF.poly_rem(new Uint8Array([].concat(data,new Array(10).fill(0))),genPoly(10));
+  var all=data.concat(Array.from(ecc));
+  
+  // Build 21x21 matrix
   var mat=[];
-  for(var i=0;i<n;i++)mat.push(new Array(n).fill(0));
-  function finder(r,c){for(var i=0;i<7;i++)for(var j=0;j<7;j++)mat[r+i][c+j]=((i===0||i===6||j===0||j===6)||(i>=2&&i<=4&&j>=2&&j<=4))?1:0;}
-  finder(0,0);finder(0,14);finder(14,0);
-  for(var i=8;i<13;i++){mat[6][i]=(i%2===0)?1:0;mat[i][6]=(i%2===0)?1:0;}
+  for(var i=0;i<21;i++)mat.push(new Int8Array(21).fill(-1));
+  
+  // Finder patterns
+  function fp(r,c){
+    var p=[[1,1,1,1,1,1,1],[1,0,0,0,0,0,1],[1,0,1,1,1,0,1],[1,0,1,1,1,0,1],[1,0,1,1,1,0,1],[1,0,0,0,0,0,1],[1,1,1,1,1,1,1]];
+    for(var i=0;i<7;i++)for(var j=0;j<7;j++)mat[r+i][c+j]=p[i][j];
+  }
+  fp(0,0);fp(0,14);fp(14,0);
+  // Separators
+  for(var i=0;i<8;i++){if(mat[7][i]<0)mat[7][i]=0;if(mat[i][7]<0)mat[i][7]=0;if(mat[7][20-i]<0)mat[7][20-i]=0;if(mat[i][13]<0)mat[i][13]=0;if(mat[13][i]<0)mat[13][i]=0;if(mat[20-i][7]<0)mat[20-i][7]=0;}
+  // Timing
+  for(var i=8;i<13;i++){mat[6][i]=i%2===0?1:0;mat[i][6]=i%2===0?1:0;}
+  // Dark module
+  mat[13][8]=1;
+  // Format (ECC M, mask 0): 101010000010010
+  var fmt=[1,0,1,0,1,0,0,0,0,0,1,0,0,1,0];
+  var fi=0;
+  for(var i=0;i<=5;i++)mat[8][i]=fmt[fi++];
+  mat[8][7]=fmt[fi++];mat[8][8]=fmt[fi++];mat[7][8]=fmt[fi++];
+  for(var i=5;i>=0;i--)mat[i][8]=fmt[fi++];
+  fi=0;
+  for(var i=20;i>=14;i--)mat[8][i]=fmt[fi++];
+  for(var i=14;i<=20;i++)mat[i][8]=fmt[fi++];
+
+  // Data placement
   var bits=[];
-  for(var i=0;i<text.length;i++){var b=text.charCodeAt(i).toString(2).padStart(8,'0');for(var j=0;j<8;j++)bits.push(parseInt(b[j]));}
-  var bi=0;
-  for(var r=8;r<n-8;r++)for(var col2=8;col2<n-8;col2++)if(r!==6&&col2!==6)mat[r][col2]=bi<bits.length?bits[bi++]:(r+col2)%2;
-  for(var r=0;r<n;r++)for(var col2=8;col2<n-8;col2++)if(r>=8&&r<n-8)mat[r][col2]^=(r+col2)%2;
+  for(var i=0;i<all.length;i++)for(var b=7;b>=0;b--)bits.push((all[i]>>b)&1);
+  var bi=0,up=true,col=20;
+  while(col>=0){
+    if(col===6)col--;
+    for(var delta=0;delta<21;delta++){
+      var row=up?(20-delta):delta;
+      for(var dc=0;dc<2;dc++){
+        var c=col-dc;
+        if(mat[row][c]<0){
+          var bit=bi<bits.length?bits[bi++]:0;
+          // Mask 0: (row+col)%2==0
+          mat[row][c]=bit^(((row+c)%2===0)?1:0);
+        }
+      }
+    }
+    col-=2;up=!up;
+  }
   return mat;
 }
+
+return{render:function(canvas,text){
+  var mat=encode(text);
+  var n=mat.length,sz=canvas.width,cell=sz/n;
+  var ctx=canvas.getContext('2d');
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,sz,sz);
+  ctx.fillStyle='#000';
+  for(var r=0;r<n;r++)for(var c=0;c<n;c++)if(mat[r][c]===1)ctx.fillRect(c*cell,r*cell,cell,cell);
+}};
+}());
+
+function drawQR(canvas,text){QRMini.render(canvas,text);}
 
 async function startQRCamera(){
   try{
