@@ -140,7 +140,7 @@ textarea.inp{height:auto}
 .sub-chip{display:inline-flex;align-items:center;gap:3px;background:#eff6ff;color:var(--g1);padding:4px 10px;border-radius:8px;font-size:.72rem;font-weight:700;border:1px solid #bfdbfe}
 .sub-chip button{background:none;border:none;color:var(--red);cursor:pointer;font-weight:700;font-size:.8rem;padding:0 2px}
 /* Print */
-@media print{body,body *{visibility:hidden}#printArea,#printArea *{visibility:visible}#printArea{position:fixed;left:0;top:0;width:100%;height:auto;background:#fff;z-index:99999;padding:0;margin:0}@page{size:A4;margin:12mm 10mm}}
+@media print{body,body *{visibility:hidden}#printArea,#printArea *{visibility:visible}#printArea{position:static!important;inset:auto!important;width:100%!important;height:auto!important;overflow:visible!important;background:#fff;padding:0;margin:0}@page{size:A4;margin:12mm 10mm}}
 .print-sheet{font-family:'Hind Siliguri',sans-serif;max-width:210mm;margin:0 auto;padding:8mm;background:#fff;color:#000}
 .print-sheet h1{font-family:'Sora',sans-serif;font-size:18pt;text-align:center;margin-bottom:2mm;color:#1e293b}
 .print-sheet .subtitle{text-align:center;font-size:9pt;color:#64748b;margin-bottom:5mm;border-bottom:2px solid #6366f1;padding-bottom:3mm}
@@ -2000,9 +2000,9 @@ async function printQRCards(){
   var students=r.data.filter(function(s){if(seen[s.id])return false;seen[s.id]=true;return true;});
 
   var cardsHTML=students.map(function(s){
-    var url=makeQRDataURL(String(s.id),120);
+    var url=makeQRDataURL(String(s.id),100);
     return '<div class="qrc">'
-      +'<img src="'+url+'" width="120" height="120">'
+      +'<img src="'+url+'" style="width:100%;height:auto;display:block">'
       +'<p class="qrnm">'+s.name+'</p>'
       +'<p class="qrinf">রোল: '+s.roll_no+' | '+s.class+(s.batch?' | '+s.batch:'')+'</p>'
       +'</div>';
