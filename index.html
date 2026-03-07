@@ -1159,7 +1159,7 @@ var absentMap={};
 var r4=stuIds2.length?await SB.from('call_notes').select('student_id,note,created_at').in('student_id',stuIds2).order('created_at',{ascending:false}).limit(1000):{data:[]};
 var noteMap={};
 (r4.data||[]).forEach(function(n){if(!noteMap[n.student_id])noteMap[n.student_id]=n;});
-if(srch&&r1.data){r1.data=r1.data.filter(function(s){var nm=s.name.toLowerCase().indexOf(srch)!==-1;var rl=String(s.roll_no)===srch;return nm||rl;});}
+if(srch&&r1.data){r1.data=r1.data.filter(function(s){var isNum=/^\d+$/.test(srch);var nm=!isNum&&s.name.toLowerCase().indexOf(srch)!==-1;var rl=isNum&&String(s.roll_no)===srch;return nm||rl;});}
 if(r1.data)r1.data.forEach(function(s){stuCache[s.id]=s;});
 if(!r1.data||!r1.data.length){c.innerHTML='<p style="text-align:center;padding:26px;color:var(--muted)">নেই</p>';return;}feeCache={};if(r2.data)r2.data.forEach(function(f){if(!feeCache[f.student_id])feeCache[f.student_id]=[];if(feeCache[f.student_id].indexOf(f.payment_month)===-1)feeCache[f.student_id].push(f.payment_month);});var pc=r2.data?r2.data.filter(function(p){return p.payment_month===mon&&r1.data.some(function(s){return s.id===p.student_id;});}).length:0;
 // Selected মাসে কে বকেয়া সেটা count করি (admission month check সহ)
@@ -1302,7 +1302,7 @@ async function loadS(){
   await loadFeeData();
   var list=(r1.data||[]).filter(function(s){
     if(!sn)return true;
-    var nm=s.name.toLowerCase().indexOf(sn)!==-1;var rl=String(s.roll_no)===sn;return nm||rl;
+    var isNum=/^\d+$/.test(sn);var nm=!isNum&&s.name.toLowerCase().indexOf(sn)!==-1;var rl=isNum&&String(s.roll_no)===sn;return nm||rl;
   });
   list.forEach(function(s){stuCache[s.id]=s;});
   if(!list.length){
@@ -3502,8 +3502,10 @@ async function loadPayLog(){
     if(!srch) return true;
     var sl=srch.toLowerCase();
     var nameMatch=s.name.toLowerCase().indexOf(sl)!==-1;
-    var rollExact=String(s.roll_no)===srch;
-    return nameMatch||rollExact;
+    var isNum=/^\d+$/.test(srch);
+    var rollExact=isNum&&String(s.roll_no)===srch;
+    var nameMatch2=!isNum&&s.name.toLowerCase().indexOf(srch)!==-1;
+    return nameMatch2||rollExact;
   });
 
   // memo অনুযায়ী group করি
