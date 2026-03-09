@@ -250,6 +250,29 @@ textarea.inp{height:auto}
   </div>
 </div>
 
+<!-- ADMIN HEADER (Desktop) -->
+<header class="ah">
+  <div style="display:flex;align-items:center;gap:8px"><span class="al">UBIQUE</span><span style="background:#eff6ff;color:var(--g1);padding:2px 8px;border-radius:99px;font-size:.6rem;font-weight:700">Admin</span></div>
+  <nav style="display:flex;gap:2px;overflow-x:auto">
+    <button onclick="gTab('daily')" class="dt on" id="d-daily">📋 হাজিরা</button>
+    <button onclick="gTab('fee')" class="dt" id="d-fee">💰 ফি</button>
+    <button onclick="gTab('absent')" class="dt" id="d-absent">📞 কল</button>
+    <button onclick="gTab('homework')" class="dt" id="d-homework">📝 HW</button>
+    <button onclick="gTab('modeltest')" class="dt" id="d-modeltest">📄 মডেল</button>
+    <button onclick="gTab('notice')" class="dt" id="d-notice">📢 নোটিস</button>
+    <button onclick="gTab('report')" class="dt" id="d-report">📊 রিপোর্ট</button>
+    <button onclick="gTab('routine')" class="dt" id="d-routine">🗓️ রুটিন</button>
+    <button onclick="gTab('lectureplan')" class="dt" id="d-lectureplan">📚 লেকচার</button>
+    <button onclick="gTab('enroll')" class="dt" id="d-enroll">📤 বাল্ক ভর্তি</button>
+    <button onclick="gTab('expense');initExpenseTab()" class="dt" id="d-expense">💸 খরচ</button>
+    <button onclick="gTab('dailytest')" class="dt" id="d-dailytest">📝 ডেইলি টেস্ট</button>
+    <button onclick="gTab('assignment')" class="dt" id="d-assignment">📋 এসাইনমেন্ট</button>
+    <button onclick="gTab('online')" class="dt" id="d-online">🎥 অনলাইন ক্লাস</button>
+    <button onclick="gTab('settings')" class="dt" id="d-settings">⚙️</button>
+  </nav>
+  <button onclick="logout()" style="background:rgba(255,255,255,.17);color:var(--g1);border:1px solid #e0e7ff;padding:7px 16px;border-radius:10px;font-family:'Hind Siliguri',sans-serif;font-weight:700;font-size:.76rem;cursor:pointer">লগআউট 🚪</button>
+</header>
+
 <!-- ADMIN MAIN -->
 <main id="am" style="display:none;max-width:1160px;margin:0 auto;padding:16px 15px">
   <div id="sb" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
