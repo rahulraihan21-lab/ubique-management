@@ -10,7 +10,7 @@
 <style>
 :root{--g1:#6366f1;--g2:#8b5cf6;--teal:#14b8a6;--green:#10b981;--red:#f43f5e;--orange:#f97316;--amber:#f59e0b;--ink:#0f172a;--ink2:#1e293b;--muted:#64748b;--border:#e2e8f0;--bg:#f0f4ff;--gs:#d1fae5;--rs:#ffe4e6}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Hind Siliguri',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:76px;-webkit-tap-highlight-color:transparent}
+body{font-family:'Hind Siliguri',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:76px;-webkit-tap-highlight-color:transparent;overflow-x:hidden}
 .hidden{display:none!important}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:#c7d2fe;border-radius:9px}
 .card{background:#fff;border-radius:20px;box-shadow:0 2px 16px rgba(99,102,241,.08);border:1px solid #e8ecf8}
@@ -69,7 +69,7 @@ textarea.inp{height:auto}
 .ac{background:var(--rs);color:#9f1239;font-weight:700;text-align:center}
 .tc{background:#ede9fe;color:#5b21b6;font-weight:700;text-align:center}
 /* LOGIN */
-#lo{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto;background:linear-gradient(135deg,#0f172a,#1e1b4b,#0c1461)}
+#lo{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto;overflow-x:hidden;background:linear-gradient(135deg,#0f172a,#1e1b4b,#0c1461)}
 #lo::before{content:'';position:absolute;width:360px;height:360px;top:-80px;right:-60px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,.4),transparent 70%);filter:blur(55px);animation:o1 8s ease-in-out infinite}
 #lo::after{content:'';position:absolute;width:300px;height:300px;bottom:-50px;left:-40px;border-radius:50%;background:radial-gradient(circle,rgba(6,182,212,.35),transparent 70%);filter:blur(55px);animation:o2 10s ease-in-out infinite}
 @keyframes o1{0%,100%{transform:translate(0,0)}50%{transform:translate(-25px,18px)}}
@@ -115,6 +115,7 @@ textarea.inp{height:auto}
 .mt .i{font-size:1.15rem;line-height:1}.mt .l{font-size:.58rem;font-weight:700;white-space:nowrap}
 .mt.on{color:var(--g1);background:#eff6ff}
 @media(max-width:768px){.ah{display:none!important}.mn{display:block}body{padding-bottom:72px}}
+
 /* More menu popup */
 .more-menu{position:absolute;bottom:calc(100% + 8px);right:-10px;background:#fff;border-radius:16px;box-shadow:0 -8px 30px rgba(0,0,0,.15);border:1px solid #e0e7ff;padding:8px;min-width:180px;display:none;z-index:200}
 .more-menu.show{display:block;animation:fu .2s ease}
@@ -248,29 +249,6 @@ textarea.inp{height:auto}
     <div id="tr" class="hidden"><div class="card" style="padding:18px"><h2 class="stitle">📊 রিপোর্ট</h2><div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:13px"><input type="month" id="tRMo" class="inp" style="width:auto;min-width:148px"><select id="tRCl" class="inp dynC" onchange="filterBatch('tRCl','tRBt',null);" style="width:auto;min-width:108px"></select><select id="tRBt" class="inp dynB" style="width:auto;min-width:108px"></select><button onclick="loadTR()" class="btn btn-t btn-sm">🔄</button></div><div id="tRL" class="hidden"><div class="sk" style="height:28px;width:100%"></div></div><div style="overflow-x:auto;border-radius:11px;border:1px solid #e0e7ff"><table class="rt"><thead id="tRH"></thead><tbody id="tRB"></tbody></table></div><div id="tRS" class="hidden" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px"></div></div></div>
   </div>
 </div>
-
-<!-- ADMIN HEADER (Desktop) -->
-<header class="ah">
-  <div style="display:flex;align-items:center;gap:8px"><span class="al">UBIQUE</span><span style="background:#eff6ff;color:var(--g1);padding:2px 8px;border-radius:99px;font-size:.6rem;font-weight:700">Admin</span></div>
-  <nav style="display:flex;gap:2px;overflow-x:auto">
-    <button onclick="gTab('daily')" class="dt on" id="d-daily">📋 হাজিরা</button>
-    <button onclick="gTab('fee')" class="dt" id="d-fee">💰 ফি</button>
-    <button onclick="gTab('absent')" class="dt" id="d-absent">📞 কল</button>
-    <button onclick="gTab('homework')" class="dt" id="d-homework">📝 HW</button>
-    <button onclick="gTab('modeltest')" class="dt" id="d-modeltest">📄 মডেল</button>
-    <button onclick="gTab('notice')" class="dt" id="d-notice">📢 নোটিস</button>
-    <button onclick="gTab('report')" class="dt" id="d-report">📊 রিপোর্ট</button>
-    <button onclick="gTab('routine')" class="dt" id="d-routine">🗓️ রুটিন</button>
-    <button onclick="gTab('lectureplan')" class="dt" id="d-lectureplan">📚 লেকচার</button>
-    <button onclick="gTab('enroll')" class="dt" id="d-enroll">📤 বাল্ক ভর্তি</button>
-    <button onclick="gTab('expense');initExpenseTab()" class="dt" id="d-expense">💸 খরচ</button>
-    <button onclick="gTab('dailytest')" class="dt" id="d-dailytest">📝 ডেইলি টেস্ট</button>
-    <button onclick="gTab('assignment')" class="dt" id="d-assignment">📋 এসাইনমেন্ট</button>
-    <button onclick="gTab('online')" class="dt" id="d-online">🎥 অনলাইন ক্লাস</button>
-    <button onclick="gTab('settings')" class="dt" id="d-settings">⚙️</button>
-    <button onclick="logout()" class="dt" style="color:#ef4444">🚪 লগআউট</button>
-  </nav>
-</header>
 
 <!-- ADMIN MAIN -->
 <main id="am" style="display:none;max-width:1160px;margin:0 auto;padding:16px 15px">
@@ -1986,12 +1964,57 @@ function makeQRDataURL(text, size){
   return 'https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data='+encodeURIComponent(String(text));
 }
 
+var UBIQUE_OFFICE_PHONE='01700-000000';
+var UBIQUE_LOGO_SRC='';
+function updateQRPhone(){
+  var v=document.getElementById('qrOfficePhone');
+  if(v){UBIQUE_OFFICE_PHONE=v.value;reRenderQRCards();}
+}
+function uploadQRLogo(input){
+  var file=input.files[0];if(!file)return;
+  var r=new FileReader();
+  r.onload=function(e){UBIQUE_LOGO_SRC=e.target.result;reRenderQRCards();};
+  r.readAsDataURL(file);
+}
+function reRenderQRCards(){
+  var grid=document.getElementById('qrCardGrid');
+  if(!grid||!window._lastQRStudents)return;
+  var clsWord={6:'SIX',7:'SEVEN',8:'EIGHT',9:'NINE',10:'TEN',11:'ELEVEN',12:'TWELVE'};
+  function getClsWord(c){var n=parseInt(c);return clsWord[n]?clsWord[n]:(c||'');}
+  grid.innerHTML=window._lastQRStudents.map(function(s){
+    var url=makeQRDataURL(String(s.id),200);
+    var logo=UBIQUE_LOGO_SRC?'<img src="'+UBIQUE_LOGO_SRC+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':'U';
+    return '<div class="idc">'
+      +'<div class="idc-top">'
+        +'<div class="idc-logo">'+logo+'</div>'
+        +'<div class="idc-headtext">'
+          +'<div class="idc-school">UBIQUE</div>'
+          +'<div class="idc-tagline">Cadet &amp; Defence Academy</div>'
+        +'</div>'
+      +'</div>'
+      +'<div class="idc-mid">'
+        +'<div class="idc-qr"><img src="'+url+'" alt="QR"></div>'
+        +'<div class="idc-name">'+s.name+'</div>'
+        +'<div class="idc-info">'
+          +'<div class="idc-row"><span class="idc-lbl">Class</span><span class="idc-val">'+getClsWord(s.class)+'</span></div>'
+          +'<div class="idc-row"><span class="idc-lbl">Batch</span><span class="idc-val">'+(s.batch||'—')+'</span></div>'
+          +'<div class="idc-row"><span class="idc-lbl">Roll</span><span class="idc-val">'+s.roll_no+'</span></div>'
+          +'<div class="idc-row"><span class="idc-lbl">Phone</span><span class="idc-val">'+(s.phone||'—')+'</span></div>'
+        +'</div>'
+      +'</div>'
+      +'<div class="idc-bot">'
+        +'<div class="idc-addr">501 North Shahjahanpur, Dhaka<br>'+UBIQUE_OFFICE_PHONE+'</div>'
+        +'<div class="idc-year">2026</div>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+}
 async function printQRCards(){
   if(_qrPrinting)return;
   _qrPrinting=true;
   var cls=g('qrCl').value, bch=g('qrBt').value;
   if(cls==='All'){alert('একটি নির্দিষ্ট ক্লাস বেছে নিন!');_qrPrinting=false;return;}
-  var q=SB.from('students').select('id,name,roll_no,class,batch');
+  var q=SB.from('students').select('id,name,roll_no,class,batch,phone');
   q=q.eq('class',cls);
   if(bch!=='All')q=q.eq('batch',bch);
   var r=await q.order('roll_no');
@@ -1999,36 +2022,75 @@ async function printQRCards(){
   var seen={};
   var students=r.data.filter(function(s){if(seen[s.id])return false;seen[s.id]=true;return true;});
 
+  window._lastQRStudents=students;
+  var clsWord={6:'SIX',7:'SEVEN',8:'EIGHT',9:'NINE',10:'TEN',11:'ELEVEN',12:'TWELVE'};
+  function getClsWord(c){var n=parseInt(c);return clsWord[n]?clsWord[n]:(c||'');}
   var cardsHTML=students.map(function(s){
-    var url=makeQRDataURL(String(s.id),100);
-    return '<div class="qrc">'
-      +'<img src="'+url+'" style="width:100%;height:auto;display:block">'
-      +'<p class="qrnm">'+s.name+'</p>'
-      +'<p class="qrinf">রোল: '+s.roll_no+' | '+s.class+(s.batch?' | '+s.batch:'')+'</p>'
-      +'</div>';
+    var url=makeQRDataURL(String(s.id),200);
+    var logo=UBIQUE_LOGO_SRC?'<img src="'+UBIQUE_LOGO_SRC+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':'U';
+    return '<div class="idc">'
+      +'<div class="idc-top">'
+        +'<div class="idc-logo">'+logo+'</div>'
+        +'<div class="idc-headtext">'
+          +'<div class="idc-school">UBIQUE</div>'
+          +'<div class="idc-tagline">Cadet &amp; Defence Academy</div>'
+        +'</div>'
+      +'</div>'
+      +'<div class="idc-mid">'
+        +'<div class="idc-qr"><img src="'+url+'" alt="QR"></div>'
+        +'<div class="idc-name">'+s.name+'</div>'
+        +'<div class="idc-info">'
+          +'<div class="idc-row"><span class="idc-lbl">Class</span><span class="idc-val">'+getClsWord(s.class)+'</span></div>'
+          +'<div class="idc-row"><span class="idc-lbl">Batch</span><span class="idc-val">'+(s.batch||'—')+'</span></div>'
+          +'<div class="idc-row"><span class="idc-lbl">Roll</span><span class="idc-val">'+s.roll_no+'</span></div>'
+          +'<div class="idc-row"><span class="idc-lbl">Phone</span><span class="idc-val">'+(s.phone||'—')+'</span></div>'
+        +'</div>'
+      +'</div>'
+      +'<div class="idc-bot">'
+        +'<div class="idc-addr">501 North Shahjahanpur, Dhaka<br>'+UBIQUE_OFFICE_PHONE+'</div>'
+        +'<div class="idc-year">2026</div>'
+      +'</div>'
+    +'</div>';
   }).join('');
 
   document.body.style.overflow='hidden';
   document.body.style.height='100vh';
   var pa=g('printArea');
   pa.innerHTML='<style>'
-    +'@page{size:A4 portrait;margin:6mm}'
+    +'@page{size:A4 portrait;margin:0}'
     +'*{box-sizing:border-box;margin:0;padding:0}'
     +'.no-print{font-family:Arial}'
-    +'.qr-wrap{padding:2mm}'
-    +'.qr-grid{display:grid;grid-template-columns:repeat(6,30mm);gap:2mm;justify-content:center}'
-    +'.qrc{width:30mm;border:1px solid #c7d2fe;border-radius:4px;padding:2px;text-align:center;break-inside:avoid;page-break-inside:avoid;overflow:hidden}'
-    +'.qrc img{width:25mm;height:25mm;display:block;margin:0 auto}'
-    +'.qrnm{font-weight:700;font-size:6pt;margin:2px 0 1px;line-height:1.1;font-family:Arial;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
-    +'.qrinf{font-size:5pt;color:#475569;line-height:1.2;font-family:Arial;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
+    +'.qr-wrap{width:210mm;height:297mm;padding:6.35mm;display:flex;align-items:center;justify-content:center}'
+    +'.qr-grid{display:grid;grid-template-columns:repeat(3,53.97mm);grid-template-rows:repeat(3,85.72mm);column-gap:8.85mm;row-gap:6.79mm;padding:6.79mm 8.85mm;width:197.3mm;height:284.3mm}'
+    +'.idc{width:53.97mm;height:85.72mm;background:#fff;border:0.8px solid #111;border-radius:2.3mm;overflow:hidden;display:flex;flex-direction:column;break-inside:avoid;page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'.idc-top{padding:2.5mm 3mm 2mm;display:flex;align-items:center;gap:2.5mm;flex-shrink:0;border-bottom:0.8px solid #111}'
+    +'.idc-logo{width:10mm;height:10mm;border-radius:50%;background:#111;display:flex;align-items:center;justify-content:center;font-family:Arial;font-size:8pt;font-weight:900;color:#fff;flex-shrink:0;overflow:hidden}'
+    +'.idc-logo img{width:100%;height:100%;object-fit:cover;border-radius:50%}'
+    +'.idc-headtext{flex:1}'
+    +'.idc-school{font-family:Arial;font-size:11pt;font-weight:900;color:#000;letter-spacing:.14em;line-height:1}'
+    +'.idc-tagline{font-size:4pt;color:#000;font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-top:.7mm}'
+    +'.idc-mid{flex:1;display:flex;flex-direction:column;padding:3mm 3mm 2mm;gap:2.5mm}'
+    +'.idc-qr{display:flex;justify-content:center;flex-shrink:0}'
+    +'.idc-qr img{width:28mm;height:28mm;display:block;image-rendering:pixelated}'
+    +'.idc-name{font-family:Arial;font-size:8.5pt;font-weight:900;color:#000;text-align:center;line-height:1.2;padding:1.8mm 0;border-top:0.8px solid #000;border-bottom:0.8px solid #000;flex-shrink:0}'
+    +'.idc-info{display:flex;flex-direction:column;gap:1.2mm;flex:1}'
+    +'.idc-row{display:flex;align-items:center;line-height:1.3}'
+    +'.idc-lbl{font-family:Arial;font-size:4.5pt;font-weight:700;color:#000;text-transform:uppercase;letter-spacing:.05em;width:11mm;flex-shrink:0}'
+    +'.idc-val{font-family:Arial;font-weight:700;color:#000;font-size:6pt}'
+    +'.idc-bot{padding:2mm 3mm;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;border-top:0.8px solid #111}'
+    +'.idc-addr{font-family:Arial;font-size:5.5pt;color:#000;line-height:1.6;font-weight:600}'
+    +'.idc-year{font-family:Arial;font-size:7.5pt;font-weight:900;color:#000;letter-spacing:.06em}'
     +'@media print{.no-print{display:none!important}}'
     +'</style>'
     +'<div class="no-print" style="padding:10px;display:flex;gap:8px;align-items:center;border-bottom:1px solid #e2e8f0;margin-bottom:6px">'
     +'<span style="font-size:.8rem;color:#475569;font-weight:700">মোট: '+students.length+' জন | '+cls+(bch!=='All'?' | '+bch:'')+'</span>'
+    +'<input id="qrOfficePhone" type="text" value="01700-000000" placeholder="অফিস ফোন" onchange="updateQRPhone()" style="height:32px;padding:0 10px;border-radius:8px;border:1.5px solid #c7d2fe;font-size:.75rem;width:140px">'
+    +'<label style="display:flex;align-items:center;gap:5px;background:#eff6ff;border:1.5px dashed #93c5fd;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:.75rem;font-weight:600;color:#2563eb">'
+    +'📁 লোগো <input type="file" accept="image/*" style="display:none" onchange="uploadQRLogo(this)"></label>'
     +'<button onclick="window.print()" style="background:#4f46e5;color:#fff;border:none;padding:7px 14px;border-radius:8px;cursor:pointer;font-weight:700;font-size:.8rem">🖨️ প্রিন্ট</button>'
     +'<button onclick="closeQRPrint()" style="background:#94a3b8;color:#fff;border:none;padding:7px 14px;border-radius:8px;cursor:pointer;font-weight:700;font-size:.8rem">✕ বন্ধ</button>'
     +'</div>'
-    +'<div class="qr-wrap"><div class="qr-grid">'+cardsHTML+'</div></div>';
+    +'<div class="qr-wrap"><div class="qr-grid" id="qrCardGrid">'+cardsHTML+'</div></div>';
 
   pa.classList.remove('hidden');
   pa.scrollTop=0;
@@ -3506,17 +3568,23 @@ async function loadPayLog(){
 
   var MONTH_BN={January:'জানুয়ারি',February:'ফেব্রুয়ারি',March:'মার্চ',April:'এপ্রিল',May:'মে',June:'জুন',July:'জুলাই',August:'আগস্ট',September:'সেপ্টেম্বর',October:'অক্টোবর',November:'নভেম্বর',December:'ডিসেম্বর'};
 
+  var memoSrch=(g('plMemo')?g('plMemo').value||'':'').trim().toLowerCase();
   var rows=(r2.data||[]).filter(function(p){
     var s=stuMap[p.student_id];
-    // ক্লাস/ব্যাচ filter — stuMap এ না থাকলে বাদ দিই (অন্য ব্যাচের payment)
     if(!s) return false;
-    if(!srch) return true;
-    var sl=srch.toLowerCase();
-    var nameMatch=s.name.toLowerCase().indexOf(sl)!==-1;
-    var isNum=/^\d+$/.test(srch);
-    var rollExact=isNum&&String(s.roll_no)===srch;
-    var nameMatch2=!isNum&&s.name.toLowerCase().indexOf(srch)!==-1;
-    return nameMatch2||rollExact;
+    // নাম/রোল filter
+    if(srch){
+      var isNum=/^\d+$/.test(srch);
+      var rollMatch=isNum&&String(s.roll_no)===srch;
+      var nameMatch=!isNum&&s.name.toLowerCase().indexOf(srch)!==-1;
+      if(!rollMatch&&!nameMatch) return false;
+    }
+    // মেমো filter
+    if(memoSrch){
+      var memo=(p.memo_no||'').toLowerCase();
+      if(memo.indexOf(memoSrch)===-1) return false;
+    }
+    return true;
   });
 
   // memo অনুযায়ী group করি
@@ -3692,12 +3760,13 @@ function initExpenseTab(){
 
 
 /* DAILY TEST */
-var selDTId=null,selDTTotal=100;
+var selDTId=null,selDTTotal=100,selDTCls='All',selDTBch='All',selDTDate='';
 
 async function createDailyTest(){
   var name=g('dtName').value.trim(),date=g('dtDate').value,total=parseFloat(g('dtTotal').value)||100;
   var cls=g('dtCl').value,bat=g('dtBt').value;
   if(!name||!date){alert('নাম ও তারিখ দিন!');return;}
+  if(!cls||cls==='All'){alert('একটি নির্দিষ্ট ক্লাস বেছে নিন!');return;}
   var r=await SB.from('daily_tests').insert([{test_name:name,test_date:date,class:cls,batch:bat,total_marks:total}]).select();
   if(r.error){alert('❌ '+r.error.message);return;}
   g('dtName').value='';
@@ -3733,7 +3802,7 @@ async function delDT(id){
 }
 
 async function selectDT(id,name,total,cls,bch,date){
-  selDTId=id;selDTTotal=total;
+  selDTId=id;selDTTotal=total;selDTCls=cls;selDTBch=bch;selDTDate=date;
   g('dtSelName').innerText=name;
   g('dtSelInfo').innerText=fd(date)+' | '+cls+' | '+bch+' | সর্বোচ্চ: '+total;
   show('dtEntry');
@@ -3795,7 +3864,7 @@ async function saveDTMarks(){
   var r=await SB.from('daily_test_results').upsert(recs,{onConflict:'test_id,student_id'});
   if(r.error){alert('❌ '+r.error.message);return;}
   alert('✅ '+recs.length+' জনের নম্বর সেভ হয়েছে!');
-  selectDT(selDTId,g('dtSelName').innerText,selDTTotal,'All','All',new Date().toISOString().split('T')[0]);
+  selectDT(selDTId,g('dtSelName').innerText,selDTTotal,selDTCls,selDTBch,selDTDate);
 }
 
 async function loadDTSummary(){
@@ -4865,6 +4934,7 @@ function onAClChange_att(){
         <option>October</option><option>November</option><option>December</option>
       </select>
       <input id="plSearch" class="inp" placeholder="🔍 নাম / রোল" oninput="loadPayLog()" style="flex:1;min-width:130px">
+      <input id="plMemo" class="inp" placeholder="🧾 মেমো নম্বর" oninput="loadPayLog()" style="flex:1;min-width:130px">
     </div>
     <div id="payLogList" style="padding:12px 16px;max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
       <p style="text-align:center;color:#94a3b8;padding:20px">লোড হচ্ছে...</p>
