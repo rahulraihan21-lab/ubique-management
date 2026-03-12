@@ -1567,15 +1567,19 @@ function MA(id,s){
   var ap=g('ap-'+id),ax=g('ax-'+id);
   if(ap)ap.className='ab pb'+(s==='Present'?' on':'');
   if(ax)ax.className='ab xb'+(s==='Absent'?' on':'');
-  // auto-save
+  // saving indicator
+  var card=ap&&ap.closest?ap.closest('.sr'):null;
+  if(card)card.style.borderColor='#f59e0b';
   var today=getAttDate();
   SB.from('attendance').upsert([{student_id:parseInt(id,10),attendance_date:today,status:s}],{onConflict:'student_id,attendance_date'}).then(function(r){
-    if(r.error){showToast('❌ সেভ হয়নি: '+r.error.message);}
-    else{
-      // border update
-      var card=ap&&ap.closest?ap.closest('.sr'):null;
-      if(card){card.style.borderColor=s==='Present'?'var(--green)':'var(--red)';}
-      // counter update
+    if(r.error){
+      showToast('\u274C সেভ হয়নি: '+r.error.message);
+      if(card)card.style.borderColor='#94a3b8';
+    }else{
+      if(card)card.style.borderColor=s==='Present'?'var(--green)':'var(--red)';
+      var stu=stuCache[id]||stuCache[String(id)];
+      var nm=stu?stu.name:'';
+      showToast((s==='Present'?'\u2705 উপস্থিত: ':'\u274C অনুপস্থিত: ')+nm);
       var pCount=0,aCount=0;
       document.querySelectorAll('[id^="ap-"]').forEach(function(b){if(b.classList.contains('on'))pCount++;});
       document.querySelectorAll('[id^="ax-"]').forEach(function(b){if(b.classList.contains('on'))aCount++;});
@@ -3587,7 +3591,7 @@ window.onload=async function(){
   console.log('Auth on load:', auth);
   try{
     if(auth==='a')showAdmin();
-    else if(auth==='t'){if(localStorage.getItem('ub_away')==='1'){localStorage.removeItem('ub_away');showTeacher();}else{showTeacher();}}
+    else if(auth==='t'){if(localStorage.getItem('ub_away')==='1'){localStorage.removeItem('ub_away');localStorage.removeItem('ub');location.reload();}else{showTeacher();}}
   }catch(err){console.error('Auth restore error:',err);}
 };
 </script>
