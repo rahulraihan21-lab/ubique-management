@@ -10,10 +10,10 @@
 <style>
 :root{--g1:#6366f1;--g2:#8b5cf6;--teal:#14b8a6;--green:#10b981;--red:#f43f5e;--orange:#f97316;--amber:#f59e0b;--ink:#0f172a;--ink2:#1e293b;--muted:#64748b;--border:#e2e8f0;--bg:#f0f4ff;--gs:#d1fae5;--rs:#ffe4e6}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Hind Siliguri',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:76px;-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+html,body{max-width:100%;overflow-x:hidden}body{font-family:'Hind Siliguri',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:76px;-webkit-tap-highlight-color:transparent;overflow-x:hidden}
 .hidden{display:none!important}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:#c7d2fe;border-radius:9px}
-.card{background:#fff;border-radius:20px;box-shadow:0 2px 16px rgba(99,102,241,.08);border:1px solid #e8ecf8}
+.card{background:#fff;border-radius:20px;box-shadow:0 2px 16px rgba(99,102,241,.08);border:1px solid #e8ecf8;overflow:hidden}
 .inp{width:100%;padding:11px 14px;border-radius:13px;border:1.5px solid var(--border);background:#f8faff;font-family:'Hind Siliguri',sans-serif;font-size:.875rem;font-weight:500;color:var(--ink);outline:none;transition:.18s}
 .inp:focus{border-color:var(--g1);background:#fff;box-shadow:0 0 0 3px rgba(99,102,241,.1)}
 .inp::placeholder{color:#94a3b8}
@@ -53,6 +53,7 @@ textarea.inp{height:auto}
 .sr-bot{display:flex;align-items:center;justify-content:space-between;padding-top:5px;border-top:1px solid #f1f5f9}
 .ab{width:33px;height:33px;border-radius:9px;border:1.5px solid;font-weight:700;font-size:.8rem;cursor:pointer;background:transparent;transition:all .12s;flex-shrink:0}
 .ab:active{transform:scale(.87)}
+.ab:disabled{opacity:.35;cursor:not-allowed;transform:none}
 .pb{border-color:var(--green);color:var(--green)}.pb.on{background:var(--green);color:#fff}
 .xb{border-color:var(--red);color:var(--red)}.xb.on{background:var(--red);color:#fff}
 .yb{border-color:var(--g2);color:var(--g2)}.yb.on{background:var(--g2);color:#fff}
@@ -518,29 +519,33 @@ textarea.inp{height:auto}
 
   <!-- LECTURE PLAN -->
   <section id="sec-lectureplan" class="hidden" style="padding:15px;display:flex;flex-direction:column;gap:16px">
+
+    <!-- Time Slot Settings -->
+    <div class="card" style="padding:18px" id="lpSlotCard">
+      <h2 class="stitle">⏰ টাইম স্লট সেটিং</h2>
+      <div id="lpSlotList" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:8px">
+        <input id="lpNewSlot" class="inp" placeholder="যেমন: 8:00am-8:45am / 3:30pm-4:15pm">
+        <button onclick="addLPSlot()" class="btn btn-p btn-sm">+ যোগ</button>
+      </div>
+    </div>
+
+    <!-- Plan Builder -->
     <div class="card" style="padding:18px">
       <h2 class="stitle">📚 মান্থলি লেকচার প্ল্যান</h2>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-        <select id="lpCl" class="inp"></select>
+        <select id="lpCl" class="inp dynC" onchange="lpClChanged()"></select>
         <input type="month" id="lpMo" class="inp">
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
-        <button onclick="loadLP()" class="btn btn-p btn-sm">🔄 লোড</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <button onclick="loadLP()" class="btn btn-p btn-sm">🔄 লোড / নতুন</button>
         <button onclick="saveLP()" class="btn btn-g btn-sm">💾 সেভ</button>
-        <button onclick="printLP()" id="lpPrint" class="btn btn-ghost btn-sm hidden">🖨️ প্রিন্ট</button>
       </div>
-      <div id="lpContent" style="margin-top:6px">
+      <div id="lpContent">
         <p style="text-align:center;color:var(--muted);padding:20px">ক্লাস ও মাস বেছে লোড করুন</p>
       </div>
-      <div id="lpAddArea" class="hidden" style="margin-top:14px;background:#f8faff;border-radius:14px;padding:14px;border:1px solid #e0e7ff">
-        <p style="font-weight:700;font-size:.82rem;margin-bottom:10px">➕ বিষয় যোগ করুন</p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <input id="lpSubName" class="inp" placeholder="বিষয়ের নাম (যেমন: গণিত)" style="flex:1;min-width:140px">
-          <input id="lpTeacher" class="inp" placeholder="শিক্ষকের নাম" style="flex:1;min-width:140px">
-          <button onclick="addLPSubject()" class="btn btn-p btn-sm">যোগ করুন</button>
-        </div>
-      </div>
     </div>
+
   </section>
 
   <!-- SETTINGS -->
@@ -1478,8 +1483,8 @@ async function loadS(){
   if(cls!=='All')q=q.eq('class',cls);
   if(bch!=='All')q=q.eq('batch',bch);
   var r1=await q.order('roll_no');
-  var r2=await SB.from('attendance').select('student_id,status,homework_status').eq('attendance_date',today);
   var stuIds=(r1.data||[]).map(function(s){return s.id;});
+  var r2=stuIds.length?await SB.from('attendance').select('student_id,status,homework_status').eq('attendance_date',today).in('student_id',stuIds):{data:[]};
   var r3=stuIds.length?await SB.from('attendance').select('student_id').in('student_id',stuIds).eq('status','Absent').limit(5000):{data:[]};
   var absTotalMap={};
   (r3.data||[]).forEach(function(a){absTotalMap[a.student_id]=(absTotalMap[a.student_id]||0)+1;});
@@ -1563,31 +1568,57 @@ async function loadS(){
   }).join('');
 }
 function MA(id,s){
-  AD[id]=s;
   var ap=g('ap-'+id),ax=g('ax-'+id);
-  if(ap)ap.className='ab pb'+(s==='Present'?' on':'');
-  if(ax)ax.className='ab xb'+(s==='Absent'?' on':'');
-  // saving indicator
   var card=ap&&ap.closest?ap.closest('.sr'):null;
+
+  // বাটন দুটো disable করি — save confirm হওয়ার আগে আর click করা যাবে না
+  if(ap)ap.disabled=true;
+  if(ax)ax.disabled=true;
+  // হলুদ border = saving...
   if(card)card.style.borderColor='#f59e0b';
+
   var today=getAttDate();
-  SB.from('attendance').upsert([{student_id:parseInt(id,10),attendance_date:today,status:s}],{onConflict:'student_id,attendance_date'}).then(function(r){
-    if(r.error){
-      showToast('\u274C সেভ হয়নি: '+r.error.message);
-      if(card)card.style.borderColor='#94a3b8';
-    }else{
-      if(card)card.style.borderColor=s==='Present'?'var(--green)':'var(--red)';
-      var stu=stuCache[id]||stuCache[String(id)];
-      var nm=stu?stu.name:'';
-      showToast((s==='Present'?'\u2705 উপস্থিত: ':'\u274C অনুপস্থিত: ')+nm);
-      var pCount=0,aCount=0;
-      document.querySelectorAll('[id^="ap-"]').forEach(function(b){if(b.classList.contains('on'))pCount++;});
-      document.querySelectorAll('[id^="ax-"]').forEach(function(b){if(b.classList.contains('on'))aCount++;});
-      if(g('cP'))g('cP').innerText=pCount;
-      if(g('cA'))g('cA').innerText=aCount;
-    }
-  });
+  var attempt=0;
+
+  function doSave(){
+    attempt++;
+    SB.from('attendance').upsert(
+      [{student_id:parseInt(id,10),attendance_date:today,status:s}],
+      {onConflict:'student_id,attendance_date'}
+    ).then(function(r){
+      if(r.error){
+        if(attempt<3){
+          // retry
+          setTimeout(doSave, 1500);
+          if(card)card.style.borderColor='#f59e0b';
+        } else {
+          // ৩ বার try করেও fail — revert UI
+          if(card)card.style.borderColor='#94a3b8';
+          if(ap){ap.className='ab pb'+(AD[id]==='Present'?' on':'');ap.disabled=false;}
+          if(ax){ax.className='ab xb'+(AD[id]==='Absent'?' on':'');ax.disabled=false;}
+          showToast('❌ সেভ হয়নি! আবার চেষ্টা করুন');
+        }
+      } else {
+        // সফল — এখন AD update করি
+        AD[id]=s;
+        if(ap){ap.className='ab pb'+(s==='Present'?' on':'');ap.disabled=false;}
+        if(ax){ax.className='ab xb'+(s==='Absent'?' on':'');ax.disabled=false;}
+        if(card)card.style.borderColor=s==='Present'?'var(--green)':'var(--red)';
+        var stu=stuCache[id]||stuCache[String(id)];
+        showToast((s==='Present'?'✅ উপস্থিত: ':'❌ অনুপস্থিত: ')+(stu?stu.name:''));
+        // counter
+        var pCount=0,aCount=0;
+        document.querySelectorAll('[id^="ap-"]').forEach(function(b){if(b.classList.contains('on'))pCount++;});
+        document.querySelectorAll('[id^="ax-"]').forEach(function(b){if(b.classList.contains('on'))aCount++;});
+        if(g('cP'))g('cP').innerText=pCount;
+        if(g('cA'))g('cA').innerText=aCount;
+      }
+    });
+  }
+
+  doSave();
 }
+
 function MH(id,s){
   HD[id]=s;
   var ay=g('ay-'+id),an=g('an-'+id);
@@ -2688,13 +2719,7 @@ function onRtClChange(){
   var src=g('sBt');
   if(src){rb.innerHTML=src.innerHTML;}
 }
-function syncLPDrops(){
-  var r=g('lpCl');if(!r)return;
-  var src=g('sCl');if(src){r.innerHTML=src.innerHTML;}
-  for(var i=r.options.length-1;i>=0;i--){if(r.options[i].value==='All')r.remove(i);}
-  var t=new Date();
-  if(!g('lpMo').value)g('lpMo').value=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0');
-}
+
 
 
 
@@ -2703,7 +2728,6 @@ var DAYS_BN=['শনিবার','রবিবার','সোমবার','ম
 var classDays={};  // {class: [day1, day2, ...]}
 var PERIODS=['১ম','২য়','৩য়','৪র্থ','৫ম','৬ষ্ঠ','৭ম','৮ম'];
 var routineData={};
-var lpData={};
 
 async function loadRoutine(){
   var cls=gv('rtCl');
@@ -2795,136 +2819,272 @@ function printRoutine(){
 // MONTHLY LECTURE PLAN
 // ═══════════════════════════════════════
 
-async function loadLP(){
-  var cls=gv('lpCl'),mo=g('lpMo').value;
-  if(!cls){alert('ক্লাস বেছে নিন!');return;}
-  if(!mo){alert('মাস বেছে নিন!');return;}
-  var key=cls+'__'+mo;
-  var r=await SB.from('lecture_plans').select('*').eq('class',cls).eq('month',mo).single();
-  lpData[key]=(r.data&&r.data.plan_data)||{subjects:[]};
-  renderLP(cls,mo);
-  show('lpPrint');show('lpAddArea');
+var lpData={};
+var lpSlots=[];
+var _lpCls='';var _lpMo='';
+
+function syncLPDrops(){
+  var t=new Date();
+  var mo=g('lpMo');
+  if(mo&&!mo.value)mo.value=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0');
+  loadLPSlots();
 }
 
-function renderLP(cls,mo){
-  var key=cls+'__'+mo;
-  var plan=lpData[key]||{subjects:[]};
-  var subs=plan.subjects||[];
-  if(!subs.length){
-    g('lpContent').innerHTML='<p style="text-align:center;color:var(--muted);padding:24px">কোনো বিষয় নেই — নিচে যোগ করুন</p>';
+function lpClChanged(){}
+
+// ── Slots ──
+async function loadLPSlots(){
+  var r=await SB.from('lecture_plans').select('plan_data').eq('class','__slots__').eq('month','__slots__').single();
+  lpSlots=(r.data&&r.data.plan_data&&r.data.plan_data.slots)||[];
+  renderLPSlots();
+}
+
+function renderLPSlots(){
+  var c=g('lpSlotList');if(!c)return;
+  if(!lpSlots.length){
+    c.innerHTML='<p style="color:var(--muted);font-size:.78rem;text-align:center">স্লট নেই। নিচে যোগ করুন।</p>';
     return;
   }
-  var html='';
-  subs.forEach(function(sub,si){
-    html+='<div style="background:#f8faff;border-radius:14px;padding:14px;margin-bottom:12px;border:1px solid #e0e7ff">';
-    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
-    html+='<div><p style="font-weight:700;font-size:.88rem;margin:0">📖 '+e(sub.name)+'</p>'
-      +'<p style="font-size:.68rem;color:#6366f1;margin:0">'+e(sub.teacher||'')+'</p></div>';
-    html+='<button onclick="removeLPSubject('+si+')" style="background:#fff1f2;color:#ef4444;border:none;padding:4px 10px;border-radius:8px;font-size:.7rem;cursor:pointer">✕ বাদ</button>';
-    html+='</div>';
-    html+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.74rem;min-width:400px">';
-    html+='<thead><tr>'
-      +'<th style="background:#6366f1;color:#fff;padding:6px;border:1px solid #818cf8;width:55px">সপ্তাহ</th>'
-      +'<th style="background:#6366f1;color:#fff;padding:6px;border:1px solid #818cf8">টপিক / অধ্যায়</th>'
-      +'<th style="background:#6366f1;color:#fff;padding:6px;border:1px solid #818cf8;width:90px">লক্ষ্যমাত্রা</th>'
-      +'<th style="background:#6366f1;color:#fff;padding:6px;border:1px solid #818cf8;width:85px">অগ্রগতি</th>'
-      +'</tr></thead><tbody>';
-    for(var w=0;w<4;w++){
-      var wd=(sub.weeks&&sub.weeks[w])||{topics:'',target:'',progress:''};
-      var wk='lp_'+si+'_w'+w;
-      html+='<tr>'
-        +'<td style="padding:5px;border:1px solid #e0e7ff;text-align:center;font-weight:700;background:#eff6ff">'+(w+1)+'ম</td>'
-        +'<td style="padding:4px;border:1px solid #e0e7ff"><textarea id="'+wk+'_top" rows="2" placeholder="টপিক লিখুন..." style="width:100%;border:none;resize:none;font-size:.72rem;background:transparent;box-sizing:border-box">'+e(wd.topics||'')+'</textarea></td>'
-        +'<td style="padding:4px;border:1px solid #e0e7ff"><input id="'+wk+'_tgt" value="'+e(wd.target||'')+'" placeholder="পৃষ্ঠা/অধ্যায়" style="width:100%;border:none;font-size:.71rem;background:transparent;box-sizing:border-box"></td>'
-        +'<td style="padding:4px;border:1px solid #e0e7ff">'
-        +'<select id="'+wk+'_prg" style="width:100%;border:1px solid #e0e7ff;border-radius:6px;font-size:.68rem;padding:2px">'
-        +'<option value=""'+(wd.progress===''?' selected':'')+'>—</option>'
-        +'<option value="done"'+(wd.progress==='done'?' selected':'')+'>✅ সম্পন্ন</option>'
-        +'<option value="partial"'+(wd.progress==='partial'?' selected':'')+'>🔄 আংশিক</option>'
-        +'<option value="pending"'+(wd.progress==='pending'?' selected':'')+'>⏳ বাকি</option>'
-        +'</select></td>'
-        +'</tr>';
-    }
-    html+='</tbody></table></div></div>';
+  c.innerHTML=lpSlots.map(function(s,i){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;background:#f8faff;border:1px solid #e0e7ff;border-radius:10px;padding:8px 12px">'
+      +'<span style="font-size:.78rem;font-weight:700">📌 '+e(s)+'</span>'
+      +'<button onclick="removeLPSlot('+i+')" style="background:#fff1f2;color:#ef4444;border:none;padding:2px 9px;border-radius:6px;font-size:.7rem;cursor:pointer">✕</button>'
+      +'</div>';
+  }).join('');
+}
+
+async function addLPSlot(){
+  var v=(g('lpNewSlot').value||'').trim();
+  if(!v){showToast('স্লটের নাম দিন!');return;}
+  lpSlots.push(v);
+  g('lpNewSlot').value='';
+  await saveLPSlots();
+  renderLPSlots();
+  // যদি plan খোলা থাকে, re-render
+  if(_lpCls&&_lpMo)renderLP();
+  showToast('✅ স্লট যোগ হয়েছে');
+}
+
+async function removeLPSlot(i){
+  if(!confirm('এই স্লট বাদ দেবেন?'))return;
+  lpSlots.splice(i,1);
+  await saveLPSlots();
+  renderLPSlots();
+  if(_lpCls&&_lpMo)renderLP();
+}
+
+async function saveLPSlots(){
+  var ex=await SB.from('lecture_plans').select('id').eq('class','__slots__').eq('month','__slots__').single();
+  if(ex.data)
+    await SB.from('lecture_plans').update({plan_data:{slots:lpSlots}}).eq('class','__slots__').eq('month','__slots__');
+  else
+    await SB.from('lecture_plans').insert([{class:'__slots__',month:'__slots__',plan_data:{slots:lpSlots}}]);
+}
+
+// ── Plan ──
+async function loadLP(){
+  var cls=gv('lpCl'),mo=(g('lpMo')||{}).value||'';
+  if(!cls||cls===''){showToast('ক্লাস বেছে নিন!');return;}
+  if(!mo){showToast('মাস বেছে নিন!');return;}
+  _lpCls=cls;_lpMo=mo;
+  var r=await SB.from('lecture_plans').select('*').eq('class',cls).eq('month',mo).single();
+  var key=cls+'__'+mo;
+  lpData[key]=(r.data&&r.data.plan_data)||{days:[],modelTest:''};
+  renderLP();
+}
+
+function renderLP(){
+  var cls=_lpCls,mo=_lpMo;
+  var key=cls+'__'+mo;
+  var plan=lpData[key]||{days:[],modelTest:''};
+  var days=plan.days||[];
+  var slots=lpSlots;
+  var c=g('lpContent');if(!c)return;
+
+  if(!slots.length){
+    c.innerHTML='<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:12px;padding:14px;text-align:center;color:#92400e;font-size:.82rem">⚠️ আগে উপরে টাইম স্লট যোগ করুন।</div>';
+    return;
+  }
+
+  // Add day button
+  var top='<div style="display:flex;gap:8px;margin-bottom:12px">'
+    +'<button onclick="addLPDay()" class="btn btn-p btn-sm">📅 দিন যোগ করুন</button>'
+    +'<button onclick="printLP()" class="btn btn-ghost btn-sm">🖨️ প্রিন্ট</button>'
+    +'</div>';
+
+  if(!days.length){
+    c.innerHTML=top+'<p style="text-align:center;color:var(--muted);padding:20px">কোনো দিন নেই। উপরে বাটন দিয়ে দিন যোগ করুন।</p>';
+    return;
+  }
+
+  // Table
+  var tbl='<div style="overflow-x:auto;margin-bottom:12px">'
+    +'<table style="width:100%;border-collapse:collapse;font-size:.74rem">';
+
+  // Header
+  tbl+='<thead><tr>'
+    +'<th style="background:#1e3a5f;color:#fff;padding:7px 6px;border:1.5px solid #2d5a8e;min-width:70px;text-align:center">Day/Date</th>';
+  slots.forEach(function(s){
+    tbl+='<th style="background:#1e3a5f;color:#fff;padding:7px 5px;border:1.5px solid #2d5a8e;min-width:100px;text-align:center;font-size:.66rem;line-height:1.3">'+e(s)+'</th>';
   });
-  g('lpContent').innerHTML=html;
-}
+  tbl+='<th style="background:#1e3a5f;color:#fff;padding:7px 4px;border:1.5px solid #2d5a8e;width:30px"></th>';
+  tbl+='</tr></thead><tbody>';
 
-function addLPSubject(){
-  var cls=gv('lpCl'),mo=g('lpMo').value;
-  if(!cls||!mo){alert('আগে ক্লাস ও মাস বেছে লোড করুন!');return;}
-  var name=g('lpSubName').value.trim(),teacher=g('lpTeacher').value.trim();
-  if(!name){alert('বিষয়ের নাম দিন!');return;}
-  var key=cls+'__'+mo;
-  if(!lpData[key])lpData[key]={subjects:[]};
-  lpData[key].subjects.push({name:name,teacher:teacher,weeks:[{},{},{},{}]});
-  renderLP(cls,mo);
-  g('lpSubName').value='';g('lpTeacher').value='';
-}
+  // Rows
+  var dayNames=['রবি','সোম','মঙ্গল','বুধ','বৃহঃ','শুক্র','শনি'];
+  days.forEach(function(day,di){
+    var bn=new Date(day.date+'T00:00:00');
+    var dn=isNaN(bn.getTime())?'':dayNames[bn.getDay()];
+    var dd=day.date?day.date.split('-').reverse().join('.'):'';
 
-function removeLPSubject(si){
-  var cls=gv('lpCl'),mo=g('lpMo').value;
-  var key=cls+'__'+mo;
-  if(!confirm('বাদ দেবেন?'))return;
-  // collect current data first
-  collectLPData(cls,mo);
-  lpData[key].subjects.splice(si,1);
-  renderLP(cls,mo);
-}
+    tbl+='<tr>';
+    tbl+='<td style="padding:7px 5px;border:1.5px solid #c7d2fe;text-align:center;background:#eff6ff;vertical-align:middle">'
+      +'<p style="font-weight:800;font-size:.78rem;color:#1e3a5f;margin:0">'+dd+'</p>'
+      +'<p style="font-size:.64rem;color:#6366f1;font-weight:700;margin:0">'+dn+'</p>'
+      +'</td>';
 
-function collectLPData(cls,mo){
-  var key=cls+'__'+mo;
-  var plan=lpData[key]||{subjects:[]};
-  plan.subjects.forEach(function(sub,si){
-    var weeks=[];
-    for(var w=0;w<4;w++){
-      var wk='lp_'+si+'_w'+w;
-      weeks.push({
-        topics:g(wk+'_top')?g(wk+'_top').value:'',
-        target:g(wk+'_tgt')?g(wk+'_tgt').value:'',
-        progress:g(wk+'_prg')?g(wk+'_prg').value:''
-      });
-    }
-    sub.weeks=weeks;
+    slots.forEach(function(s,si){
+      var cell=(day.periods&&day.periods[si])||{subject:'',topic:''};
+      tbl+='<td style="padding:3px;border:1.5px solid #c7d2fe;vertical-align:top">'
+        +'<input id="lp_'+di+'_'+si+'_s" value="'+e(cell.subject||'')+'" placeholder="বিষয়" '
+        +'style="width:100%;border:none;border-bottom:1px dashed #cbd5e1;padding:3px 4px;font-size:.72rem;font-weight:700;color:#1e3a5f;background:transparent;box-sizing:border-box">'
+        +'<input id="lp_'+di+'_'+si+'_t" value="'+e(cell.topic||'')+'" placeholder="টপিক" '
+        +'style="width:100%;border:none;padding:3px 4px;font-size:.67rem;color:#475569;background:transparent;box-sizing:border-box">'
+        +'</td>';
+    });
+
+    tbl+='<td style="padding:3px;border:1.5px solid #c7d2fe;text-align:center;vertical-align:middle">'
+      +'<button onclick="removeLPDay('+di+')" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:.9rem">✕</button>'
+      +'</td>';
+    tbl+='</tr>';
   });
+
+  tbl+='</tbody></table></div>';
+
+  // Model test
+  var mt='<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px">'
+    +'<span style="font-weight:700;font-size:.78rem;white-space:nowrap;color:#92400e">🏆 মডেল টেস্ট:</span>'
+    +'<input id="lpMT" value="'+e(plan.modelTest||'')+'" placeholder="যেমন: Model Test-2 (08.04.2026: Wednesday)" '
+    +'style="flex:1;border:none;background:transparent;font-size:.76rem;font-weight:600;color:#92400e;outline:none">'
+    +'</div>';
+
+  c.innerHTML=top+tbl+mt;
+}
+
+function addLPDay(){
+  if(!_lpCls||!_lpMo){showToast('আগে লোড করুন!');return;}
+  collectLPData();
+  var dateVal=prompt('তারিখ দিন (YYYY-MM-DD)\nযেমন: 2026-03-13');
+  if(!dateVal||!dateVal.match(/^\d{4}-\d{2}-\d{2}$/)){
+    if(dateVal)showToast('সঠিক ফরম্যাটে দিন: 2026-03-13');
+    return;
+  }
+  var key=_lpCls+'__'+_lpMo;
+  if(!lpData[key])lpData[key]={days:[],modelTest:''};
+  // duplicate check
+  if(lpData[key].days.find(function(d){return d.date===dateVal;})){
+    showToast('এই তারিখ আগেই আছে!');return;
+  }
+  lpData[key].days.push({date:dateVal,periods:lpSlots.map(function(){return{subject:'',topic:''};})});
+  lpData[key].days.sort(function(a,b){return a.date>b.date?1:-1;});
+  renderLP();
+}
+
+function removeLPDay(di){
+  if(!confirm('এই দিনটি বাদ দেবেন?'))return;
+  collectLPData();
+  var key=_lpCls+'__'+_lpMo;
+  lpData[key].days.splice(di,1);
+  renderLP();
+}
+
+function collectLPData(){
+  var key=_lpCls+'__'+_lpMo;
+  var plan=lpData[key]||{days:[],modelTest:''};
+  (plan.days||[]).forEach(function(day,di){
+    day.periods=lpSlots.map(function(s,si){
+      return{
+        subject:g('lp_'+di+'_'+si+'_s')?g('lp_'+di+'_'+si+'_s').value:'',
+        topic:g('lp_'+di+'_'+si+'_t')?g('lp_'+di+'_'+si+'_t').value:''
+      };
+    });
+  });
+  if(g('lpMT'))plan.modelTest=g('lpMT').value;
   lpData[key]=plan;
 }
 
 async function saveLP(){
-  var cls=gv('lpCl'),mo=g('lpMo').value;
-  if(!cls||!mo){alert('ক্লাস ও মাস বেছে নিন!');return;}
-  collectLPData(cls,mo);
+  var cls=_lpCls,mo=_lpMo;
+  if(!cls||!mo){showToast('আগে লোড করুন!');return;}
+  collectLPData();
   var key=cls+'__'+mo;
   var plan=lpData[key];
   var ex=await SB.from('lecture_plans').select('id').eq('class',cls).eq('month',mo).single();
   var r=ex.data
     ?await SB.from('lecture_plans').update({plan_data:plan}).eq('class',cls).eq('month',mo)
     :await SB.from('lecture_plans').insert([{class:cls,month:mo,plan_data:plan}]);
-  if(r.error)alert('❌ '+r.error.message);
-  else alert('✅ লেকচার প্ল্যান সেভ হয়েছে!');
+  if(r.error)showToast('❌ '+r.error.message);
+  else showToast('✅ সেভ হয়েছে!');
 }
 
 function printLP(){
-  var cls=gv('lpCl'),mo=g('lpMo').value;
-  if(!cls||!mo)return;
-  collectLPData(cls,mo);
-  var key=cls+'__'+mo;
-  var plan=lpData[key]||{subjects:[]};
-  var html='<html><head><meta charset="UTF-8"><style>body{font-family:sans-serif;padding:20px;color:#1e293b}h2{margin:0 0 4px}.sub{color:#64748b;font-size:.82rem;margin:0 0 16px}.card{margin-bottom:18px;border:1px solid #e0e7ff;border-radius:10px;overflow:hidden}.ch{background:#4f46e5;color:#fff;padding:9px 14px;font-weight:700}table{width:100%;border-collapse:collapse}th{background:#6366f1;color:#fff;padding:6px;font-size:.78rem}td{padding:6px 8px;border:1px solid #e0e7ff;font-size:.78rem;vertical-align:top}</style></head><body>'
-    +'<h2>UBIQUE — মান্থলি লেকচার প্ল্যান</h2>'
-    +'<p class="sub">ক্লাস: '+cls+' | মাস: '+mo+'</p>';
-  plan.subjects.forEach(function(sub){
-    html+='<div class="card"><div class="ch">📖 '+sub.name+(sub.teacher?' | '+sub.teacher:'')+'</div>';
-    html+='<table><thead><tr><th style="width:55px">সপ্তাহ</th><th>টপিক / অধ্যায়</th><th style="width:100px">লক্ষ্যমাত্রা</th><th style="width:80px">অগ্রগতি</th></tr></thead><tbody>';
-    (sub.weeks||[]).forEach(function(w,i){
-      var pg=w.progress==='done'?'✅ সম্পন্ন':w.progress==='partial'?'🔄 আংশিক':w.progress==='pending'?'⏳ বাকি':'—';
-      html+='<tr><td style="text-align:center;font-weight:700;background:#eff6ff">'+(i+1)+'ম</td><td>'+e(w.topics||'')+'</td><td>'+e(w.target||'')+'</td><td style="text-align:center">'+pg+'</td></tr>';
+  if(!_lpCls||!_lpMo){showToast('আগে লোড করুন!');return;}
+  collectLPData();
+  var key=_lpCls+'__'+_lpMo;
+  var plan=lpData[key]||{days:[],modelTest:''};
+  var days=plan.days||[];
+  var slots=lpSlots;
+  var moP=_lpMo.split('-');
+  var moNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var moLabel=moNames[parseInt(moP[1],10)-1]||_lpMo;
+
+  var html='<html><head><meta charset="UTF-8"><style>'
+    +'*{box-sizing:border-box}'
+    +'body{font-family:"Times New Roman",serif;padding:14px;color:#000}'
+    +'h1{text-align:center;font-size:18pt;font-weight:900;margin:0 0 2px;letter-spacing:.5px}'
+    +'h2{text-align:center;font-size:11pt;font-weight:700;margin:0 0 12px;text-decoration:underline}'
+    +'table{width:100%;border-collapse:collapse}'
+    +'th{border:1.5px solid #000;padding:6px 5px;text-align:center;font-size:9.5pt;font-weight:700;background:#c8d4e8}'
+    +'td{border:1.5px solid #000;padding:5px 6px;vertical-align:top;font-size:10pt}'
+    +'.dc{text-align:center;vertical-align:middle}'
+    +'.dn{font-size:9pt;color:#333}'
+    +'.sub{font-weight:700;font-size:10pt}'
+    +'.top{font-size:9.5pt;margin-top:2px}'
+    +'.mt{text-align:center;font-weight:900;font-size:11pt;margin-top:10px;border:2px solid #000;padding:8px;border-radius:3px}'
+    +'@media print{@page{size:A4 portrait;margin:10mm}}'
+    +'</style></head><body>'
+    +'<h1>UBIQUE Cadet &amp; Defense Academy</h1>'
+    +'<h2>Class '+e(_lpCls)+': Lecture Plan-'+moLabel+'</h2>'
+    +'<table><thead><tr>'
+    +'<th style="min-width:65px">Day /Date</th>';
+
+  slots.forEach(function(s){html+='<th>'+e(s)+'</th>';});
+  html+='</tr></thead><tbody>';
+
+  var dayNamesEN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  days.forEach(function(day){
+    var bn=new Date(day.date+'T00:00:00');
+    var dn=isNaN(bn.getTime())?'':dayNamesEN[bn.getDay()];
+    var dd=day.date?day.date.split('-').reverse().join('.'):'';
+    html+='<tr><td class="dc"><strong>'+dd+'</strong><br><span class="dn">'+dn+'</span></td>';
+    slots.forEach(function(s,si){
+      var cell=(day.periods&&day.periods[si])||{subject:'',topic:''};
+      html+='<td>'
+        +(cell.subject?'<div class="sub">'+e(cell.subject)+'</div>':'')
+        +(cell.topic?'<div class="top">'+e(cell.topic)+'</div>':'')
+        +'</td>';
     });
-    html+='</tbody></table></div>';
+    html+='</tr>';
   });
+
+  html+='</tbody></table>';
+  if(plan.modelTest){
+    html+='<div class="mt">'+e(plan.modelTest)+'</div>';
+  }
   html+='</body></html>';
   doPrint(html);
 }
+
 
 // ═══════════════════════════════════════════════
 // SMART ROUTINE SYSTEM
