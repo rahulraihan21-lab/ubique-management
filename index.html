@@ -1325,7 +1325,7 @@ if(!r1.data||!r1.data.length){c.innerHTML='<p style="text-align:center;padding:2
 // Selected মাসে কে বকেয়া সেটা count করি (admission month check সহ)
 var selMonIdx=ALL_MONTHS.indexOf(mon);var dueStuCount=r1.data.filter(function(s){var admIdx=ALL_MONTHS.indexOf(s.admission_month||ALL_MONTHS[0]);if(selMonIdx<admIdx)return false;var paid=feeCache[s.id]||[];return paid.indexOf(mon)===-1;}).length;
 c.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:13px"><span class="paid-b">✅ পরিশোধ: '+pc+'</span><span class="due-b">⏳ বকেয়া আছে: '+dueStuCount+' জন</span></div><div style="display:flex;flex-direction:column;gap:7px">'+r1.data.map(function(s){var pay=r2.data&&r2.data.find(function(p){return p.student_id===s.id&&p.payment_month===mon;});var admIdx2=ALL_MONTHS.indexOf(s.admission_month||ALL_MONTHS[0]);var notYetAdmitted=selMonIdx<admIdx2;var dueM=getDueMonths(s.id);var borderColor=notYetAdmitted?'#e2e8f0':pay?'var(--green)':'var(--red)';return'<div style="background:#fff;padding:12px;border-radius:12px;border-left:4px solid '+borderColor+';display:flex;flex-direction:column;gap:5px"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px"><div style="flex:1;min-width:0"><p style="font-weight:700;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+e(s.name)+'</p><p style="font-size:.63rem;color:var(--muted)">রোল:'+s.roll_no+' | '+e(s.class)+' | '+e(s.batch||'')+'</p>'+'<p style="font-size:.63rem;color:var(--muted)">📞 '+e(s.phone||'—')+'</p></div>'+'<div style="display:flex;gap:3px;align-items:center;flex-shrink:0">'+(notYetAdmitted?'<span style="background:#f1f5f9;color:#94a3b8;padding:3px 8px;border-radius:8px;font-size:.68rem;font-weight:700">N/A</span>':pay?'<span class="paid-b">PAID ✓</span>':'<button onclick="openFF(\''+s.id+'\',\''+e(s.name)+'\')" style="background:var(--g1);color:#fff;border:none;padding:6px 10px;border-radius:10px;font-family:var(--font);font-weight:700;font-size:.7rem;cursor:pointer;white-space:nowrap">💰 ফি নিন</button>')+'<button onclick="printSingleQR('+s.id+',\'' +e(s.name)+ '\','+s.roll_no+',\'' +e(s.class)+ '\',\'' +(s.batch||'')+ '\')" style="background:#f0fdf4;color:#16a34a;border:none;padding:7px 9px;border-radius:10px;font-weight:700;font-size:.72rem;cursor:pointer" title="QR প্রিন্ট">&#x1F4F7;</button>'+'<button class="fee-edit-btn" data-sid="'+s.id+'" style="background:#eff6ff;color:var(--g1);border:none;padding:7px 9px;border-radius:10px;font-weight:700;font-size:.72rem;cursor:pointer">✏️</button>'+'<button onclick="openCallNote('+s.id+',\''+e(s.name)+'\')" style="background:#f0fdf4;color:#16a34a;border:none;padding:7px 9px;border-radius:10px;font-weight:700;font-size:.72rem;cursor:pointer">📝</button>'+'</div>'+'</div>'+(dueM.length?'<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap"><span class="fee-due-tag">⚠️ '+dueM.length+' মাস</span><div class="due-months-bar">'+dueM.map(function(m){return'<span class="due-month-chip">'+MONTH_BN[m]+'</span>';}).join('')+'</div></div>':'<span class="fee-ok-tag">✅ সব ঠিক</span>')+
-(absentMap[s.id]>0?'<div style="display:flex;align-items:center;gap:6px;margin-top:2px"><span style="font-size:.65rem;font-weight:700;color:'+(absentMap[s.id]>5?'#dc2626':'#16a34a')+'">'+( absentMap[s.id]>5?'⚠️ অনিয়মিত':'✅ নিয়মিত')+'</span><span style="font-size:.63rem;color:#64748b">অনুপস্থিত: '+absentMap[s.id]+' দিন</span></div>':'')+
+(absentMap[s.id]>0?'<div style="display:flex;align-items:center;gap:6px;margin-top:2px"><span style="font-size:.65rem;font-weight:700;color:'+(absentMap[s.id]>0?'#dc2626':'#16a34a')+'">'+( absentMap[s.id]>0?'⚠️ অনুপস্থিত':'✅ নিয়মিত')+'</span><span style="font-size:.63rem;color:#64748b">অনুপস্থিত: '+absentMap[s.id]+' দিন</span></div>':'')+
 (noteMap[s.id]?'<div style="margin-top:5px;padding:7px 9px;background:#f8faff;border-radius:8px;border-left:3px solid #6366f1"><p style="font-size:.6rem;color:#94a3b8;margin-bottom:2px">📝 '+new Date(noteMap[s.id].created_at).toLocaleDateString('bn-BD')+'</p><p style="font-size:.72rem;color:#1e1b4b;line-height:1.4">'+e(noteMap[s.id].note)+'</p></div>':'')+
 '</div>';}).join('')+'</div>';
   // Add click handlers for edit buttons
@@ -1513,7 +1513,7 @@ async function loadS(){
     var nA=HD[s.id]==='No'||(!HD[s.id]&&rec&&rec.homework_status==='No');
     var hn=s.problem_note&&s.problem_note.trim();
     var dueM=getDueMonths(s.id);var hasDue=dueM.length>0;
-    var totalAbs=absTotalMap[s.id]||0;var isIrregular=totalAbs>=5;
+    var totalAbs=absTotalMap[s.id]||0;var isIrregular=totalAbs>=1;
     var borderStyle=aA?'border-color:var(--red)':pA?'border-color:var(--green)':'';
     var h='';
     h+='<div class="sr'+(hn?' hn':'')+'" style="'+borderStyle+'" onclick="openProbModal('+s.id+')">';
@@ -3811,8 +3811,8 @@ async function loadAttEdit(){
     var totalAbs=totalAbsMap[s.id]||0;
     if(totalAbs>0){
       var absBadge=document.createElement('span');
-      absBadge.style.cssText='font-size:.6rem;font-weight:700;color:'+(totalAbs>5?'#dc2626':'#16a34a');
-      absBadge.textContent=(totalAbs>5?'⚠️ অনিয়মিত':'✅ নিয়মিত')+' · '+totalAbs+'দিন অনুপস্থিত';
+      absBadge.style.cssText='font-size:.6rem;font-weight:700;color:'+(totalAbs>0?'#dc2626':'#16a34a');
+      absBadge.textContent=(totalAbs>0?'⚠️ অনুপস্থিত':'✅ নিয়মিত')+' · '+totalAbs+'দিন অনুপস্থিত';
       nameEl.appendChild(absBadge);
     }
     var btnWrap=document.createElement('div');
