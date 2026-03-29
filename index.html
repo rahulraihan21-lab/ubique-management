@@ -316,6 +316,22 @@ textarea.inp{height:auto}
   <button onclick="subAtt()" class="btn btn-p" style="flex:1" id="subAttBtn">✔ হাজিরা নিশ্চিত করুন</button>
 </div></div></div></div></section>
 
+
+<!-- AUTO CALL MODAL -->
+<div id="autoCallModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);align-items:flex-end;justify-content:center">
+  <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:520px;padding:20px 20px 32px;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 style="font-size:.95rem;font-weight:700;color:#1e3a5f">📞 বকেয়া ফি অটো কল</h2>
+      <button onclick="closeAutoCallModal()" style="background:#f1f5f9;border:none;width:28px;height:28px;border-radius:99px;cursor:pointer;font-weight:700">✕</button>
+    </div>
+    <div id="acPreview" style="background:#f8faff;border:1px solid #e0e7ff;border-radius:12px;padding:12px;margin-bottom:14px;font-size:.8rem;color:#475569"></div>
+    <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:.75rem;color:#92400e">
+      ⚠️ সর্বোচ্চ ৯৯৯টি নম্বরে এক সাথে কল যাবে।
+    </div>
+    <button onclick="sendAutoCall()" id="acSendBtn" class="btn btn-p">📞 কল শুরু করুন</button>
+  </div>
+</div>
+
   <!-- FEE -->
   <section id="sec-fee" class="hidden"><div class="card" style="padding:18px">
   <div class="th">
@@ -439,6 +455,27 @@ textarea.inp{height:auto}
   <!-- REPORT -->
   <section id="sec-report" class="hidden"><div style="display:flex;flex-direction:column;gap:14px">
 
+  <!-- Notes Report -->
+  <div class="card" style="padding:18px">
+    <h2 class="stitle">⚠️ সমস্যা নোট রিপোর্ট</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <select id="ntRCl" class="inp dynC" onchange="filterBatch('ntRCl','ntRBt',loadNoteReport);"></select>
+      <select id="ntRBt" class="inp dynB" onchange="loadNoteReport()"></select>
+    </div>
+    <button onclick="loadNoteReport()" class="btn btn-p btn-sm" style="margin-bottom:12px">🔄 লোড</button>
+    <div id="ntRList"></div>
+  </div>
+
+  <!-- Phone Excel Download -->
+  <div class="card" style="padding:18px">
+    <h2 class="stitle">📞 ফোন নম্বর ডাউনলোড</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <select id="phCl" class="inp dynC" onchange="filterBatch('phCl','phBt',null);"></select>
+      <select id="phBt" class="inp dynB"></select>
+    </div>
+    <button onclick="dlPhoneXls()" class="btn btn-p btn-sm">📥 Excel ডাউনলোড</button>
+  </div>
+
   <div class="card" style="padding:18px">
     <h2 class="stitle">⚠️ বকেয়া ফি রিপোর্ট</h2>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
@@ -456,6 +493,7 @@ textarea.inp{height:auto}
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center">
       <button onclick="printDueReport()" id="drPrintBtn" class="btn btn-g hidden">🖨️ প্রিন্ট করুন</button>
       <button onclick="dlDueXls()" id="drXlsBtn" class="btn btn-ghost hidden">📥 Excel ডাউনলোড</button>
+      <button onclick="openAutoCallModal()" id="drCallBtn" class="btn btn-o hidden">📞 অটো কল</button>
     </div>
     <div id="drList"></div>
   </div>
@@ -947,6 +985,68 @@ function toggleSL(){var body=g('slBody'),btn=g('slToggle');if(!body)return;if(bo
 function closeM(){g('pm').classList.remove('open');document.body.style.overflow='';}
 function calcGrade(pct){if(pct>=80)return{grade:'A+',color:'#065f46',label:'অসাধারণ'};if(pct>=70)return{grade:'A',color:'#065f46',label:'খুব ভালো'};if(pct>=60)return{grade:'B',color:'#1e40af',label:'ভালো'};if(pct>=50)return{grade:'C',color:'#92400e',label:'মোটামুটি'};if(pct>=40)return{grade:'D',color:'#92400e',label:'পাস'};return{grade:'F',color:'#9f1239',label:'ফেল'};}
 function getMonthsUpToCurrent(){return ALL_MONTHS.slice(0,new Date().getMonth()+1);}
+
+
+
+async function loadNoteReport(){
+  var cls=gv('ntRCl'),bat=gv('ntRBt');
+  var c=g('ntRList');if(!c)return;
+  c.innerHTML='<div class="sk" style="height:56px;width:100%"></div>';
+  var q=SB.from('students').select('id,name,roll_no,class,batch,phone,problem_note').not('problem_note','is',null).neq('problem_note','');
+  if(cls&&cls!=='All')q=q.eq('class',cls);
+  if(bat&&bat!=='All')q=q.eq('batch',bat);
+  var r=await q.order('class').order('roll_no');
+  if(!r.data||!r.data.length){
+    c.innerHTML='<p style="text-align:center;padding:20px;color:var(--green)">✅ কোনো সমস্যা নোট নেই!</p>';
+    return;
+  }
+  c.innerHTML=r.data.map(function(s){
+    return '<div style="background:#fff8f0;border:1.5px solid #fed7aa;border-radius:14px;padding:14px;margin-bottom:10px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">'
+      +'<div style="flex:1;min-width:0">'
+      +'<p style="font-weight:700;font-size:.88rem;color:var(--ink2)">'+e(s.name)+'</p>'
+      +'<p style="font-size:.68rem;color:var(--muted);margin-top:2px">'+e(s.class)+(s.batch?' | '+e(s.batch):'')+' | রোল: '+s.roll_no+'</p>'
+      +(s.phone?'<p style="font-size:.68rem;color:var(--muted)">📞 '+e(s.phone)+'</p>':'')
+      +'<div style="background:#fff;border:1px solid #fed7aa;border-radius:10px;padding:9px 12px;margin-top:8px">'
+      +'<p style="font-size:.75rem;color:#92400e;font-weight:600;line-height:1.5">'+e(s.problem_note)+'</p>'
+      +'</div>'
+      +'</div>'
+      +'<button onclick="solveNote('+s.id+')" style="background:#dcfce7;color:#16a34a;border:1.5px solid #bbf7d0;padding:6px 12px;border-radius:10px;font-weight:700;font-size:.72rem;cursor:pointer;white-space:nowrap;flex-shrink:0">✅ সমস্যা সমাধান</button>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+async function solveNote(id){
+  if(!confirm('এই ছাত্রের সমস্যা সমাধান হয়েছে? নোট মুছে যাবে।'))return;
+  var r=await SB.from('students').update({problem_note:''}).eq('id',id);
+  if(r.error){showToast('❌ হয়নি: '+r.error.message);return;}
+  if(stuCache[id])stuCache[id].problem_note='';
+  showToast('✅ নোট সরানো হয়েছে!');
+  loadNoteReport();
+}
+
+async function dlPhoneXls(){
+  var cls=gv('phCl'),bat=gv('phBt');
+  showToast('⏳ লোড হচ্ছে...');
+  var q=SB.from('students').select('name,roll_no,class,batch,phone').order('class').order('roll_no');
+  if(cls&&cls!=='All')q=q.eq('class',cls);
+  if(bat&&bat!=='All')q=q.eq('batch',bat);
+  var r=await q;
+  if(!r.data||!r.data.length){showToast('কোনো শিক্ষার্থী নেই!');return;}
+  var rows=[['নাম','রোল','ক্লাস','ব্যাচ','ফোন নম্বর']];
+  r.data.forEach(function(s){
+    rows.push([s.name||'',s.roll_no||'',s.class||'',s.batch||'',{t:'s',v:String(s.phone||''),z:'@'}]);
+  });
+  var ws=XLSX.utils.aoa_to_sheet(rows);
+  // phone column width
+  ws['!cols']=[{wch:22},{wch:8},{wch:10},{wch:14},{wch:16}];
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'ফোন নম্বর');
+  var fname='ফোন_'+(cls!=='All'?cls+'_':'')+(bat!=='All'?bat+'_':'')+new Date().toISOString().split('T')[0]+'.xlsx';
+  XLSX.writeFile(wb,fname);
+  showToast('✅ ডাউনলোড হয়েছে!');
+}
 
 function dlDueXls(){
   var data=window._dueReportData||[];
@@ -1485,7 +1585,7 @@ async function loadS(){
   var r1=await q.order('roll_no');
   var stuIds=(r1.data||[]).map(function(s){return s.id;});
   var r2=stuIds.length?await SB.from('attendance').select('student_id,status,homework_status').eq('attendance_date',today).in('student_id',stuIds):{data:[]};
-  var r3=stuIds.length?await SB.from('attendance').select('student_id').in('student_id',stuIds).eq('status','Absent').limit(5000):{data:[]};
+  var r3=stuIds.length?await SB.from('attendance').select('student_id').in('student_id',stuIds).eq('status','Absent').neq('attendance_date',today).limit(5000):{data:[]};
   var absTotalMap={};
   (r3.data||[]).forEach(function(a){absTotalMap[a.student_id]=(absTotalMap[a.student_id]||0)+1;});
   await loadFeeData();
@@ -2128,9 +2228,9 @@ async function loadDueReport(){
     var due=expected.filter(function(m){return paid.indexOf(m)===-1;});
     return{s:s,due:due,cnt:due.length};
   }).filter(function(x){return x.cnt>=minDue;}).sort(function(a,b){return b.cnt-a.cnt;});
-  if(!dueList.length){el.innerHTML='<p style="text-align:center;padding:20px;color:var(--green)">✅ কেউ '+minDue+'+ মাস বাকি নেই!</p>';hide('drPrintBtn');hide('drXlsBtn');return;}
+  if(!dueList.length){el.innerHTML='<p style="text-align:center;padding:20px;color:var(--green)">✅ কেউ '+minDue+'+ মাস বাকি নেই!</p>';hide('drPrintBtn');hide('drXlsBtn');hide('drCallBtn');return;}
   window._dueReportData=dueList;
-  show('drPrintBtn');show('drXlsBtn');
+  show('drPrintBtn');show('drXlsBtn');show('drCallBtn');
   var MONTH_BN2={January:'জানুয়ারি',February:'ফেব্রুয়ারি',March:'মার্চ',April:'এপ্রিল',May:'মে',June:'জুন',July:'জুলাই',August:'আগস্ট',September:'সেপ্টেম্বর',October:'অক্টোবর',November:'নভেম্বর',December:'ডিসেম্বর'};
   el.innerHTML='<p style="font-size:.72rem;color:var(--muted);margin-bottom:8px">মোট <strong>'+dueList.length+'</strong> জনের বকেয়া আছে</p>'
     +dueList.map(function(x){
@@ -2813,6 +2913,73 @@ function printRoutine(){
     +'<table><thead><tr><th>পিরিয়ড</th>'+DAYS_BN.map(function(d){return'<th>'+d+'</th>';}).join('')+'</tr></thead>'
     +'<tbody>'+rows+'</tbody></table></body></html>';
   doPrint(html);
+}
+
+
+// ═══════════════════════════════
+// AWAJ DIGITAL AUTO CALL
+// ═══════════════════════════════
+var AWAJ_TOKEN='oat_Mjcw.enNCUFdyUUpBNW8xaGx6NFRfQnkwU0ZkMWV2Qk1CanNkRGxLVktHdTMxMTcwOTYxMzc';
+var AWAJ_VOICE='Monthly Fee Reminder';
+var AWAJ_SENDER='09610993093';
+
+function openAutoCallModal(){
+  var data=window._dueReportData||[];
+  if(!data.length){showToast('আগে বকেয়া রিপোর্ট লোড করুন!');return;}
+  var phones=[];
+  data.forEach(function(item){
+    var phone=(item.s&&item.s.phone)||(item.phone)||'';
+    if(phone){
+      var ph=phone.toString().replace(/[^0-9]/g,'');
+      if(ph.length===11&&ph.startsWith('0'))phones.push(ph);
+    }
+  });
+  window._acPhones=phones;
+  var preview=g('acPreview');
+  preview.innerHTML='<p style="font-weight:700;margin-bottom:6px">📋 কল যাবে '+phones.length+'টি নম্বরে:</p>'
+    +'<p style="color:#6366f1;font-weight:700">ভয়েস: '+AWAJ_VOICE+'</p>'
+    +'<p>সেন্ডার: '+AWAJ_SENDER+'</p>'
+    +(phones.length>10?'<p style="margin-top:4px">'+phones.slice(0,10).join(', ')+' ... আরও '+(phones.length-10)+'টি</p>'
+    :'<p style="margin-top:4px">'+phones.join(', ')+'</p>');
+  g('autoCallModal').style.display='flex';
+}
+
+function closeAutoCallModal(){
+  g('autoCallModal').style.display='none';
+}
+
+function sendAutoCall(){
+  var phones=window._acPhones||[];
+  if(!phones.length){showToast('কোনো নম্বর নেই!');return;}
+  if(phones.length>999){showToast('সর্বোচ্চ ৯৯৯টি! ফিল্টার করে কম করুন।');return;}
+  var btn=g('acSendBtn');
+  btn.disabled=true;btn.innerText='⏳ পাঠানো হচ্ছে...';
+  var reqId='ubique_'+Date.now();
+  fetch('https://api.awajdigital.com/api/broadcasts',{
+    method:'POST',
+    headers:{
+      'Authorization':'Bearer '+AWAJ_TOKEN,
+      'Accept':'application/json',
+      'Content-Type':'application/json'
+    },
+    body:JSON.stringify({
+      request_id:reqId,
+      voice:AWAJ_VOICE,
+      sender:AWAJ_SENDER,
+      phone_numbers:phones
+    })
+  }).then(function(res){return res.json();}).then(function(data){
+    btn.disabled=false;btn.innerText='📞 কল শুরু করুন';
+    if(data.status==='success'||data.success||data.id){
+      showToast('✅ '+phones.length+'টি নম্বরে কল পাঠানো হয়েছে!');
+      closeAutoCallModal();
+    } else {
+      showToast('❌ Error: '+(data.message||data.error||JSON.stringify(data)));
+    }
+  }).catch(function(err){
+    btn.disabled=false;btn.innerText='📞 কল শুরু করুন';
+    showToast('❌ Network error: '+err.message);
+  });
 }
 
 // ═══════════════════════════════════════
@@ -3723,7 +3890,7 @@ async function openAttEditBulk(){
 }
 function closeAttEditBulk(){g('aeModal').style.display='none';}
 
-window.onload=async function(){
+window.onload=function(){
   loadClassDaysFromDB();
   if(isOnline && getQueue().length) setTimeout(syncOfflineQueue, 2000);
   updateOfflineBar();
@@ -3756,6 +3923,7 @@ window.onload=async function(){
 };
 </script>
 <script>
+var _x=0;
 var AE_CHANGES={};
 
 async function openAttEditBulk(){
@@ -3892,8 +4060,7 @@ function toggleEnrollFee(){
 window.addEventListener('load',function(){var ae=g('aeModal');if(ae)ae.addEventListener('click',function(e){if(e.target===this)closeAttEditBulk();});});
 </script>
 <script>
-
-
+var _y=0;
 /* ══ PAYMENT LOG ══ */
 async function openPayLog(){
   var m=g('payLogModal');
@@ -3906,24 +4073,34 @@ async function openPayLog(){
 function closePayLog(){g('payLogModal').style.display='none';}
 
 async function loadPayLog(){
-  var cls=g('plCl').value, bch=g('plBt').value;
-  var mo=g('plMo').value;
-  var srch=(g('plSearch').value||'').trim().toLowerCase();
+  var cls=g('plCl')?g('plCl').value:'All';
+  var bch=g('plBt')?g('plBt').value:'All';
+  var mo=g('plMo')?g('plMo').value:'';
+  var srch=(g('plSearch')?g('plSearch').value||'':'').trim().toLowerCase();
   var el=g('payLogList');
+  if(!el)return;
   el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">লোড হচ্ছে...</p>';
 
-  var q=SB.from('students').select('id,name,roll_no,class,batch,phone');
-  if(cls&&cls!=='All') q=q.eq('class',cls);
-  if(bch&&bch!=='All') q=q.eq('batch',bch);
-  var r1=await q.order('roll_no').limit(1000);
-  var stuMap={};
-  (r1.data||[]).forEach(function(s){stuMap[s.id]=s;});
+  try{
+    // student আগে load করি
+    var stuMap={};
+    var q=SB.from('students').select('id,name,roll_no,class,batch,phone');
+    if(cls&&cls!=='All') q=q.eq('class',cls);
+    if(bch&&bch!=='All') q=q.eq('batch',bch);
+    var r1=await q.limit(5000);
+    (r1.data||[]).forEach(function(s){stuMap[s.id]=s;});
 
-  var yr=new Date().getFullYear().toString();
-  var q2=SB.from('fees_collection').select('*').eq('payment_year',yr);
-  if(mo) q2=q2.eq('payment_month',mo);
-  if(srch){} // filter later
-  var r2=await q2.order('created_at',{ascending:false}).limit(2000);
+    // payment data আনি
+    var stuIds=Object.keys(stuMap).map(Number);
+    if(!stuIds.length){
+      el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">কোনো শিক্ষার্থী নেই</p>';
+      return;
+    }
+    var q2=SB.from('fees_collection').select('*').in('student_id',stuIds);
+    if(mo) q2=q2.eq('payment_month',mo);
+    var r2=await q2.order('created_at',{ascending:false}).limit(3000);
+    if(r2.error){el.innerHTML='<p style="color:red;padding:20px">Error: '+r2.error.message+'</p>';return;}
+    var payData=r2.data||[];
 
   var MONTH_BN={January:'জানুয়ারি',February:'ফেব্রুয়ারি',March:'মার্চ',April:'এপ্রিল',May:'মে',June:'জুন',July:'জুলাই',August:'আগস্ট',September:'সেপ্টেম্বর',October:'অক্টোবর',November:'নভেম্বর',December:'ডিসেম্বর'};
 
@@ -3946,32 +4123,32 @@ async function loadPayLog(){
     return true;
   });
 
-  // memo অনুযায়ী group করি
-  // memo same হলে একই গ্রুপে রাখি
+  // student অনুযায়ী group — একজনের সব payment এক card এ
   var groups={};
   rows.forEach(function(p){
     var s=stuMap[p.student_id]||{name:'অজানা',roll_no:'?',class:'?',batch:'?',phone:''};
-    var memo=p.memo_no||'';
-    // same memo_no থাকলে একই গ্রুপ, না থাকলে created_at minute দিয়ে group
-    var dt=p.created_at?p.created_at.substring(0,16):'';
-    var gkey=p.student_id+'__'+(memo?memo:dt);
+    var gkey=p.student_id;
     if(!groups[gkey]){
       groups[gkey]={
         student:s,
-        memo:p.memo_no||'',
-        amount:p.amount,
-        note:p.memo_note||'',
-        created_at:p.created_at,
-        months:[],
-        ids:[]
+        totalAmount:0,
+        payments:[]
       };
     }
-    groups[gkey].months.push(p.payment_month);
-    groups[gkey].ids.push(p.id);
+    groups[gkey].totalAmount+=parseFloat(p.amount||0);
+    groups[gkey].payments.push({
+      month:p.payment_month,
+      year:p.payment_year||'',
+      memo:p.memo_no||'',
+      note:p.memo_note||'',
+      amount:p.amount,
+      created_at:p.created_at,
+      id:p.id
+    });
   });
 
   var gArr=Object.values(groups);
-  g('payLogCount').innerText='মোট: '+rows.length+' টি এন্ট্রি | '+gArr.length+' টি ট্রানজেকশন';
+  g('payLogCount').innerText='মোট: '+rows.length+' টি পেমেন্ট | '+gArr.length+' জন শিক্ষার্থী';
 
   if(!gArr.length){
     el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px;font-size:.8rem">কোনো রেকর্ড নেই</p>';
@@ -3981,12 +4158,10 @@ async function loadPayLog(){
   el.innerHTML='';
   gArr.forEach(function(grp){
     var s=grp.student;
-    var dt=grp.created_at?new Date(grp.created_at).toLocaleString('bn-BD',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
-
     var card=document.createElement('div');
     card.style.cssText='background:#fff;border:1px solid #e0e7ff;border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px';
 
-    // শিক্ষার্থী info
+    // student info + মোট amount
     var topRow='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
       +'<div>'
         +'<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">'
@@ -3996,30 +4171,33 @@ async function loadPayLog(){
           +(s.batch?'<span style="font-size:.65rem;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:99px">'+e(s.batch)+'</span>':'')
         +'</div>'
         +(s.phone?'<p style="font-size:.67rem;color:#64748b;margin-top:2px">📞 '+e(s.phone)+'</p>':'')
-        +(dt?'<p style="font-size:.62rem;color:#94a3b8;margin-top:1px">'+dt+'</p>':'')
       +'</div>'
-      +(grp.amount?'<span style="font-size:.95rem;font-weight:800;color:#16a34a;white-space:nowrap">৳'+grp.amount+'</span>':'')
+      +'<span style="font-size:.95rem;font-weight:800;color:#16a34a;white-space:nowrap">৳'+grp.totalAmount+'</span>'
     +'</div>';
 
-    // মেমো
-    var memoRow=grp.memo?'<div style="background:#f0fdf4;border-radius:8px;padding:5px 10px;font-size:.75rem;font-weight:700;color:#15803d">🧾 মেমো নং: '+e(grp.memo)+'</div>':'';
-    var noteRow=grp.note?'<div style="font-size:.7rem;color:#64748b;padding-left:4px">📝 '+e(grp.note)+'</div>':'';
-
-    // প্রতিটা মাস আলাদা row — আলাদা delete বাটন সহ
-    var monthsHTML='<div style="display:flex;flex-direction:column;gap:4px">'
-      +'<p style="font-size:.67rem;color:#64748b;font-weight:700;margin-bottom:2px">পেমেন্ট মাস:</p>';
-    grp.months.forEach(function(mo,i){
-      var pid=grp.ids[i];
-      monthsHTML+='<div style="display:flex;justify-content:space-between;align-items:center;background:#f8faff;border:1px solid #e0e7ff;border-radius:8px;padding:5px 10px">'
-        +'<span style="font-size:.78rem;font-weight:700;color:#4f46e5">'+(MONTH_BN[mo]||mo)+' '+yr+'</span>'
-        +'<button onclick="deletePayment('+pid+',this)" style="background:#fef2f2;color:#dc2626;border:none;padding:3px 10px;border-radius:7px;font-size:.7rem;font-weight:700;cursor:pointer">🗑️ মুছুন</button>'
+    // প্রতিটা payment আলাদা row — মাস + মেমো + amount + delete
+    var paymentsHTML='<div style="display:flex;flex-direction:column;gap:6px">';
+    grp.payments.forEach(function(pay){
+      var dt=pay.created_at?new Date(pay.created_at).toLocaleString('bn-BD',{day:'2-digit',month:'short',year:'numeric'}):'';
+      paymentsHTML+='<div style="background:#f8faff;border:1px solid #e0e7ff;border-radius:10px;padding:8px 10px">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
+          +'<span style="font-size:.8rem;font-weight:700;color:#4f46e5">'+(MONTH_BN[pay.month]||pay.month)+' '+(pay.year||'')+'</span>'
+          +'<span style="font-size:.82rem;font-weight:800;color:#16a34a">৳'+pay.amount+'</span>'
+        +'</div>'
+        +(pay.memo?'<div style="font-size:.72rem;font-weight:700;color:#15803d;margin-bottom:3px">🧾 মেমো: '+e(pay.memo)+'</div>':'')
+        +(pay.note?'<div style="font-size:.68rem;color:#64748b;margin-bottom:3px">📝 '+e(pay.note)+'</div>':'')
+        +(dt?'<div style="font-size:.62rem;color:#94a3b8">'+dt+'</div>':'')
+        +'<div style="text-align:right;margin-top:5px">'
+          +'<button onclick="deletePayment('+pay.id+',this)" style="background:#fef2f2;color:#dc2626;border:none;padding:3px 10px;border-radius:7px;font-size:.68rem;font-weight:700;cursor:pointer">🗑️ মুছুন</button>'
+        +'</div>'
       +'</div>';
     });
-    monthsHTML+='</div>';
+    paymentsHTML+='</div>';
 
-    card.innerHTML=topRow+memoRow+noteRow+monthsHTML;
+    card.innerHTML=topRow+paymentsHTML;
     el.appendChild(card);
   });
+  }catch(err){el.innerHTML='<p style="color:red;padding:20px">❌ Error: '+err.message+'</p>';console.error(err);}
 }
 
 async function deletePayment(id, btn){
@@ -4267,7 +4445,7 @@ async function loadDTSummary(){
   var html='<p style="font-size:.72rem;color:var(--muted);margin-bottom:10px">মোট '+r1.data.length+'টি টেস্ট | সর্বোচ্চ মোট: '+maxTotal+'</p>';
   html+='<div style="overflow-x:auto;border-radius:12px;border:1px solid #e0e7ff"><table class="rt"><thead><tr>';
   html+='<th>মেরিট</th><th style="text-align:left">নাম</th><th>রোল</th>';
-  r1.data.forEach(function(t){html+='<th title="'+e(t.test_name)+'">'+fd(t.test_date).split('/')[0]+'/'+fd(t.test_date).split('/')[1]+'<br><span style="font-size:.6rem">'+t.total_marks+'</span></th>';});
+  r1.data.forEach(function(t){var _d=t.test_date?new Date(t.test_date):null;var _dl=_d?(_d.getDate()+'/'+ (_d.getMonth()+1)):t.test_date||'';html+='<th title="'+e(t.test_name)+'">'+_dl+'<br><span style="font-size:.6rem">'+t.total_marks+'</span></th>';});
   html+='<th>মোট</th><th>মেরিট</th></tr></thead><tbody>';
   rows.forEach(function(r){
     var mc=r.merit<=3?['#fef9c3','#e0f2fe','#fce7f3'][r.merit-1]:'';
@@ -4317,7 +4495,8 @@ async function printDTResult(){
   w.onload=function(){w.focus();w.print();};
 }
 
-async function printDTSummary(){
+async 
+function printDTSummary(){
   var mo=g('dtMo').value,cls=g('dtSCl').value,bat=g('dtSBt').value;
   var from=mo+'-01';
   var d=new Date(mo+'-01');d.setMonth(d.getMonth()+1);d.setDate(0);
@@ -4325,14 +4504,14 @@ async function printDTSummary(){
   var q=SB.from('daily_tests').select('*').gte('test_date',from).lte('test_date',to);
   if(cls!=='All')q=q.eq('class',cls);
   if(bat!=='All')q=q.eq('batch',bat);
-  var r1=await q.order('test_date').limit(200);
+  q.order('test_date').limit(200).then(function(r1){
   if(!r1.data||!r1.data.length){alert('কোনো টেস্ট নেই!');return;}
   var testIds=r1.data.map(function(t){return t.id;});
-  var r2=await SB.from('daily_test_results').select('*').in('test_id',testIds).limit(2000);
+  SB.from('daily_test_results').select('*').in('test_id',testIds).limit(2000).then(function(r2){
   var sq=SB.from('students').select('*');
   if(cls!=='All')sq=sq.eq('class',cls);
   if(bat!=='All')sq=sq.eq('batch',bat);
-  var r3=await sq.order('roll_no').limit(1000);
+  sq.order('roll_no').limit(1000).then(function(r3){
   var stuMap={};
   r3.data.forEach(function(s){stuMap[s.id]={name:s.name,roll:s.roll_no,total:0,count:0,tests:{}};});
   (r2.data||[]).forEach(function(res){
@@ -4351,7 +4530,7 @@ async function printDTSummary(){
   var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;margin:0;padding:8mm;font-size:8pt}h1{text-align:center;font-size:16pt;margin:0}.sub{text-align:center;font-size:8pt;color:#555;margin:3px 0 8px;border-bottom:2px solid #6366f1;padding-bottom:4px}table{width:100%;border-collapse:collapse;font-size:7.5pt}th{background:#6366f1;color:#fff;padding:5px 4px;border:1px solid #4f46e5;white-space:nowrap}td{padding:4px 4px;border:1px solid #ddd;text-align:center}tr:nth-child(even) td{background:#f8faff}.name-cell{text-align:left;font-weight:600}.m1 td{background:#fef9c3!important}.m2 td{background:#e0f2fe!important}.m3 td{background:#fce7f3!important}.footer{margin-top:5mm;display:flex;justify-content:space-between;font-size:7pt;color:#666;border-top:1px solid #ddd;padding-top:2px}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>';
   html+='<h1>UBIQUE</h1><div class="sub">ডেইলি টেস্ট মাসিক মেরিট — '+moStr+' | মোট '+r1.data.length+'টি টেস্ট | সর্বোচ্চ: '+maxTotal+'</div>';
   html+='<table><thead><tr><th>মেরিট</th><th style="text-align:left">নাম</th><th>রোল</th>';
-  r1.data.forEach(function(t){html+='<th>'+fd(t.test_date).split('/')[0]+'/'+fd(t.test_date).split('/')[1]+'<br>'+t.total_marks+'</th>';});
+  r1.data.forEach(function(t){var _d=t.test_date?new Date(t.test_date):null;var _dl=_d?(_d.getDate()+'/'+ (_d.getMonth()+1)):t.test_date||'';html+='<th>'+_dl+'<br>'+t.total_marks+'</th>';});
   html+='<th>মোট</th></tr></thead><tbody>';
   rows.forEach(function(r){
     var mc=r.merit===1?'m1':r.merit===2?'m2':r.merit===3?'m3':'';
@@ -4363,6 +4542,7 @@ async function printDTSummary(){
   var w=window.open('','_blank','width=1100,height=700');
   w.document.write(html);w.document.close();
   w.onload=function(){w.focus();w.print();};
+  });});});
 }
 
 
