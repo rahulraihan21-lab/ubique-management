@@ -321,10 +321,28 @@ textarea.inp{height:auto}
 <div id="autoCallModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);align-items:flex-end;justify-content:center">
   <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:520px;padding:20px 20px 32px;max-height:90vh;overflow-y:auto">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <h2 style="font-size:.95rem;font-weight:700;color:#1e3a5f">📞 বকেয়া ফি অটো কল</h2>
+      <h2 id="acModalTitle" style="font-size:.95rem;font-weight:700;color:#1e3a5f">📞 অটো কল</h2>
       <button onclick="closeAutoCallModal()" style="background:#f1f5f9;border:none;width:28px;height:28px;border-radius:99px;cursor:pointer;font-weight:700">✕</button>
     </div>
-    <div id="acPreview" style="background:#f8faff;border:1px solid #e0e7ff;border-radius:12px;padding:12px;margin-bottom:14px;font-size:.8rem;color:#475569"></div>
+
+    <!-- Voice Input -->
+    <div style="margin-bottom:12px">
+      <label style="font-size:.78rem;font-weight:700;color:#475569;display:block;margin-bottom:5px">🎙️ ভয়েস নাম / আইডি</label>
+      <input id="acVoiceInput" type="text" class="inp" placeholder="যেমন: Monthly Fee Reminder" />
+    </div>
+
+    <!-- Select All / Deselect All -->
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <button onclick="acSelectAll(true)" class="btn btn-ghost btn-sm" style="flex:1">☑️ সব সিলেক্ট</button>
+      <button onclick="acSelectAll(false)" class="btn btn-ghost btn-sm" style="flex:1">⬜ সব আনসিলেক্ট</button>
+    </div>
+
+    <!-- Selected count -->
+    <div id="acSelectedCount" style="font-size:.78rem;color:#6366f1;font-weight:700;margin-bottom:8px"></div>
+
+    <!-- Phone list with checkboxes -->
+    <div id="acPhoneList" style="background:#f8faff;border:1px solid #e0e7ff;border-radius:12px;padding:10px;margin-bottom:14px;max-height:45vh;overflow-y:auto;font-size:.8rem"></div>
+
     <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:.75rem;color:#92400e">
       ⚠️ সর্বোচ্চ ৯৯৯টি নম্বরে এক সাথে কল যাবে।
     </div>
@@ -367,6 +385,7 @@ textarea.inp{height:auto}
       <select id="abBt" onchange="loadAb()" class="inp dynB"></select>
     </div>
     <div id="abL" style="display:flex;flex-direction:column;gap:8px"></div>
+    <button onclick="openAbsentAutoCallModal()" class="btn btn-o" style="margin-top:14px;width:100%">📞 অনুপস্থিতদের অটো কল</button>
   </div></section>
 
   <!-- HOMEWORK -->
@@ -2919,58 +2938,121 @@ function printRoutine(){
 // ═══════════════════════════════
 // AWAJ DIGITAL AUTO CALL
 // ═══════════════════════════════
-var AWAJ_TOKEN='oat_Mjcw.enNCUFdyUUpBNW8xaGx6NFRfQnkwU0ZkMWV2Qk1CanNkRGxLVktHdTMxMTcwOTYxMzc';
+var EDGE_FN_URL='https://kzxwcvgtkuydoxglglfm.supabase.co/functions/v1/awaj-broadcast';
 var AWAJ_VOICE='Monthly Fee Reminder';
 var AWAJ_SENDER='09610993093';
 
 function openAutoCallModal(){
+  g('acModalTitle').innerText='📞 বকেয়া ফি অটো কল';
   var data=window._dueReportData||[];
   if(!data.length){showToast('আগে বকেয়া রিপোর্ট লোড করুন!');return;}
-  var phones=[];
+  var items=[];
   data.forEach(function(item){
     var phone=(item.s&&item.s.phone)||(item.phone)||'';
+    var name=(item.s&&item.s.name)||(item.name)||'অজানা';
     if(phone){
       var ph=phone.toString().replace(/[^0-9]/g,'');
-      if(ph.length===11&&ph.startsWith('0'))phones.push(ph);
+      if(ph.length===11&&ph.startsWith('0')){
+        items.push({phone:ph, name:name, checked:true});
+      }
     }
   });
-  window._acPhones=phones;
-  var preview=g('acPreview');
-  preview.innerHTML='<p style="font-weight:700;margin-bottom:6px">📋 কল যাবে '+phones.length+'টি নম্বরে:</p>'
-    +'<p style="color:#6366f1;font-weight:700">ভয়েস: '+AWAJ_VOICE+'</p>'
-    +'<p>সেন্ডার: '+AWAJ_SENDER+'</p>'
-    +(phones.length>10?'<p style="margin-top:4px">'+phones.slice(0,10).join(', ')+' ... আরও '+(phones.length-10)+'টি</p>'
-    :'<p style="margin-top:4px">'+phones.join(', ')+'</p>');
+  window._acItems=items;
+
+  // Set voice input
+  var voiceInput=g('acVoiceInput');
+  voiceInput.value=AWAJ_VOICE;
+
+  // Render phone list with checkboxes
+  acRenderList();
   g('autoCallModal').style.display='flex';
+}
+
+function acRenderList(){
+  var items=window._acItems||[];
+  var list=g('acPhoneList');
+  var html='';
+  items.forEach(function(item,i){
+    html+='<label style="display:flex;align-items:center;gap:8px;padding:7px 6px;border-bottom:1px solid #e8ecf8;cursor:pointer">'
+      +'<input type="checkbox" '+(item.checked?'checked':'')+' onchange="acToggle('+i+')" style="width:18px;height:18px;accent-color:#6366f1;cursor:pointer">'
+      +'<span style="flex:1;font-weight:600;color:#1e293b">'+item.name+'</span>'
+      +'<span style="font-family:monospace;color:#64748b;font-size:.75rem">'+item.phone+'</span>'
+      +'</label>';
+  });
+  if(!items.length) html='<p style="text-align:center;color:#94a3b8;padding:12px">কোনো বৈধ নম্বর নেই</p>';
+  list.innerHTML=html;
+  acUpdateCount();
+}
+
+function acToggle(i){
+  var items=window._acItems||[];
+  if(items[i]) items[i].checked=!items[i].checked;
+  acUpdateCount();
+}
+
+function acSelectAll(val){
+  var items=window._acItems||[];
+  items.forEach(function(item){item.checked=val;});
+  acRenderList();
+}
+
+function acUpdateCount(){
+  var items=window._acItems||[];
+  var selected=items.filter(function(it){return it.checked;}).length;
+  g('acSelectedCount').innerText='✅ '+selected+'/'+items.length+'টি সিলেক্ট করা হয়েছে';
 }
 
 function closeAutoCallModal(){
   g('autoCallModal').style.display='none';
 }
 
+async function openAbsentAutoCallModal(){
+  g('acModalTitle').innerText='📞 অনুপস্থিতদের অটো কল';
+  var today=new Date().toISOString().split('T')[0];
+  var cls=gv('abCl'),bch=gv('abBt');
+  var r1=await SB.from('attendance').select('student_id').eq('attendance_date',today).eq('status','Absent');
+  if(!r1.data||!r1.data.length){showToast('আজ কেউ অনুপস্থিত নেই!');return;}
+  var q=SB.from('students').select('*').in('id',r1.data.map(function(a){return a.student_id;}));
+  if(cls!=='All')q=q.eq('class',cls);
+  if(bch!=='All')q=q.eq('batch',bch);
+  var r2=await q.order('roll_no');
+  if(!r2.data||!r2.data.length){showToast('এই ফিল্টারে কেউ নেই!');return;}
+  var items=[];
+  r2.data.forEach(function(s){
+    var ph=(s.phone||'').toString().replace(/[^0-9]/g,'');
+    if(ph.length===11&&ph.startsWith('0')){
+      items.push({phone:ph, name:s.name+' ('+s.class+', রোল:'+s.roll_no+')', checked:true});
+    }
+  });
+  if(!items.length){showToast('বৈধ ফোন নম্বর পাওয়া যায়নি!');return;}
+  window._acItems=items;
+  var voiceInput=g('acVoiceInput');
+  voiceInput.value=AWAJ_VOICE;
+  acRenderList();
+  g('autoCallModal').style.display='flex';
+}
+
 function sendAutoCall(){
-  var phones=window._acPhones||[];
-  if(!phones.length){showToast('কোনো নম্বর নেই!');return;}
-  if(phones.length>999){showToast('সর্বোচ্চ ৯৯৯টি! ফিল্টার করে কম করুন।');return;}
+  var items=window._acItems||[];
+  var phones=items.filter(function(it){return it.checked;}).map(function(it){return it.phone;});
+  if(!phones.length){showToast('কোনো নম্বর সিলেক্ট করা হয়নি!');return;}
+  if(phones.length>999){showToast('সর্বোচ্চ ৯৯৯টি! কিছু আনসিলেক্ট করুন।');return;}
+
+  var voiceVal=g('acVoiceInput').value.trim()||AWAJ_VOICE;
   var btn=g('acSendBtn');
   btn.disabled=true;btn.innerText='⏳ পাঠানো হচ্ছে...';
-  var reqId='ubique_'+Date.now();
-  fetch('https://api.awajdigital.com/api/broadcasts',{
+
+  fetch(EDGE_FN_URL,{
     method:'POST',
-    headers:{
-      'Authorization':'Bearer '+AWAJ_TOKEN,
-      'Accept':'application/json',
-      'Content-Type':'application/json'
-    },
+    headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
-      request_id:reqId,
-      voice:AWAJ_VOICE,
-      sender:AWAJ_SENDER,
-      phone_numbers:phones
+      phone_numbers:phones,
+      voice:voiceVal,
+      sender:AWAJ_SENDER
     })
   }).then(function(res){return res.json();}).then(function(data){
     btn.disabled=false;btn.innerText='📞 কল শুরু করুন';
-    if(data.status==='success'||data.success||data.id){
+    if(data.status==='broadcasting'||data.status==='success'||data.success||data.id){
       showToast('✅ '+phones.length+'টি নম্বরে কল পাঠানো হয়েছে!');
       closeAutoCallModal();
     } else {
