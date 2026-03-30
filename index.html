@@ -969,6 +969,25 @@ window.alert = function(msg) {
   _alert(msg);
 };
 var SB=supabase.createClient('https://sfsrtozgfethgdfrmskk.supabase.co','sb_publishable_ds6DYMap76uRiquvQ9a0fQ_rctZqM61');
+// === DB PROXY HELPER ===
+var PROXY_URL='https://kzxwcvgtkuydoxglglfm.supabase.co/functions/v1/db-proxy';
+async function dbWrite(table,operation,data,filters,opts){
+  var role=localStorage.getItem('ub');
+  var headers={'Content-Type':'application/json'};
+  if(role==='a'){headers['x-admin-pin']=localStorage.getItem('ub_pin')||'';headers['x-role']='admin';}
+  else if(role==='t'){headers['x-teacher-pin']=localStorage.getItem('ub_tpin')||'';headers['x-role']='teacher';}
+  var body={table:table,operation:operation};
+  if(data)body.data=data;
+  if(filters)body.filters=filters;
+  if(opts&&opts.onConflict)body.upsert_options={onConflict:opts.onConflict};
+  if(opts&&opts.select)body.select=opts.select;
+  var res=await fetch(PROXY_URL,{method:'POST',headers:headers,body:JSON.stringify(body)});
+  var json=await res.json();
+  if(!res.ok)return{data:null,error:{message:json.error||'Proxy error'}};
+  return{data:json.data,error:null};
+}
+// === END DB PROXY HELPER ===
+
 var AD={},HD={},TAD={},THD={},selFeeId=null,repData=null,stuCache={};
 var selExamId=null,selExamTotal=100,tSelExamId=null,tSelExamTotal=100;
 var feeCache={},mtSubjectsList=[],selMTId=null,selMTData=null;
@@ -1038,7 +1057,7 @@ async function loadNoteReport(){
 
 async function solveNote(id){
   if(!confirm('এই ছাত্রের সমস্যা সমাধান হয়েছে? নোট মুছে যাবে।'))return;
-  var r=await SB.from('students').update({problem_note:''}).eq('id',id);
+  var r=await dbWrite('students','update',{problem_note:''},[{column:'id',value:id}]);
   if(r.error){showToast('❌ হয়নি: '+r.error.message);return;}
   if(stuCache[id])stuCache[id].problem_note='';
   showToast('✅ নোট সরানো হয়েছে!');
@@ -1172,10 +1191,10 @@ async function aLogin(){
   var pin=gv('aPass');
   var r=await SB.from('academy_settings').select('value').eq('type','admin_pin').single();
   var stored=r.data?r.data.value:'1234';
-  if(pin===stored){localStorage.setItem('ub','a');showAdmin();}
+  if(pin===stored){localStorage.setItem('ub','a');localStorage.setItem('ub_pin',pin);localStorage.setItem('ub_apin',pin);showAdmin();}
   else{g('lerr').innerText='❌ পিন ভুল!';show('lerr');g('aPass').value='';}
 }
-async function tLogin(){var pin=gv('tPass').trim();if(!pin){g('lerr').innerText='❌ পিন দিন!';show('lerr');return;}var r=await SB.from('teachers').select('*').eq('pin',pin).single();if(r.data){localStorage.setItem('ub','t');localStorage.setItem('ub_tname',r.data.name||'টিচার');localStorage.setItem('ub_tcls',r.data.assigned_class||'All');localStorage.setItem('ub_tbat',r.data.assigned_batch||'All');localStorage.setItem('ub_lt',Date.now().toString());showTeacher();startFLCheck();}else{g('lerr').innerText='❌ পিন ভুল!';show('lerr');g('tPass').value='';}}
+async function tLogin(){var pin=gv('tPass').trim();if(!pin){g('lerr').innerText='❌ পিন দিন!';show('lerr');return;}var r=await SB.from('teachers').select('*').eq('pin',pin).single();if(r.data){localStorage.setItem('ub','t');localStorage.setItem('ub_tpin',pin);localStorage.setItem('ub_tname',r.data.name||'টিচার');localStorage.setItem('ub_tcls',r.data.assigned_class||'All');localStorage.setItem('ub_tbat',r.data.assigned_batch||'All');localStorage.setItem('ub_lt',Date.now().toString());showTeacher();startFLCheck();}else{g('lerr').innerText='❌ পিন ভুল!';show('lerr');g('tPass').value='';}}
 
 var stuQRStream=null,stuQRScanning=false;
 
@@ -1393,7 +1412,7 @@ async function saveStu(){
     }
   }
   var pl={name:name,roll_no:roll,class:cls,batch:bat,phone:gv('ePh').trim(),admission_month:gv('eAdm')};
-  var r=id?await SB.from('students').update(pl).eq('id',id):await SB.from('students').insert([pl]).select();
+  var r=id?await dbWrite('students','update',pl,[{column:'id',value:id}]):await dbWrite('students','insert',[pl],null,{select:'*'});
   if(r.error){alert(r.error.message);return;}
   // Collect current month fee if checkbox checked
   var collectFee=g('eCollectFee')&&g('eCollectFee').checked;
@@ -1410,7 +1429,7 @@ async function saveStu(){
       var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
       var feeAmt=parseFloat(g('eFeePay')?g('eFeePay').value:0)||0;
       var feeMemo=g('eFeeMemo')?g('eFeeMemo').value.trim():'ভর্তির সময় বেতন';
-      var fr=await SB.from('fees_collection').insert([{
+      var fr=await dbWrite('fees_collection','insert',[{
         student_id:sid,
         payment_month:months[now.getMonth()],
         payment_year:now.getFullYear().toString(),
@@ -1461,17 +1480,17 @@ async function loadHW(){var today=new Date().toISOString().split('T')[0],cls=gv(
 /* NOTICE */
 /* postNotice moved */
 async function loadNotices(){var r=await SB.from('notices').select('*').order('created_at',{ascending:false}).limit(10);g('nL').innerHTML=(r.data||[]).map(function(n){return'<div class="ni" style="display:flex;justify-content:space-between"><div style="flex:1"><p style="font-weight:700">'+e(n.title)+'</p><p style="font-size:.75rem;color:var(--muted);margin-top:3px">'+e(n.content.substring(0,100))+'</p><p style="font-size:.62rem;color:#94a3b8;margin-top:5px">'+fd(n.created_at)+'</p></div><button onclick="delNotice(\''+n.id+'\')" style="color:var(--red);background:transparent;border:none;cursor:pointer;font-weight:700;margin-left:9px">✕</button></div>';}).join('')||'<p style="text-align:center;color:var(--muted);padding:13px">নেই</p>';}
-async function delNotice(id){if(!confirm('মুছবেন?'))return;var r=await SB.from('notices').delete().eq('id',id);if(r.error){alert('❌ Error: '+r.error.message);}else{loadNotices();}}
+async function delNotice(id){if(!confirm('মুছবেন?'))return;var r=await dbWrite('notices','delete',null,[{column:'id',value:id}]);if(r.error){alert('❌ Error: '+r.error.message);}else{loadNotices();}}
 
 /* EXAM */
-async function createExam(){var name=gv('exName').trim(),date=gv('exDate'),total=parseInt(gv('exTotal'),10)||100;if(!name||!date){alert('নাম ও তারিখ দিন!');return;}await SB.from('exams').insert([{exam_name:name,exam_date:date,class:gv('exCl'),batch:gv('exBt'),total_marks:total}]);alert('✅');g('exName').value='';loadExams();}
+async function createExam(){var name=gv('exName').trim(),date=gv('exDate'),total=parseInt(gv('exTotal'),10)||100;if(!name||!date){alert('নাম ও তারিখ দিন!');return;}await dbWrite('exams','insert',[{exam_name:name,exam_date:date,class:gv('exCl'),batch:gv('exBt'),total_marks:total}]);alert('✅');g('exName').value='';loadExams();}
 async function loadExams(){var cls=gv('exLCl'),bch=gv('exLBt');var c=g('examList');var q=SB.from('exams').select('*').order('exam_date',{ascending:false});if(cls!=='All')q=q.eq('class',cls);if(bch!=='All')q=q.eq('batch',bch);var r=await q;if(!r.data||!r.data.length){c.innerHTML='<p style="grid-column:1/-1;text-align:center;padding:26px;color:var(--muted)">নেই</p>';hide('marksEntry');return;}c.innerHTML=r.data.map(function(ex){return'<div class="exam-card fi" data-id="'+ex.id+'" data-name="'+e(ex.exam_name)+'" data-total="'+ex.total_marks+'" data-cls="'+e(ex.class)+'" data-bch="'+e(ex.batch||'All')+'" data-date="'+ex.exam_date+'" onclick="selectExamEl(this)"><p style="font-weight:700">'+e(ex.exam_name)+'</p><p style="font-size:.63rem;color:var(--muted)">'+fd(ex.exam_date)+' | '+e(ex.class)+' | '+ex.total_marks+'</p><div style="display:flex;gap:5px;margin-top:8px"><button onclick="event.stopPropagation()" style="flex:1;background:var(--g1);color:#fff;border:none;padding:5px;border-radius:8px;font-weight:700;font-size:.68rem;cursor:pointer">📝</button><button onclick="event.stopPropagation();delExam('+ex.id+')" style="background:var(--rs);color:var(--red);border:none;padding:5px 8px;border-radius:8px;font-weight:700;font-size:.68rem;cursor:pointer">🗑</button></div></div>';}).join('');}
-async function delExam(id){if(!confirm('মুছবেন?'))return;await SB.from('exam_results').delete().eq('exam_id',id);await SB.from('exams').delete().eq('id',id);selExamId=null;hide('marksEntry');loadExams();}
+async function delExam(id){if(!confirm('মুছবেন?'))return;await dbWrite('exam_results','delete',null,[{column:'exam_id',value:id}]);await dbWrite('exams','delete',null,[{column:'id',value:id}]);selExamId=null;hide('marksEntry');loadExams();}
 function selectExamEl(el){
   selectExam(el.dataset.id,el.dataset.name,el.dataset.total,el.dataset.cls,el.dataset.bch,el.dataset.date);
 }
 async function selectExam(id,name,total,cls,bch,date){selExamId=id;selExamTotal=total;g('selExName').innerText=name;g('selExInfo').innerText=fd(date)+' | '+cls+' | সর্বোচ্চ: '+total;show('marksEntry');var q=SB.from('students').select('*');if(cls&&cls!=='All')q=q.eq('class',cls);if(bch&&bch!=='All')q=q.eq('batch',bch);var r1=await q.order('roll_no').limit(1000);var r2=await SB.from('exam_results').select('*').eq('exam_id',id).limit(1000);g('marksList').innerHTML=(r1.data||[]).map(function(s){var res=r2.data&&r2.data.find(function(x){return x.student_id===s.id;});return'<div class="sr fi" style="flex-direction:row;align-items:center;gap:10px"><div style="flex:1"><p style="font-weight:700;font-size:.82rem">'+e(s.name)+'</p><p style="font-size:.6rem;color:var(--muted)">রোল:'+s.roll_no+'</p></div><input type="number" id="mk-'+s.id+'" class="marks-inp" value="'+(res?res.marks_obtained:'')+'" max="'+total+'"><div id="gr-'+s.id+'" style="min-width:32px;text-align:center;font-size:.68rem;font-weight:700;color:#94a3b8">'+(res?calcGrade((res.marks_obtained/total)*100).grade:'—')+'</div></div>';}).join('');g('marksEntry').scrollIntoView({behavior:'smooth'});}
-async function saveMarks(){if(!selExamId)return;var inps=g('marksList').querySelectorAll('.marks-inp');var recs=[];inps.forEach(function(inp){var sid=parseInt(inp.id.replace('mk-',''),10);if(inp.value!==''){var m=parseFloat(inp.value)||0;recs.push({exam_id:selExamId,student_id:sid,marks_obtained:m,grade:calcGrade((m/selExamTotal)*100).grade});}});if(!recs.length){alert('নম্বর দিন!');return;}var r=await SB.from('exam_results').upsert(recs,{onConflict:'exam_id,student_id'});if(r.error)alert(r.error.message);else alert('✅ সেভ!');}
+async function saveMarks(){if(!selExamId)return;var inps=g('marksList').querySelectorAll('.marks-inp');var recs=[];inps.forEach(function(inp){var sid=parseInt(inp.id.replace('mk-',''),10);if(inp.value!==''){var m=parseFloat(inp.value)||0;recs.push({exam_id:selExamId,student_id:sid,marks_obtained:m,grade:calcGrade((m/selExamTotal)*100).grade});}});if(!recs.length){alert('নম্বর দিন!');return;}var r=await dbWrite('exam_results','upsert',recs,null,{onConflict:'exam_id,student_id'});if(r.error)alert(r.error.message);else alert('✅ সেভ!');}
 function exportExamXls(){if(!selExamId)return;var inps=g('marksList').querySelectorAll('.marks-inp');var data=[['নাম','রোল','নম্বর','গ্রেড']];inps.forEach(function(inp){var row=inp.closest('.sr');data.push([row.querySelector('p').innerText,row.querySelectorAll('p')[1].innerText.replace('রোল:',''),inp.value||'',g('gr-'+inp.id.replace('mk-','')).innerText]);});var ws=XLSX.utils.aoa_to_sheet(data);var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Results');XLSX.writeFile(wb,'Exam.xlsx');}
 
 /* PRINT EXAM */
@@ -1540,9 +1559,9 @@ async function printExamResult(){
 function addMTSubject(){var name=gv('mtSubName').trim(),max=parseInt(gv('mtSubMax'),10)||100;if(!name){alert('বিষয় দিন!');return;}mtSubjectsList.push({name:name,max:max});renderMTSubs();g('mtSubName').value='';g('mtSubMax').value='100';g('mtSubName').focus();}
 function removeMTSub(i){mtSubjectsList.splice(i,1);renderMTSubs();}
 async function renderMTSubs(){g('mtSubjects').innerHTML=mtSubjectsList.map(function(s,i){return'<span class="sub-chip">'+e(s.name)+' ('+s.max+') <button onclick="removeMTSub('+i+')">✕</button></span>';}).join('');}
-async function createModelTest(){var name=gv('mtName').trim();if(!name){alert('নাম দিন!');return;}if(!mtSubjectsList.length){alert('বিষয় যোগ করুন!');return;}var r=await SB.from('model_tests').insert([{test_name:name,test_date:gv('mtDate'),class:gv('mtCl'),batch:gv('mtBt'),subjects:mtSubjectsList}]);if(r.error){alert('❌ '+r.error.message);return;}alert('✅ সেভ হয়েছে!');g('mtName').value='';mtSubjectsList=[];renderMTSubs();loadModelTests();loadMTDropdown();}
+async function createModelTest(){var name=gv('mtName').trim();if(!name){alert('নাম দিন!');return;}if(!mtSubjectsList.length){alert('বিষয় যোগ করুন!');return;}var r=await dbWrite('model_tests','insert',[{test_name:name,test_date:gv('mtDate'),class:gv('mtCl'),batch:gv('mtBt'),subjects:mtSubjectsList}]);if(r.error){alert('❌ '+r.error.message);return;}alert('✅ সেভ হয়েছে!');g('mtName').value='';mtSubjectsList=[];renderMTSubs();loadModelTests();loadMTDropdown();}
 async function loadModelTests(){var cls=gv('mtLCl'),bch=gv('mtLBt');var c=g('mtList');var q=SB.from('model_tests').select('*').order('test_date',{ascending:false});if(cls!=='All')q=q.eq('class',cls);if(bch!=='All')q=q.eq('batch',bch);var r=await q;if(!r.data||!r.data.length){c.innerHTML='<p style="grid-column:1/-1;text-align:center;padding:26px;color:var(--muted)">নেই</p>';hide('mtEntry');return;}c.innerHTML=r.data.map(function(mt){var subs=mt.subjects||[];var tm=subs.reduce(function(a,s){return a+s.max;},0);return'<div class="exam-card fi" onclick="selectMT('+mt.id+')"><p style="font-weight:700">'+e(mt.test_name)+'</p><p style="font-size:.63rem;color:var(--muted)">'+fd(mt.test_date)+' | '+e(mt.class)+' | '+subs.length+' বিষয় | মোট:'+tm+'</p><div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px">'+subs.map(function(s){return'<span style="background:#eff6ff;color:var(--g1);padding:2px 6px;border-radius:5px;font-size:.58rem;font-weight:700">'+e(s.name)+'</span>';}).join('')+'</div><div style="display:flex;gap:5px;margin-top:8px"><button onclick="event.stopPropagation()" style="flex:1;background:var(--g1);color:#fff;border:none;padding:5px;border-radius:8px;font-weight:700;font-size:.68rem;cursor:pointer">📝</button><button onclick="event.stopPropagation();delMT('+mt.id+')" style="background:var(--rs);color:var(--red);border:none;padding:5px 8px;border-radius:8px;font-weight:700;font-size:.68rem;cursor:pointer">🗑</button></div></div>';}).join('');}
-async function delMT(id){if(!confirm('মুছবেন?'))return;await SB.from('model_test_results').delete().eq('model_test_id',id);await SB.from('model_tests').delete().eq('id',id);selMTId=null;hide('mtEntry');loadModelTests();loadMTDropdown();}
+async function delMT(id){if(!confirm('মুছবেন?'))return;await dbWrite('model_test_results','delete',null,[{column:'model_test_id',value:id}]);await dbWrite('model_tests','delete',null,[{column:'id',value:id}]);selMTId=null;hide('mtEntry');loadModelTests();loadMTDropdown();}
 function filterMTRows(){
   var q=(g('mtSr').value||'').toLowerCase().trim();
   var rows=g('mtMarksBody').querySelectorAll('tr');
@@ -1558,7 +1577,7 @@ function filterMTRows(){
 async function selectMT(id){selMTId=id;var mt=(await SB.from('model_tests').select('*').eq('id',id).single()).data;if(!mt)return;selMTData=mt;var subs=mt.subjects||[];var tm=subs.reduce(function(a,s){return a+s.max;},0);g('mtSelName').innerText=mt.test_name;g('mtSelInfo').innerText=fd(mt.test_date)+' | '+mt.class+' | মোট:'+tm;g('mtSelSubs').innerHTML=subs.map(function(s){return'<span style="background:#fff;color:var(--amber);padding:3px 8px;border-radius:6px;font-size:.65rem;font-weight:700;border:1px solid #fde68a">'+e(s.name)+' ('+s.max+')</span>';}).join('');show('mtEntry');var q=SB.from('students').select('*');if(mt.class!=='All')q=q.eq('class',mt.class);if(mt.batch!=='All')q=q.eq('batch',mt.batch);var r1=await q.order('roll_no');var r2=await SB.from('model_test_results').select('*').eq('model_test_id',id);g('mtMarksHead').innerHTML='<tr><th style="text-align:left;min-width:100px">নাম</th><th>রোল</th>'+subs.map(function(s){return'<th>'+e(s.name)+'<br><span style="font-weight:400;font-size:.6rem">('+s.max+')</span></th>';}).join('')+'<th>মোট</th><th>%</th><th>গ্রেড</th></tr>';g('mtMarksBody').innerHTML=(r1.data||[]).map(function(s){var res=r2.data&&r2.data.find(function(x){return x.student_id===s.id;});var sm=res?res.subject_marks:{};return'<tr><td style="text-align:left;font-weight:700;font-size:.75rem">'+e(s.name)+'</td><td style="text-align:center;font-size:.72rem">'+s.roll_no+'</td>'+subs.map(function(sub){return'<td style="text-align:center"><input type="number" id="mt-'+s.id+'-'+sub.name.replace(/\s/g,'_')+'" class="marks-inp" style="width:50px" value="'+(sm[sub.name]!==undefined?sm[sub.name]:'')+'" max="'+sub.max+'"></td>';}).join('')+'<td id="mtt-'+s.id+'" style="text-align:center;font-weight:700;color:var(--g1)">—</td><td id="mtp-'+s.id+'" style="text-align:center;font-weight:700">—</td><td id="mtg-'+s.id+'" style="text-align:center;font-weight:700">—</td></tr>';}).join('');g('mtMarksBody').querySelectorAll('.marks-inp').forEach(function(inp){inp.addEventListener('input',function(){calcMTRow(this);});});(r1.data||[]).forEach(function(s){calcMTRowById(s.id,subs,tm);});g('mtEntry').scrollIntoView({behavior:'smooth'});}
 function calcMTRow(inp){if(!selMTData)return;var subs=selMTData.subjects||[];var tm=subs.reduce(function(a,s){return a+s.max;},0);var sid=inp.id.split('-')[1];var total=0;subs.forEach(function(sub){var el=g('mt-'+sid+'-'+sub.name.replace(/\s/g,'_'));if(el&&el.value)total+=parseFloat(el.value)||0;});var pct=tm>0?Math.round((total/tm)*100):0;var gr=calcGrade(pct);g('mtt-'+sid).innerText=total;g('mtp-'+sid).innerText=pct+'%';g('mtg-'+sid).innerHTML='<span style="color:'+gr.color+'">'+gr.grade+'</span>';}
 function calcMTRowById(sid,subs,tm){var total=0;subs.forEach(function(sub){var el=g('mt-'+sid+'-'+sub.name.replace(/\s/g,'_'));if(el&&el.value)total+=parseFloat(el.value)||0;});var pct=tm>0?Math.round((total/tm)*100):0;var gr=calcGrade(pct);if(g('mtt-'+sid))g('mtt-'+sid).innerText=total;if(g('mtp-'+sid))g('mtp-'+sid).innerText=pct+'%';if(g('mtg-'+sid))g('mtg-'+sid).innerHTML='<span style="color:'+gr.color+'">'+gr.grade+'</span>';}
-async function saveMTMarks(){if(!selMTId||!selMTData)return;var subs=selMTData.subjects||[];var tm=subs.reduce(function(a,s){return a+s.max;},0);var rows=g('mtMarksBody').querySelectorAll('tr');var recs=[];rows.forEach(function(tr){var inps=tr.querySelectorAll('.marks-inp');if(!inps.length)return;var sid=parseInt(inps[0].id.split('-')[1],10);var sm={};var total=0;var hasAny=false;subs.forEach(function(sub,i){if(inps[i]&&inps[i].value!==''){sm[sub.name]=parseFloat(inps[i].value)||0;total+=sm[sub.name];hasAny=true;}});if(hasAny){var pct=tm>0?Math.round((total/tm)*100):0;recs.push({model_test_id:selMTId,student_id:sid,subject_marks:sm,total_marks:total,percentage:pct,grade:calcGrade(pct).grade});}});if(!recs.length){alert('নম্বর দিন!');return;}recs.sort(function(a,b){return b.total_marks-a.total_marks;});recs.forEach(function(r,i){r.merit_position=i+1;});var r=await SB.from('model_test_results').upsert(recs,{onConflict:'model_test_id,student_id'});if(r.error)alert(r.error.message);else alert('✅ সেভ + মেরিট!');}
+async function saveMTMarks(){if(!selMTId||!selMTData)return;var subs=selMTData.subjects||[];var tm=subs.reduce(function(a,s){return a+s.max;},0);var rows=g('mtMarksBody').querySelectorAll('tr');var recs=[];rows.forEach(function(tr){var inps=tr.querySelectorAll('.marks-inp');if(!inps.length)return;var sid=parseInt(inps[0].id.split('-')[1],10);var sm={};var total=0;var hasAny=false;subs.forEach(function(sub,i){if(inps[i]&&inps[i].value!==''){sm[sub.name]=parseFloat(inps[i].value)||0;total+=sm[sub.name];hasAny=true;}});if(hasAny){var pct=tm>0?Math.round((total/tm)*100):0;recs.push({model_test_id:selMTId,student_id:sid,subject_marks:sm,total_marks:total,percentage:pct,grade:calcGrade(pct).grade});}});if(!recs.length){alert('নম্বর দিন!');return;}recs.sort(function(a,b){return b.total_marks-a.total_marks;});recs.forEach(function(r,i){r.merit_position=i+1;});var r=await dbWrite('model_test_results','upsert',recs,null,{onConflict:'model_test_id,student_id'});if(r.error)alert(r.error.message);else alert('✅ সেভ + মেরিট!');}
 
 /* PRINT MT */
 function printMTResult(){if(!selMTId||!selMTData)return;var mt=selMTData,subs=mt.subjects||[];var tm=subs.reduce(function(a,s){return a+s.max;},0);var rows=[];g('mtMarksBody').querySelectorAll('tr').forEach(function(tr){var tds=tr.querySelectorAll('td');var inps=tr.querySelectorAll('.marks-inp');if(!inps.length)return;var name=tds[0].innerText,roll=tds[1].innerText;var sm={};var total=0;var hasAny=false;subs.forEach(function(sub,i){if(inps[i]&&inps[i].value!==''){sm[sub.name]=parseFloat(inps[i].value)||0;total+=sm[sub.name];hasAny=true;}});if(hasAny)rows.push({name:name,roll:roll,sm:sm,total:total,pct:tm>0?Math.round((total/tm)*100):0,grade:calcGrade(tm>0?Math.round((total/tm)*100):0).grade});});rows.sort(function(a,b){return b.total-a.total;});rows.forEach(function(r,i){r.merit=i+1;});var html='<div class="print-sheet"><h1>UBIQUE</h1><div class="subtitle">'+e(mt.test_name)+' — '+fd(mt.test_date)+' | '+e(mt.class)+'</div><table><thead><tr><th>মেরিট</th><th style="text-align:left">নাম</th><th>রোল</th>'+subs.map(function(s){return'<th>'+e(s.name)+'<br>('+s.max+')</th>';}).join('')+'<th>মোট<br>('+tm+')</th><th>%</th><th>গ্রেড</th></tr></thead><tbody>'+rows.map(function(r){var mc=r.merit<=3?' class="merit-'+r.merit+'"':'';return'<tr'+mc+'><td style="font-weight:700">'+r.merit+'</td><td class="name-cell">'+e(r.name)+'</td><td>'+r.roll+'</td>'+subs.map(function(s){return'<td>'+(r.sm[s.name]!==undefined?r.sm[s.name]:'—')+'</td>';}).join('')+'<td style="font-weight:700;color:#6366f1">'+r.total+'</td><td style="font-weight:700">'+r.pct+'%</td><td><strong>'+r.grade+'</strong></td></tr>';}).join('')+'</tbody></table><div class="grade-box"><div>A+ (80%↑)</div><div>A (70%↑)</div><div>B (60%↑)</div><div>C (50%↑)</div><div>D (40%↑)</div><div>F (&lt;40%)</div></div><div class="stamp-area"><div>পরীক্ষক<span>স্বাক্ষর</span></div><div>প্রধান শিক্ষক<span>স্বাক্ষর ও সিল</span></div></div><div class="footer"><span>'+new Date().toLocaleDateString('bn-BD')+'</span><span>UBIQUE SMS</span></div></div>';doPrint(html);}
@@ -1701,9 +1720,9 @@ function MA(id,s){
 
   function doSave(){
     attempt++;
-    SB.from('attendance').upsert(
+    dbWrite('attendance','upsert',
       [{student_id:parseInt(id,10),attendance_date:today,status:s}],
-      {onConflict:'student_id,attendance_date'}
+      null,{onConflict:'student_id,attendance_date'}
     ).then(function(r){
       if(r.error){
         if(attempt<3){
@@ -1745,13 +1764,13 @@ function MH(id,s){
   if(an)an.className='ab nb'+(s==='No'?' on':'');
   // auto-save HW
   var today=getAttDate();
-  SB.from('attendance').upsert([{student_id:parseInt(id,10),attendance_date:today,homework_status:s,status:AD[id]||'Absent'}],{onConflict:'student_id,attendance_date'});
+  dbWrite('attendance','upsert',[{student_id:parseInt(id,10),attendance_date:today,homework_status:s,status:AD[id]||'Absent'}],null,{onConflict:'student_id,attendance_date'});
 }
 async function resetAtt(id){
   var s=stuCache[id]||stuCache[String(id)];
   if(!s)return;
   var today=getAttDate();
-  var r=await SB.from('attendance').delete().eq('student_id',parseInt(id,10)).eq('attendance_date',today);
+  var r=await dbWrite('attendance','delete',null,[{column:'student_id',value:parseInt(id,10)},{column:'attendance_date',value:today}]);
   if(r.error){showToast('❌ রিসেট হয়নি!');return;}
   delete AD[id];delete HD[id];
   var ap=g('ap-'+id),ax=g('ax-'+id);
@@ -1793,7 +1812,7 @@ async function subAtt(){
   var unmarked=screenIds.filter(function(sid){return !markedIds.has(sid);});
   if(unmarked.length>0){
     var recs=unmarked.map(function(sid){return{student_id:sid,attendance_date:today,status:'Absent'};});
-    var r2=await SB.from('attendance').upsert(recs,{onConflict:'student_id,attendance_date'});
+    var r2=await dbWrite('attendance','upsert',recs,null,{onConflict:'student_id,attendance_date'});
     if(r2.error){
       if(btn){btn.disabled=false;btn.innerText='✔ হাজিরা নিশ্চিত করুন';}
       showToast('❌ সেভ হয়নি: '+r2.error.message);
@@ -1845,9 +1864,9 @@ async function loadSetS(){
   });
 }
 
-async function addSet(type){var el=g(type==='class'?'nCl':'nBt'),val=el.value.trim();if(!val)return;await SB.from('academy_settings').insert([{type:type,value:val}]);el.value='';syncDrops();}
-async function delSet(id){if(!confirm('মুছবেন?'))return;await SB.from('academy_settings').delete().eq('id',id);syncDrops();}
-async function delStu(id){protect(async function(){if(!confirm('⚠️ সব ডেটা মুছে যাবে!'))return;await SB.from('attendance').delete().eq('student_id',id);await SB.from('fees_collection').delete().eq('student_id',id);await SB.from('exam_results').delete().eq('student_id',id);await SB.from('model_test_results').delete().eq('student_id',id);await SB.from('students').delete().eq('id',id);syncDrops();});}
+async function addSet(type){var el=g(type==='class'?'nCl':'nBt'),val=el.value.trim();if(!val)return;await dbWrite('academy_settings','insert',[{type:type,value:val}]);el.value='';syncDrops();}
+async function delSet(id){if(!confirm('মুছবেন?'))return;await dbWrite('academy_settings','delete',null,[{column:'id',value:id}]);syncDrops();}
+async function delStu(id){protect(async function(){if(!confirm('⚠️ সব ডেটা মুছে যাবে!'))return;await dbWrite('attendance','delete',null,[{column:'student_id',value:id}]);await dbWrite('fees_collection','delete',null,[{column:'student_id',value:id}]);await dbWrite('exam_results','delete',null,[{column:'student_id',value:id}]);await dbWrite('model_test_results','delete',null,[{column:'student_id',value:id}]);await dbWrite('students','delete',null,[{column:'id',value:id}]);syncDrops();});}
 
 /* TEACHER */
 async function loadTDrops(){var tcls=localStorage.getItem('ub_tcls')||'All';var tbat=localStorage.getItem('ub_tbat')||'All';var r=await SB.from('academy_settings').select('*').order('value');if(!r.data)return;var cls=r.data.filter(function(i){return i.type==='class';}),bch=r.data.filter(function(i){return i.type==='batch';});var cO=tcls!=='All'?'<option value="'+e(tcls)+'">'+e(tcls)+'</option>':'<option value="All">সব</option>'+cls.map(function(x){return'<option>'+e(x.value)+'</option>';}).join('');var bO=tbat!=='All'?'<option value="'+e(tbat)+'">'+e(tbat)+'</option>':'<option value="All">সব</option>'+bch.map(function(x){return'<option>'+e(x.value)+'</option>';}).join('');['tCl','tPCl','tRCl','tExCl'].forEach(function(id){var el=g(id);if(el)el.innerHTML=cO;});['tBt','tPBt','tRBt','tExBt'].forEach(function(id){var el=g(id);if(el)el.innerHTML=bO;});loadTS();}
@@ -1859,9 +1878,9 @@ function getTAttDate(){
 }
 
 async function loadTS(){TAD={};THD={};var tcls=localStorage.getItem('ub_tcls')||'All';var cls=gv('tCl')||tcls,bch=gv('tBt')||'All',sn=(gv('tSr')||'').toLowerCase();var today=getTAttDate();var q=SB.from('students').select('id,name,roll_no,class,batch');if(cls!=='All')q=q.eq('class',cls);if(bch!=='All')q=q.eq('batch',bch);var r1=await q.order('roll_no'),r2=await SB.from('attendance').select('student_id,status,homework_status').eq('attendance_date',today);g('tSL').innerHTML=(r1.data||[]).filter(function(s){return s.name.toLowerCase().includes(sn);}).map(function(s){var rec=r2.data&&r2.data.find(function(x){return x.student_id===s.id;});var pA=TAD[s.id]==='Present'||(!TAD[s.id]&&rec&&rec.status==='Present');var aA=TAD[s.id]==='Absent'||(!TAD[s.id]&&rec&&rec.status==='Absent');var yA=THD[s.id]==='Yes'||(!THD[s.id]&&rec&&rec.homework_status==='Yes');var nA=THD[s.id]==='No'||(!THD[s.id]&&rec&&rec.homework_status==='No');return'<div class="sr fi"><div class="sr-top"><div style="flex:1"><p style="font-weight:700;font-size:.84rem">'+e(s.name)+'</p><p style="font-size:.63rem;color:var(--muted)">রোল:'+s.roll_no+'</p></div><div style="display:flex;gap:4px"><button id="tp-'+s.id+'" onclick="tMA(\''+s.id+'\',\'Present\')" class="ab pb'+(pA?' on':'')+'">P</button><button id="ta-'+s.id+'" onclick="tMA(\''+s.id+'\',\'Absent\')" class="ab xb'+(aA?' on':'')+'">A</button></div></div><div class="sr-bot"><span style="flex:1"></span><div style="display:flex;align-items:center;gap:4px"><span style="font-size:.55rem;font-weight:700;color:#94a3b8">HW</span><button id="ty-'+s.id+'" onclick="tMH(\''+s.id+'\',\'Yes\')" class="ab yb'+(yA?' on':'')+'">Y</button><button id="tn-'+s.id+'" onclick="tMH(\''+s.id+'\',\'No\')" class="ab nb'+(nA?' on':'')+'">N</button></div></div></div>';}).join('')||'<p style="text-align:center;padding:26px;color:var(--muted)">নেই</p>';}
-function tMA(id,s){TAD[id]=s;g('tp-'+id).className='ab pb'+(s==='Present'?' on':'');g('ta-'+id).className='ab xb'+(s==='Absent'?' on':'');var today=getTAttDate();SB.from('attendance').upsert([{student_id:parseInt(id,10),attendance_date:today,status:s}],{onConflict:'student_id,attendance_date'}).then(function(r){if(r.error)showToast('❌ সেভ হয়নি!');});}
-function tMH(id,s){THD[id]=s;g('ty-'+id).className='ab yb'+(s==='Yes'?' on':'');g('tn-'+id).className='ab nb'+(s==='No'?' on':'');var today=getTAttDate();SB.from('attendance').upsert([{student_id:parseInt(id,10),attendance_date:today,homework_status:s,status:TAD[id]||'Absent'}],{onConflict:'student_id,attendance_date'});}
-async function subTAtt(){var today=new Date().toISOString().split('T')[0];var ids=[...new Set([...Object.keys(TAD),...Object.keys(THD)])];if(!ids.length){alert('মার্ক করুন!');return;}var recs=ids.map(function(id){return{student_id:parseInt(id,10),attendance_date:today,status:TAD[id]||'Absent',homework_status:THD[id]||null};});await SB.from('attendance').upsert(recs,{onConflict:'student_id,attendance_date'});alert('✅');TAD={};THD={};loadTS();}
+function tMA(id,s){TAD[id]=s;g('tp-'+id).className='ab pb'+(s==='Present'?' on':'');g('ta-'+id).className='ab xb'+(s==='Absent'?' on':'');var today=getTAttDate();dbWrite('attendance','upsert',[{student_id:parseInt(id,10),attendance_date:today,status:s}],null,{onConflict:'student_id,attendance_date'}).then(function(r){if(r.error)showToast('❌ সেভ হয়নি!');});}
+function tMH(id,s){THD[id]=s;g('ty-'+id).className='ab yb'+(s==='Yes'?' on':'');g('tn-'+id).className='ab nb'+(s==='No'?' on':'');var today=getTAttDate();dbWrite('attendance','upsert',[{student_id:parseInt(id,10),attendance_date:today,homework_status:s,status:TAD[id]||'Absent'}],null,{onConflict:'student_id,attendance_date'});}
+async function subTAtt(){var today=new Date().toISOString().split('T')[0];var ids=[...new Set([...Object.keys(TAD),...Object.keys(THD)])];if(!ids.length){alert('মার্ক করুন!');return;}var recs=ids.map(function(id){return{student_id:parseInt(id,10),attendance_date:today,status:TAD[id]||'Absent',homework_status:THD[id]||null};});await dbWrite('attendance','upsert',recs,null,{onConflict:'student_id,attendance_date'});alert('✅');TAD={};THD={};loadTS();}
   
 async function loadTP(){
   var tcls=localStorage.getItem('ub_tcls')||'All';
@@ -1887,7 +1906,7 @@ async function loadTP(){
 
 async function loadTExams(){var cls=gv('tExCl')||localStorage.getItem('ub_tcls')||'All';var bch=gv('tExBt')||'All';var q=SB.from('exams').select('*').order('exam_date',{ascending:false});if(cls!=='All')q=q.eq('class',cls);if(bch!=='All')q=q.eq('batch',bch);var r=await q;g('tExList').innerHTML=(r.data||[]).map(function(ex){return'<div class="exam-card fi" onclick="selectTExam('+ex.id+',\''+e(ex.exam_name)+'\','+ex.total_marks+',\''+e(ex.class)+'\',\''+e(ex.batch||'All')+'\',\''+ex.exam_date+'\')"><p style="font-weight:700">'+e(ex.exam_name)+'</p><p style="font-size:.63rem;color:var(--muted)">'+fd(ex.exam_date)+' | '+ex.total_marks+'</p></div>';}).join('')||'<p style="text-align:center;padding:22px;color:var(--muted)">নেই</p>';}
 async function selectTExam(id,name,total,cls,bch,date){tSelExamId=id;tSelExamTotal=total;g('tExName').innerText=name;g('tExInfo').innerText=fd(date)+' | সর্বোচ্চ: '+total;show('tExEntry');var q=SB.from('students').select('*');if(cls!=='All')q=q.eq('class',cls);if(bch!=='All')q=q.eq('batch',bch);var r1=await q.order('roll_no');var r2=await SB.from('exam_results').select('*').eq('exam_id',id);g('tExStudents').innerHTML=(r1.data||[]).map(function(s){var res=r2.data&&r2.data.find(function(x){return x.student_id===s.id;});return'<div class="sr fi" style="flex-direction:row;align-items:center;gap:10px"><div style="flex:1"><p style="font-weight:700;font-size:.82rem">'+e(s.name)+'</p><p style="font-size:.6rem;color:var(--muted)">রোল:'+s.roll_no+'</p></div><input type="number" id="tmk-'+s.id+'" class="marks-inp" value="'+(res?res.marks_obtained:'')+'" max="'+total+'"></div>';}).join('');}
-async function saveTExMarks(){if(!tSelExamId)return;var inps=g('tExStudents').querySelectorAll('.marks-inp');var recs=[];inps.forEach(function(inp){var sid=parseInt(inp.id.replace('tmk-',''),10);if(inp.value!==''){var m=Math.min(parseFloat(inp.value)||0,tSelExamTotal);recs.push({exam_id:tSelExamId,student_id:sid,marks_obtained:m,grade:calcGrade((m/tSelExamTotal)*100).grade});}});if(!recs.length)return;await SB.from('exam_results').upsert(recs,{onConflict:'exam_id,student_id'});alert('✅');}
+async function saveTExMarks(){if(!tSelExamId)return;var inps=g('tExStudents').querySelectorAll('.marks-inp');var recs=[];inps.forEach(function(inp){var sid=parseInt(inp.id.replace('tmk-',''),10);if(inp.value!==''){var m=Math.min(parseFloat(inp.value)||0,tSelExamTotal);recs.push({exam_id:tSelExamId,student_id:sid,marks_obtained:m,grade:calcGrade((m/tSelExamTotal)*100).grade});}});if(!recs.length)return;await dbWrite('exam_results','upsert',recs,null,{onConflict:'exam_id,student_id'});alert('✅');}
 async function loadTR(){var mi=gv('tRMo'),cls=gv('tRCl'),bch=gv('tRBt');if(!mi)return;show('tRL');g('tRH').innerHTML='';g('tRB').innerHTML='';hide('tRS');var p=mi.split('-').map(Number),yyyy=p[0],mm=p[1],dim=new Date(yyyy,mm,0).getDate();var q=SB.from('students').select('*');if(cls!=='All')q=q.eq('class',cls);if(bch!=='All')q=q.eq('batch',bch);var r1=await q.order('roll_no');if(!r1.data||!r1.data.length){hide('tRL');return;}var dates=[];for(var d=1;d<=dim;d++)dates.push(yyyy+'-'+String(mm).padStart(2,'0')+'-'+String(d).padStart(2,'0'));var r2=await SB.from('attendance').select('student_id,attendance_date,status').in('student_id',r1.data.map(function(s){return s.id;})).gte('attendance_date',dates[0]).lte('attendance_date',dates[dates.length-1]);var aM={};if(r2.data)r2.data.forEach(function(a){aM[a.student_id+'_'+a.attendance_date]=a.status;});g('tRH').innerHTML='<tr><th style="text-align:left;position:sticky;left:0;z-index:5;min-width:100px">নাম</th><th>রোল</th>'+dates.map(function(_,i){return'<th>'+(i+1)+'</th>';}).join('')+'<th>✅</th><th>❌</th></tr>';var gP=0,gA=0;g('tRB').innerHTML=r1.data.map(function(s){var tp=0,ta=0;var cells=dates.map(function(dt){var st=aM[s.id+'_'+dt];if(st==='Present'){tp++;return'<td class="pc">P</td>';}if(st==='Absent'){ta++;return'<td class="ac">A</td>';}return'<td style="text-align:center;color:#cbd5e1">–</td>';}).join('');gP+=tp;gA+=ta;return'<tr><td style="position:sticky;left:0;background:#fff;z-index:4;font-weight:700;border-right:1px solid #e0e7ff">'+e(s.name)+'</td><td style="text-align:center;color:var(--muted);font-size:.72rem">'+s.roll_no+'</td>'+cells+'<td class="tc">'+tp+'</td><td class="ac">'+ta+'</td></tr>';}).join('');hide('tRL');var avg=r1.data.length>0?Math.round((gP/(r1.data.length*dates.length))*100):0;function mkC(bg,bc,lbl,val,col){return'<div style="background:'+bg+';border:1.5px solid '+bc+';border-radius:12px;padding:12px;text-align:center"><p style="font-size:.58rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:2px">'+lbl+'</p><p style="font-size:1.5rem;font-weight:700;color:'+col+";font-family:'Sora',sans-serif\">"+val+'</p></div>';}g('tRS').innerHTML=mkC('#f0fdf4','#bbf7d0','উপস্থিত',gP,'var(--green)')+mkC('#fff1f2','#fecdd3','অনুপস্থিত',gA,'var(--red)')+mkC('#f5f3ff','#ddd6fe','গড়',avg+'%','var(--g2)');show('tRS');}
 
 /* STUDENT DASHBOARD */
@@ -2037,7 +2056,7 @@ var selAsgId=null,asgSubData={},asgAllStudents=[];
 async function createAssignment(){
   var title=g('asgTitle').value.trim(),desc=g('asgDesc').value.trim(),cls=g('asgCl').value,bat=g('asgBt').value,dl=g('asgDl').value;
   if(!title){alert('শিরোনাম দিন!');return;}
-  var r=await SB.from('assignments').insert([{title:title,description:desc,class:cls,batch:bat,deadline:dl||null}]);
+  var r=await dbWrite('assignments','insert',[{title:title,description:desc,class:cls,batch:bat,deadline:dl||null}]);
   if(r.error){alert('Error: '+r.error.message);return;}
   g('asgTitle').value='';g('asgDesc').value='';g('asgDl').value='';
   showToast('✅ এসাইনমেন্ট দেওয়া হয়েছে!');loadAssignments();
@@ -2105,17 +2124,17 @@ function toggleAsgSub(sid){asgSubData[parseInt(sid)]=!asgSubData[parseInt(sid)];
 async function saveSubmissions(){
   if(!selAsgId)return;
   var submittedIds=Object.keys(asgSubData).filter(function(id){return asgSubData[id];}).map(Number);
-  await SB.from('assignment_submissions').delete().eq('assignment_id',selAsgId);
+  await dbWrite('assignment_submissions','delete',null,[{column:'assignment_id',value:selAsgId}]);
   if(submittedIds.length){
-    var r=await SB.from('assignment_submissions').insert(submittedIds.map(function(sid){return{assignment_id:selAsgId,student_id:sid};}));
+    var r=await dbWrite('assignment_submissions','insert',submittedIds.map(function(sid){return{assignment_id:selAsgId,student_id:sid};}));
     if(r.error){alert('Error: '+r.error.message);return;}
   }
   showToast('✅ সেভ হয়েছে!');loadAssignments();
 }
 async function delAsg(id){
   if(!confirm('এসাইনমেন্ট মুছবেন?'))return;
-  await SB.from('assignment_submissions').delete().eq('assignment_id',id);
-  await SB.from('assignments').delete().eq('id',id);
+  await dbWrite('assignment_submissions','delete',null,[{column:'assignment_id',value:id}]);
+  await dbWrite('assignments','delete',null,[{column:'id',value:id}]);
   hide('asgSubPanel');loadAssignments();
 }
 async function loadStuAssignments(s){
@@ -2143,8 +2162,8 @@ async function forceLogoutTeachers(){
   if(!confirm('সব টিচারকে লগআউট করবেন?'))return;
   var ts=Date.now().toString();
   // আগের force_logout entry মুছে নতুন দিই
-  await SB.from('academy_settings').delete().eq('type','system');
-  await SB.from('academy_settings').insert([{type:'system',value:'force_logout:'+ts}]);
+  await dbWrite('academy_settings','delete',null,[{column:'type',value:'system'}]);
+  await dbWrite('academy_settings','insert',[{type:'system',value:'force_logout:'+ts}]);
   g('flStatus').innerText='✅ লগআউট সিগনাল পাঠানো হয়েছে! ৩০ সেকেন্ডের মধ্যে কার্যকর হবে।';
   setTimeout(function(){if(g('flStatus'))g('flStatus').innerText='';},5000);
 }
@@ -2207,7 +2226,7 @@ async function subFee(){
   var payloads=selectedMonths.map(function(mo){
     return{student_id:selFeeId,amount:parseFloat(amt),memo_no:memo||null,payment_month:mo,payment_year:yr,payment_date:date,fee_type:'Monthly',memo_note:gv('fNo')||''};
   });
-  var r=await SB.from('fees_collection').insert(payloads);
+  var r=await dbWrite('fees_collection','insert',payloads);
   if(r.error){alert('❌ সেভ হয়নি: '+r.error.message);return;}
   closeGFee();
   showToast('✅ '+selectedMonths.length+' মাসের ফি জমা হয়েছে!');
@@ -2578,7 +2597,7 @@ async function processQRCode(data){
   var s=rs.data;
   stuCache[sid]=s;
   // হাজিরা সেভ
-  await SB.from('attendance').upsert([{student_id:sid,attendance_date:today,status:'Present'}],{onConflict:'student_id,attendance_date'});
+  await dbWrite('attendance','upsert',[{student_id:sid,attendance_date:today,status:'Present'}],null,{onConflict:'student_id,attendance_date'});
   // fee cache লোড
   if(!feeCache||!Object.keys(feeCache).length){await loadFeeData();}
   var dueM=getDueMonths(sid);
@@ -2609,7 +2628,7 @@ async function postNotice(){
   var cls=g('nCls')?g('nCls').value:'All';
   var bat=g('nBat')?g('nBat').value:'All';
   if(!ti||!bo){alert('শিরোনাম ও বিস্তারিত দিন!');return;}
-  await SB.from('notices').insert([{title:ti,content:bo,target_class:cls,target_batch:bat}]);
+  await dbWrite('notices','insert',[{title:ti,content:bo,target_class:cls,target_batch:bat}]);
   showToast('✅ নোটিস পাবলিশ হয়েছে!');
   g('nTi').value='';g('nBo').value='';
   if(g('nCls'))g('nCls').value='All';
@@ -2682,7 +2701,7 @@ async function submitBulk(){
   var done=0,fail=0;
   for(var i=0;i<valid.length;i++){
     var r=valid[i];
-    var res=await SB.from('students').insert([{name:r.name,roll_no:r.roll_no,class:r.class,batch:r.batch,phone:r.phone}]);
+    var res=await dbWrite('students','insert',[{name:r.name,roll_no:r.roll_no,class:r.class,batch:r.batch,phone:r.phone}]);
     if(res.error)fail++;else done++;
     btn.innerText='⏳ '+(i+1)+'/'+valid.length+' আপলোড হচ্ছে...';
   }
@@ -2730,7 +2749,7 @@ async function openPM(id){
 async function saveProb(){
   var id=parseInt(gv('pmId'),10),note=g('pmTx').value.trim();
   if(!id)return;
-  var rs=await SB.from('students').update({problem_note:note}).eq('id',id);
+  var rs=await dbWrite('students','update',{problem_note:note},[{column:'id',value:id}]);
   if(rs.error){alert('সমস্যা: '+rs.error.message);return;}
   if(stuCache[id])stuCache[id].problem_note=note;
   closeM();
@@ -2740,7 +2759,7 @@ async function saveProb(){
 async function clearProb(){
   var id=parseInt(gv('pmId'),10);
   if(!id){closeM();return;}
-  var rc=await SB.from('students').update({problem_note:''}).eq('id',id);
+  var rc=await dbWrite('students','update',{problem_note:''},[{column:'id',value:id}]);
   if(rc.error){alert('সমস্যা: '+rc.error.message);return;}
   if(stuCache[id])stuCache[id].problem_note='';
   closeM();
@@ -2905,8 +2924,8 @@ async function saveRoutine(){
   routineData[cls]=data;
   var ex=await SB.from('class_routine').select('id').eq('class',cls).single();
   var r=ex.data
-    ?await SB.from('class_routine').update({routine_data:data}).eq('class',cls)
-    :await SB.from('class_routine').insert([{class:cls,routine_data:data}]);
+    ?await dbWrite('class_routine','update',{routine_data:data},[{column:'class',value:cls}])
+    :await dbWrite('class_routine','insert',[{class:cls,routine_data:data}]);
   if(r.error)alert('❌ '+r.error.message);
   else alert('✅ রুটিন সেভ হয়েছে!');
 }
@@ -3042,9 +3061,11 @@ function sendAutoCall(){
   var btn=g('acSendBtn');
   btn.disabled=true;btn.innerText='⏳ পাঠানো হচ্ছে...';
 
+  var adminPin=localStorage.getItem('ub_apin')||'';
+  if(!adminPin){showToast('❌ এডমিন লগইন করুন আগে!');btn.disabled=false;btn.innerText='📞 কল শুরু করুন';return;}
   fetch(EDGE_FN_URL,{
     method:'POST',
-    headers:{'Content-Type':'application/json'},
+    headers:{'Content-Type':'application/json','x-admin-password':adminPin},
     body:JSON.stringify({
       phone_numbers:phones,
       voice:voiceVal,
@@ -3125,9 +3146,9 @@ async function removeLPSlot(i){
 async function saveLPSlots(){
   var ex=await SB.from('lecture_plans').select('id').eq('class','__slots__').eq('month','__slots__').single();
   if(ex.data)
-    await SB.from('lecture_plans').update({plan_data:{slots:lpSlots}}).eq('class','__slots__').eq('month','__slots__');
+    await dbWrite('lecture_plans','update',{plan_data:{slots:lpSlots}},[{column:'class',value:'__slots__'},{column:'month',value:'__slots__'}]);
   else
-    await SB.from('lecture_plans').insert([{class:'__slots__',month:'__slots__',plan_data:{slots:lpSlots}}]);
+    await dbWrite('lecture_plans','insert',[{class:'__slots__',month:'__slots__',plan_data:{slots:lpSlots}}]);
 }
 
 // ── Plan ──
@@ -3270,8 +3291,8 @@ async function saveLP(){
   var plan=lpData[key];
   var ex=await SB.from('lecture_plans').select('id').eq('class',cls).eq('month',mo).single();
   var r=ex.data
-    ?await SB.from('lecture_plans').update({plan_data:plan}).eq('class',cls).eq('month',mo)
-    :await SB.from('lecture_plans').insert([{class:cls,month:mo,plan_data:plan}]);
+    ?await dbWrite('lecture_plans','update',{plan_data:plan},[{column:'class',value:cls},{column:'month',value:mo}])
+    :await dbWrite('lecture_plans','insert',[{class:cls,month:mo,plan_data:plan}]);
   if(r.error)showToast('❌ '+r.error.message);
   else showToast('✅ সেভ হয়েছে!');
 }
@@ -3373,7 +3394,7 @@ function renderTeacherList(){
 async function saveTeacher2(){
   var name=g('tchName2').value.trim();
   if(!name){alert('শিক্ষকের নাম দিন!');return;}
-  var r=await SB.from('teachers').insert([{name:name,pin:'0000'}]);
+  var r=await dbWrite('teachers','insert',[{name:name,pin:'0000'}]);
   if(r.error){alert('❌ '+r.error.message);return;}
   g('tchName2').value='';
   loadTeachers2();showToast('✅ শিক্ষক যোগ হয়েছে!');
@@ -3402,7 +3423,7 @@ function renderTeacherList2(){
 async function saveTeacher(){
   var name = g('tchName').value.trim();
   if(!name){alert('শিক্ষকের নাম দিন!');return;}
-  var r = await SB.from('teachers').insert([{name:name, pin:'0000'}]);
+  var r=await dbWrite('teachers','insert',[{name:name,pin:'0000'}]);
   if(r.error){alert('❌ '+r.error.message);return;}
   g('tchName').value='';
   if(g('tchSubs'))g('tchSubs').value='';
@@ -3461,7 +3482,7 @@ async function saveTchEdit(){
   if(pin&&isNaN(pin)){alert('PIN শুধু সংখ্যা হতে হবে!');return;}
   var upd={name:name,assigned_class:cls,assigned_batch:bat};
   if(pin)upd.pin=pin;
-  var r=await SB.from('teachers').update(upd).eq('id',id);
+  var r=await dbWrite('teachers','update',upd,[{column:'id',value:id}]);
   if(r.error){alert('❌ '+r.error.message);return;}
   hide('tchEditModal');
   showToast('✅ সেভ হয়েছে!');
@@ -3470,7 +3491,7 @@ async function saveTchEdit(){
 
 async function delTeacher(id){
   if(!confirm('মুছবেন?'))return;
-  await SB.from('teachers').delete().eq('id', id);
+  await dbWrite('teachers','delete',null,[{column:'id',value:id}]);
   loadTeachers();
 }
 
@@ -3680,7 +3701,7 @@ async function saveRoutine(){
   if(!cls){alert('আগে গ্রিড বানান!');return;}
   var count = parseInt(gv('rtPeriodCount'));
   // Delete existing
-  await SB.from('class_routine').delete().eq('class', cls);
+  await dbWrite('class_routine','delete',null,[{column:'class',value:cls}]);
   // Build records
   var recs = [];
   DAYS_BN.forEach(function(day){
@@ -3701,7 +3722,7 @@ async function saveRoutine(){
     }
   });
   if(!recs.length){alert('কোনো বিষয় দেননি!');return;}
-  var r = await SB.from('class_routine').insert(recs);
+  var r=await dbWrite('class_routine','insert',recs);
   if(r.error) alert('❌ '+r.error.message);
   else alert('✅ রুটিন সেভ হয়েছে! ('+recs.length+' এন্ট্রি)');
 }
@@ -3814,7 +3835,7 @@ async function syncOfflineQueue(){
   var success = [];
   for(var i=0; i<q.length; i++){
     var item = q[i];
-    var r = await SB.from('attendance').upsert(item.recs, {onConflict:'student_id,attendance_date'});
+    var r=await dbWrite('attendance','upsert',item.recs,null,{onConflict:'student_id,attendance_date'});
     if(!r.error){
       success.push(item.date);
     }
@@ -4096,7 +4117,7 @@ async function loadAttEdit(){
     delBtn.textContent='🗑️';
     delBtn.onclick=async function(){
       if(!confirm(s.name+' এর '+date+' তারিখের হাজিরা মুছবেন?'))return;
-      var r=await SB.from('attendance').delete().eq('student_id',s.id).eq('attendance_date',date);
+      var r=await dbWrite('attendance','delete',null,[{column:'student_id',value:s.id},{column:'attendance_date',value:date}]);
       if(r.error){alert('❌ '+r.error.message);return;}
       delete AE_CHANGES[s.id];
       row.remove();
@@ -4125,7 +4146,7 @@ async function saveAttEdit(){
   var recs=keys.map(function(sid){
     return {student_id:parseInt(sid,10),attendance_date:date,status:AE_CHANGES[sid]};
   });
-  var r=await SB.from('attendance').upsert(recs,{onConflict:'student_id,attendance_date'});
+  var r=await dbWrite('attendance','upsert',recs,null,{onConflict:'student_id,attendance_date'});
   if(r.error){alert('❌ '+r.error.message);return;}
   AE_CHANGES={};
   alert('✅ '+recs.length+'টি হাজিরা সংশোধন হয়েছে!');
@@ -4285,7 +4306,7 @@ async function loadPayLog(){
 async function deletePayment(id, btn){
   if(!confirm('এই মাসের পেমেন্ট এন্ট্রি মুছবেন?')) return;
   btn.disabled=true; btn.textContent='⏳';
-  var r=await SB.from('fees_collection').delete().eq('id',id);
+  var r=await dbWrite('fees_collection','delete',null,[{column:'id',value:id}]);
   if(r.error){alert('❌ '+r.error.message);btn.disabled=false;btn.textContent='🗑️ মুছুন';return;}
   // row টা সরাই
   var row=btn.closest('div[style*="background:#f8faff"]');
@@ -4296,7 +4317,7 @@ async function deletePayment(id, btn){
 async function saveExpense(){
   var date=g('exDate').value,amt=g('exAmt').value,cat=g('exCat').value,desc=g('exDesc').value.trim();
   if(!date||!amt||!cat){alert('তারিখ, পরিমাণ ও ক্যাটাগরি দিন!');return;}
-  var r=await SB.from('expenses').insert([{
+  var r=await dbWrite('expenses','insert',[{
     expense_date:date,
     amount:parseFloat(amt),
     category:cat,
@@ -4358,7 +4379,7 @@ async function loadExpenses(){
     delBtn.textContent='🗑️';
     delBtn.onclick=async function(){
       if(!confirm('এই খরচ মুছবেন?'))return;
-      var dr=await SB.from('expenses').delete().eq('id',ex.id);
+      var dr=await dbWrite('expenses','delete',null,[{column:'id',value:ex.id}]);
       if(dr.error){alert('❌ '+dr.error.message);return;}
       row.remove();
       loadExpenses();
@@ -4386,7 +4407,7 @@ async function createDailyTest(){
   var cls=g('dtCl').value,bat=g('dtBt').value;
   if(!name||!date){alert('নাম ও তারিখ দিন!');return;}
   if(!cls||cls==='All'){alert('একটি নির্দিষ্ট ক্লাস বেছে নিন!');return;}
-  var r=await SB.from('daily_tests').insert([{test_name:name,test_date:date,class:cls,batch:bat,total_marks:total}]).select();
+  var r=await dbWrite('daily_tests','insert',[{test_name:name,test_date:date,class:cls,batch:bat,total_marks:total}],null,{select:'*'});
   if(r.error){alert('❌ '+r.error.message);return;}
   g('dtName').value='';
   alert('✅ টেস্ট তৈরি হয়েছে!');
@@ -4415,8 +4436,7 @@ async function loadDailyTests(){
 
 async function delDT(id){
   if(!confirm('এই ডেইলি টেস্ট মুছবেন?'))return;
-  await SB.from('daily_test_results').delete().eq('test_id',id);
-  await SB.from('daily_tests').delete().eq('id',id);
+  await dbWrite('daily_test_results','delete',null,[{column:'test_id',value:id}]);await dbWrite('daily_tests','delete',null,[{column:'id',value:id}]);
   selDTId=null;hide('dtEntry');loadDailyTests();
 }
 
@@ -4480,7 +4500,7 @@ async function saveDTMarks(){
     if(v!=='')recs.push({test_id:selDTId,student_id:sid,marks_obtained:parseFloat(v)});
   });
   if(!recs.length){alert('কোনো নম্বর দেওয়া হয়নি!');return;}
-  var r=await SB.from('daily_test_results').upsert(recs,{onConflict:'test_id,student_id'});
+  var r=await dbWrite('daily_test_results','upsert',recs,null,{onConflict:'test_id,student_id'});
   if(r.error){alert('❌ '+r.error.message);return;}
   alert('✅ '+recs.length+' জনের নম্বর সেভ হয়েছে!');
   selectDT(selDTId,g('dtSelName').innerText,selDTTotal,selDTCls,selDTBch,selDTDate);
@@ -4652,7 +4672,7 @@ async function saveOnlineClass(){
   if(!title||!url){alert('শিরোনাম ও লিংক দিন!');return;}
   var vid=getVideoEmbed(url);
   if(!vid){alert('❌ সঠিক YouTube বা Google Drive লিংক দিন!');return;}
-  var r=await SB.from('online_classes').insert([{title:title,description:desc||null,youtube_url:vid.type+':'+vid.id,class:cls==='All'?null:cls,batch:bat==='All'?null:bat}]);
+  var r=await dbWrite('online_classes','insert',[{title:title,description:desc||null,youtube_url:vid.type+':'+vid.id,class:cls==='All'?null:cls,batch:bat==='All'?null:bat}]);
   if(r.error){alert('❌ '+r.error.message);return;}
   g('ocTitle').value='';g('ocDesc').value='';g('ocUrl').value='';
   alert('✅ ভিডিও যোগ হয়েছে!');
@@ -4724,7 +4744,7 @@ async function loadOnlineClasses(){
 
 async function deleteOnlineClass(id,card){
   if(!confirm('এই ভিডিও মুছবেন?'))return;
-  var r=await SB.from('online_classes').delete().eq('id',id);
+  var r=await dbWrite('online_classes','delete',null,[{column:'id',value:id}]);
   if(r.error){alert('❌ '+r.error.message);return;}
   card.remove();
 }
@@ -4815,7 +4835,7 @@ async function loadCNHistory(sid){
 async function saveCN(){
   var note=g('cnText').value.trim();
   if(!note){alert('নোট লিখুন!');return;}
-  var r=await SB.from('call_notes').insert([{student_id:_cnStuId,note:note}]);
+  var r=await dbWrite('call_notes','insert',[{student_id:_cnStuId,note:note}]);
   if(r.error){alert('❌ '+r.error.message);return;}
   g('cnText').value='';
   await loadCNHistory(_cnStuId);
@@ -4866,8 +4886,8 @@ async function saveCDays(){
   var existing=await SB.from('academy_settings').select('id').eq('key','class_days').single();
   var val=JSON.stringify(classDays);
   var r=existing.data
-    ?await SB.from('academy_settings').update({value:val}).eq('type','class_days')
-    :await SB.from('academy_settings').insert([{type:'class_days',value:val}]);
+    ?await dbWrite('academy_settings','update',{value:val},[{column:'type',value:'class_days'}])
+    :await dbWrite('academy_settings','insert',[{type:'class_days',value:val}]);
   if(r.error)alert('❌ '+r.error.message);
   else alert('✅ '+key+' এর দিন সেভ হয়েছে!');
 }
@@ -5058,8 +5078,8 @@ async function saveRoutineNew(){
   var data={groups:rtGroups,room:room};
   var ex=await SB.from('class_routine').select('id').eq('class',cls+(bt&&bt!=='All'?'_'+bt:'')).maybeSingle();
   var r=ex.data
-    ?await SB.from('class_routine').update({routine_data:data}).eq('class',cls+(bt&&bt!=='All'?'_'+bt:''))
-    :await SB.from('class_routine').insert([{class:cls+(bt&&bt!=='All'?'_'+bt:''),routine_data:data}]);
+    ?await dbWrite('class_routine','update',{routine_data:data},[{column:'class',value:cls+(bt&&bt!=='All'?'_'+bt:'')}])
+    :await dbWrite('class_routine','insert',[{class:cls+(bt&&bt!=='All'?'_'+bt:''),routine_data:data}]);
   if(r.error)alert('❌ '+r.error.message);
   else alert('✅ রুটিন সেভ হয়েছে!');
 }
@@ -5161,7 +5181,7 @@ async function savePlayerToken(){
     var sid = localStorage.getItem('ub_sid');
     var rec = {player_id: pid, updated_at: new Date().toISOString()};
     if(sid) rec.student_id = parseInt(sid);
-    var r = await SB.from('push_tokens').upsert([rec],{onConflict:'player_id'});
+    var r=await dbWrite('push_tokens','upsert',[rec],null,{onConflict:'player_id'});
     if(!r.error) showToast('\u{1F514} Notification ready!');
     console.log('Token saved:', pid);
   } catch(err){ console.log('token save err:', err.message); }
@@ -5177,7 +5197,7 @@ async function testOneSignal(){
         var sid = localStorage.getItem('ub_sid');
         var rec = {player_id: pid, updated_at: new Date().toISOString()};
         if(sid) rec.student_id = parseInt(sid);
-        SB.from('push_tokens').upsert([rec],{onConflict:'player_id'}).then(function(r){
+        dbWrite('push_tokens','upsert',[rec],null,{onConflict:'player_id'}).then(function(r){
           alert('player_id: '+pid+'\nSaved: '+(r.error?'❌ '+r.error.message:'✅ OK'));
         });
       }
@@ -5304,7 +5324,7 @@ async function sendNotification(){
       rec.class=g('ntCl')?g('ntCl').value:'All';
       rec.batch=g('ntBt')?g('ntBt').value:'All';
     }
-    var r=await SB.from('notifications').insert([rec]);
+    var r=await dbWrite('notifications','insert',[rec]);
     if(r.error){
       if(st)st.innerHTML='<span style="color:#ef4444">\u274C '+r.error.message+'</span>';
       return;
@@ -5358,7 +5378,7 @@ async function sendAbsentNotifications(recs){
       var name = stu ? stu.name : 'আপনার সন্তান';
       await fetch(EDGE_NOTIF_URL, {
         method:'POST',
-        headers:{'Content-Type':'application/json'},
+        headers:{'Content-Type':'application/json','x-admin-password':adminPin},
         body: JSON.stringify({
           playerIds: [tk.player_id],
           title: '❌ অনুপস্থিতির নোটিস',
