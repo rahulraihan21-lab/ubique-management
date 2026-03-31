@@ -968,19 +968,61 @@ window.alert = function(msg) {
   if(msg === '✅') msg = 'সফলভাবে সেভ হয়েছে!';
   _alert(msg);
 };
-var SB=supabase.createClient('https://sfsrtozgfethgdfrmskk.supabase.co','sb_publishable_ds6DYMap76uRiquvQ9a0fQ_rctZqM61');
+var PROXY_URL='https://deevdipciojjffkdnqax.supabase.co/functions/v1/db-proxy';
+// === SECURE PROXY SB CLIENT ===
+function PQ(t){this._t=t;this._s='*';this._f=[];this._o=[];this._l=null;this._si=false;}
+PQ.prototype.select=function(c){this._s=c||'*';return this;};
+PQ.prototype.eq=function(c,v){this._f.push({column:c,operator:'eq',value:v});return this;};
+PQ.prototype.neq=function(c,v){this._f.push({column:c,operator:'neq',value:v});return this;};
+PQ.prototype.in=function(c,v){this._f.push({column:c,operator:'in',value:v});return this;};
+PQ.prototype.not=function(c,op,v){this._f.push({column:c,operator:'not',value:v});return this;};
+PQ.prototype.is=function(c,v){this._f.push({column:c,operator:'is',value:v});return this;};
+PQ.prototype.gt=function(c,v){this._f.push({column:c,operator:'gt',value:v});return this;};
+PQ.prototype.lt=function(c,v){this._f.push({column:c,operator:'lt',value:v});return this;};
+PQ.prototype.gte=function(c,v){this._f.push({column:c,operator:'gte',value:v});return this;};
+PQ.prototype.lte=function(c,v){this._f.push({column:c,operator:'lte',value:v});return this;};
+PQ.prototype.like=function(c,v){this._f.push({column:c,operator:'like',value:v});return this;};
+PQ.prototype.ilike=function(c,v){this._f.push({column:c,operator:'ilike',value:v});return this;};
+PQ.prototype.order=function(c,opts){this._o.push({column:c,ascending:opts?opts.ascending!==false:true});return this;};
+PQ.prototype.limit=function(n){this._l=n;return this;};
+PQ.prototype.single=function(){this._si=true;return this._exec();};
+PQ.prototype._exec=function(){
+  var self=this;
+  return (async function(){
+    var role=localStorage.getItem('ub')||'';
+    var h={'Content-Type':'application/json'};
+    var body={table:self._t,operation:'select',select:self._s};
+    if(role==='a'){body._admin_pin=localStorage.getItem('ub_pin')||'';body._role='admin';}
+    else if(role==='t'){body._teacher_pin=localStorage.getItem('ub_tpin')||'';body._role='teacher';}
+    else if(role==='s'){body._role='student';body._student_id=localStorage.getItem('ub_sid')||'';}
+    if(self._f.length)body.filters=self._f;
+    if(self._o.length)body.order=self._o;
+    if(self._l)body.limit=self._l;
+    if(self._si)body.single=true;
+    try{
+      var res=await fetch(PROXY_URL,{method:'POST',headers:h,body:JSON.stringify(body)});
+      var json=await res.json();
+      if(!res.ok)return{data:null,error:{message:json.error||'Proxy error'}};
+      return{data:json.data,error:null};
+    }catch(err){return{data:null,error:{message:err.message||'Network error'}};}
+  })();
+};
+PQ.prototype.then=function(res,rej){return this._exec().then(res,rej);};
+var SB={from:function(t){return new PQ(t);}};
+// === END PROXY SB CLIENT ===
 // === DB PROXY HELPER ===
-var PROXY_URL='https://kzxwcvgtkuydoxglglfm.supabase.co/functions/v1/db-proxy';
+// === DB PROXY HELPER ===
+
 async function dbWrite(table,operation,data,filters,opts){
   var role=localStorage.getItem('ub');
   var headers={'Content-Type':'application/json'};
-  if(role==='a'){headers['x-admin-pin']=localStorage.getItem('ub_pin')||'';headers['x-role']='admin';}
-  else if(role==='t'){headers['x-teacher-pin']=localStorage.getItem('ub_tpin')||'';headers['x-role']='teacher';}
   var body={table:table,operation:operation};
   if(data)body.data=data;
   if(filters)body.filters=filters;
   if(opts&&opts.onConflict)body.upsert_options={onConflict:opts.onConflict};
   if(opts&&opts.select)body.select=opts.select;
+  if(role==='a'){body._admin_pin=localStorage.getItem('ub_pin')||'';body._role='admin';}
+  else if(role==='t'){body._teacher_pin=localStorage.getItem('ub_tpin')||'';body._role='teacher';}
   var res=await fetch(PROXY_URL,{method:'POST',headers:headers,body:JSON.stringify(body)});
   var json=await res.json();
   if(!res.ok)return{data:null,error:{message:json.error||'Proxy error'}};
@@ -1189,12 +1231,36 @@ function toggleMore(){
 function selRole(r){var parts=['pa','pt','ps'],btns=['rA','rT','rS'];parts.forEach(function(id){var el=g(id);el.classList.add('hidden');el.style.display='none';});btns.forEach(function(id){g(id).classList.remove('sel');});var idx=r==='a'?0:r==='t'?1:2;g(parts[idx]).classList.remove('hidden');g(parts[idx]).style.display='flex';g(btns[idx]).classList.add('sel');hide('lerr');}
 async function aLogin(){
   var pin=gv('aPass');
-  var r=await SB.from('academy_settings').select('value').eq('type','admin_pin').single();
-  var stored=r.data?r.data.value:'1234';
-  if(pin===stored){localStorage.setItem('ub','a');localStorage.setItem('ub_pin',pin);localStorage.setItem('ub_apin',pin);showAdmin();}
-  else{g('lerr').innerText='❌ পিন ভুল!';show('lerr');g('aPass').value='';}
+  if(!pin){g('lerr').innerText='❌ পিন দিন!';show('lerr');return;}
+  var h={'Content-Type':'application/json'};
+  var res=await fetch(PROXY_URL,{method:'POST',headers:h,body:JSON.stringify({
+    table:'academy_settings',operation:'select',select:'value',
+    filters:[{column:'type',operator:'eq',value:'admin_pin'}],single:true,
+    _admin_pin:pin,_role:'admin'
+  })});
+  var json=await res.json();
+  if(json.data&&json.data.verified){
+    localStorage.setItem('ub','a');localStorage.setItem('ub_pin',pin);localStorage.setItem('ub_apin',pin);showAdmin();
+  }else{g('lerr').innerText='❌ পিন ভুল!';show('lerr');g('aPass').value='';}
 }
-async function tLogin(){var pin=gv('tPass').trim();if(!pin){g('lerr').innerText='❌ পিন দিন!';show('lerr');return;}var r=await SB.from('teachers').select('*').eq('pin',pin).single();if(r.data){localStorage.setItem('ub','t');localStorage.setItem('ub_tpin',pin);localStorage.setItem('ub_tname',r.data.name||'টিচার');localStorage.setItem('ub_tcls',r.data.assigned_class||'All');localStorage.setItem('ub_tbat',r.data.assigned_batch||'All');localStorage.setItem('ub_lt',Date.now().toString());showTeacher();startFLCheck();}else{g('lerr').innerText='❌ পিন ভুল!';show('lerr');g('tPass').value='';}}
+async function tLogin(){
+  var pin=gv('tPass').trim();
+  if(!pin){g('lerr').innerText='❌ পিন দিন!';show('lerr');return;}
+  var h={'Content-Type':'application/json'};
+  var res=await fetch(PROXY_URL,{method:'POST',headers:h,body:JSON.stringify({
+    table:'teachers',operation:'select',select:'*',
+    filters:[{column:'pin',operator:'eq',value:pin}],single:true,
+    _teacher_pin:pin,_role:'teacher'
+  })});
+  var json=await res.json();
+  if(json.data){
+    localStorage.setItem('ub','t');localStorage.setItem('ub_tpin',pin);
+    localStorage.setItem('ub_tname',json.data.name||'টিচার');
+    localStorage.setItem('ub_tcls',json.data.assigned_class||'All');
+    localStorage.setItem('ub_tbat',json.data.assigned_batch||'All');
+    localStorage.setItem('ub_lt',Date.now().toString());showTeacher();startFLCheck();
+  }else{g('lerr').innerText='❌ পিন ভুল!';show('lerr');g('tPass').value='';}
+}
 
 var stuQRStream=null,stuQRScanning=false;
 
@@ -1253,7 +1319,9 @@ async function processStuQRLogin(data){
     return;
   }
   g('stuQRResult').innerText='⏳ যাচাই হচ্ছে...';
-  var r=await SB.from('students').select('*').eq('id',sid).single();
+  var _res=await fetch(PROXY_URL,{method:'POST',headers:{'Content-Type':'application/json','x-role':'student'},body:JSON.stringify({table:'students',operation:'select',select:'*',filters:[{column:'id',operator:'eq',value:sid}],single:true})});
+  var _json=await _res.json();
+  var r={data:_json.data,error:_res.ok?null:{message:_json.error}};
   if(!r.data){
     g('stuQRResult').innerHTML='<span style="color:#fca5a5">❌ শিক্ষার্থী পাওয়া যায়নি!</span>';
     stuQRScanning=true;
@@ -1271,7 +1339,9 @@ async function sLogin(){
   var cls=gv('sClass'),roll=gv('sRoll'),ph=gv('sPhone').trim();
   if(!cls||!roll||!ph){alert('ক্লাস, রোল ও ফোন নম্বর দিন!');return;}
   // class+roll = unique student, phone = identity verification
-  var r=await SB.from('students').select('*').eq('class',cls).eq('roll_no',parseInt(roll,10));
+  var _res=await fetch(PROXY_URL,{method:'POST',headers:{'Content-Type':'application/json','x-role':'student'},body:JSON.stringify({table:'students',operation:'select',select:'*',filters:[{column:'class',operator:'eq',value:cls},{column:'roll_no',operator:'eq',value:parseInt(roll,10)}]})});
+  var _json=await _res.json();
+  var r={data:_json.data,error:_res.ok?null:{message:_json.error}};
   if(!r.data||!r.data.length){
     g('lerr').innerText='❌ এই ক্লাসে এই রোল নেই!';show('lerr');return;
   }
@@ -2782,23 +2852,35 @@ function tpOpenNote(sid){
 async function protect(callback){
   var pin=prompt('নিশ্চিত করতে অ্যাডমিন PIN দিন:');
   if(!pin)return;
-  var r=await SB.from('academy_settings').select('value').eq('type','admin_pin').single();
-  var stored=r.data?r.data.value:(localStorage.getItem('ub_apin')||'1234');
-  if(pin===stored){callback();}
+  var h={'Content-Type':'application/json'};
+  var res=await fetch(PROXY_URL,{method:'POST',headers:h,body:JSON.stringify({
+    table:'academy_settings',operation:'select',select:'value',
+    filters:[{column:'type',operator:'eq',value:'admin_pin'}],single:true,
+    _admin_pin:pin,_role:'admin'
+  })});
+  var json=await res.json();
+  if(json.data&&json.data.verified){callback();}
   else{alert('❌ ভুল PIN!');}
 }
 
 
-function changeAdminPin(){
+async function changeAdminPin(){
   var cur=prompt('বর্তমান PIN:');
   if(!cur)return;
-  var stored=localStorage.getItem('ub_apin')||'1234';
-  if(cur!==stored){alert('❌ ভুল PIN!');return;}
+  var h={'Content-Type':'application/json'};
+  var res=await fetch(PROXY_URL,{method:'POST',headers:h,body:JSON.stringify({
+    table:'academy_settings',operation:'select',select:'value',
+    filters:[{column:'type',operator:'eq',value:'admin_pin'}],single:true,
+    _admin_pin:cur,_role:'admin'
+  })});
+  var json=await res.json();
+  if(!json.data||!json.data.verified){alert('❌ ভুল PIN!');return;}
   var n1=prompt('নতুন PIN (৪+ সংখ্যা):');
   if(!n1||n1.length<4){alert('❌ কমপক্ষে ৪ সংখ্যা দিন!');return;}
   var n2=prompt('নতুন PIN আবার দিন:');
   if(n1!==n2){alert('❌ PIN মিলছে না!');return;}
-  localStorage.setItem('ub_apin',n1);
+  await dbWrite('academy_settings','update',{value:n1},[{column:'type',value:'admin_pin'}]);
+  localStorage.setItem('ub_pin',n1);localStorage.setItem('ub_apin',n1);
   alert('✅ PIN পরিবর্তন হয়েছে!');
 }
 
