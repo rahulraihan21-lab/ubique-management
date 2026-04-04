@@ -385,8 +385,34 @@ textarea.inp{height:auto}
       <select id="abBt" onchange="loadAb()" class="inp dynB"></select>
     </div>
     <div id="abL" style="display:flex;flex-direction:column;gap:8px"></div>
-    <button onclick="openAbsentAutoCallModal()" class="btn btn-o" style="margin-top:14px;width:100%">📞 অনুপস্থিতদের অটো কল</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">
+      <button onclick="openAbsentAutoCallModal()" class="btn btn-o">📞 অনুপস্থিতদের অটো কল</button>
+      <button onclick="openCallReportModal()" class="btn btn-p">📊 কল রিপোর্ট</button>
+    </div>
   </div></section>
+
+<!-- CALL REPORT MODAL -->
+<div id="callReportModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);align-items:flex-end;justify-content:center">
+  <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:580px;padding:20px 20px 32px;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 style="font-size:.95rem;font-weight:700;color:#1e3a5f">📊 কল রিপোর্ট</h2>
+      <button onclick="closeCallReportModal()" style="background:#f1f5f9;border:none;width:28px;height:28px;border-radius:99px;cursor:pointer;font-weight:700">✕</button>
+    </div>
+
+    <!-- Broadcast List View -->
+    <div id="crListView">
+      <button onclick="loadBroadcastList()" class="btn btn-p" style="margin-bottom:12px" id="crLoadBtn">🔄 ব্রডকাস্ট লিস্ট লোড করুন</button>
+      <div id="crListContainer" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+
+    <!-- Broadcast Detail View -->
+    <div id="crDetailView" style="display:none">
+      <button onclick="showCRListView()" class="btn btn-ghost btn-sm" style="margin-bottom:12px;width:auto">← ফিরে যান</button>
+      <div id="crSummary" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px"></div>
+      <div id="crDetailList" style="background:#f8faff;border:1px solid #e0e7ff;border-radius:12px;padding:10px;max-height:50vh;overflow-y:auto;font-size:.8rem"></div>
+    </div>
+  </div>
+</div>
 
   <!-- HOMEWORK -->
   <section id="sec-homework" class="hidden"><div class="card" style="padding:18px"><h2 class="stitle">📝 আজকের HW রিপোর্ট</h2><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:13px"><select id="hwCl" onchange="filterBatch('hwCl','hwBt',loadHW);" class="inp dynC"></select><select id="hwBt" onchange="loadHW()" class="inp dynB"></select></div><div id="hwL" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:8px"></div></div></section>
@@ -1044,8 +1070,8 @@ function debounced(key, fn, delay){
     _dbTimers[key] = setTimeout(fn, delay);
   };
 }
-var _loadS_d = debounced('loadS', function(){ loadS(); }, 200);
-var _loadFee_d = debounced('loadFee', function(){ loadFee(); }, 200);
+var _loadS_d = debounced('loadS', function(){ loadS(); }, 350);
+var _loadFee_d = debounced('loadFee', function(){ loadFee(); }, 350);
 var _loadTS_d = debounced('loadTS', function(){ loadTS(); }, 350);
 var _loadTP_d = debounced('loadTP', function(){ loadTP(); }, 350);
 
@@ -1403,8 +1429,8 @@ async function showAdmin(){
     var t=getBDNow();
     var mo=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0');
     if(g('rMo'))g('rMo').value=mo;
-    if(g('exDate'))g('exDate').value=getBDDate();
-    if(g('mtDate'))g('mtDate').value=getBDDate();
+    if(g('exDate'))g('exDate').value=t.toISOString().split('T')[0];
+    if(g('mtDate'))g('mtDate').value=t.toISOString().split('T')[0];
     try{await loadFeeData();}catch(e){console.log('loadFeeData err:',e);}
     try{syncDrops();}catch(e){console.log('syncDrops err:',e);}
     try{loadPubNotice();}catch(e){}
@@ -1535,17 +1561,14 @@ var srch=(g('fSearch')?g('fSearch').value.trim().toLowerCase():'');
 var c=g('fL');c.innerHTML='<div class="sk" style="height:50px;width:100%"></div>';var q=SB.from('students').select('*');if(cls!=='All')q=q.eq('class',cls);if(bch!=='All')q=q.eq('batch',bch);
 var r1=await q.order('roll_no').limit(1000);if(_v!==_reqVer.loadFee)return;var r2=await SB.from('fees_collection').select('*').eq('payment_year',yr);
 var stuIds2=(r1.data||[]).map(function(s){return s.id;});
-if(_v!==_reqVer.loadFee)return;
 var r3=stuIds2.length?await SB.from('attendance').select('student_id,status').in('student_id',stuIds2).eq('status','Absent').limit(5000):{data:[]};
 var absentMap={};
 (r3.data||[]).forEach(function(a){absentMap[a.student_id]=(absentMap[a.student_id]||0)+1;});
 // Load latest call note per student
-if(_v!==_reqVer.loadFee)return;
 var r4=stuIds2.length?await SB.from('call_notes').select('student_id,note,created_at').in('student_id',stuIds2).order('created_at',{ascending:false}).limit(1000):{data:[]};
-if(_v!==_reqVer.loadFee)return;
 var noteMap={};
 (r4.data||[]).forEach(function(n){if(!noteMap[n.student_id])noteMap[n.student_id]=n;});
-if(srch&&r1.data){r1.data=r1.data.filter(function(s){var isNum=/^\d+$/.test(srch);var nm=!isNum&&s.name.toLowerCase().indexOf(srch)!==-1;var rl=isNum&&String(s.roll_no).startsWith(srch);return nm||rl;});}
+if(srch&&r1.data){r1.data=r1.data.filter(function(s){var isNum=/^\d+$/.test(srch);var nm=!isNum&&s.name.toLowerCase().indexOf(srch)!==-1;var rl=isNum&&parseInt(s.roll_no,10)===parseInt(srch,10);return nm||rl;});}
 if(r1.data)r1.data.forEach(function(s){stuCache[s.id]=s;});
 if(!r1.data||!r1.data.length){c.innerHTML='<p style="text-align:center;padding:26px;color:var(--muted)">নেই</p>';return;}feeCache={};if(r2.data)r2.data.forEach(function(f){if(!feeCache[f.student_id])feeCache[f.student_id]=[];if(feeCache[f.student_id].indexOf(f.payment_month)===-1)feeCache[f.student_id].push(f.payment_month);});var pc=r2.data?r2.data.filter(function(p){return p.payment_month===mon&&r1.data.some(function(s){return s.id===p.student_id;});}).length:0;
 // Selected মাসে কে বকেয়া সেটা count করি (admission month check সহ)
@@ -1572,30 +1595,8 @@ async function delNotice(id){if(!confirm('মুছবেন?'))return;var r=awa
 
 /* EXAM */
 async function createExam(){var name=gv('exName').trim(),date=gv('exDate'),total=parseInt(gv('exTotal'),10)||100;if(!name||!date){alert('নাম ও তারিখ দিন!');return;}await dbWrite('exams','insert',[{exam_name:name,exam_date:date,class:gv('exCl'),batch:gv('exBt'),total_marks:total}]);alert('✅');g('exName').value='';loadExams();}
-async function loadExams(){var cls=gv('exLCl'),bch=gv('exLBt');var c=g('examList');var q=SB.from('exams').select('*').order('exam_date',{ascending:false});if(cls!=='All')q=q.eq('class',cls);if(bch!=='All')q=q.eq('batch',bch);var r=await q;if(!r.data||!r.data.length){c.innerHTML='<p style="grid-column:1/-1;text-align:center;padding:26px;color:var(--muted)">নেই</p>';hide('marksEntry');return;}c.innerHTML=r.data.map(function(ex){return'<div class="exam-card fi" data-id="'+ex.id+'" data-name="'+e(ex.exam_name)+'" data-total="'+ex.total_marks+'" data-cls="'+e(ex.class)+'" data-bch="'+e(ex.batch||'All')+'" data-date="'+ex.exam_date+'" onclick="selectExamEl(this)"><p style="font-weight:700">'+e(ex.exam_name)+'</p><p style="font-size:.63rem;color:var(--muted)">'+fd(ex.exam_date)+' | '+e(ex.class)+' | '+ex.total_marks+'</p><div style="display:flex;gap:5px;margin-top:8px"><button onclick="event.stopPropagation()" style="flex:1;background:var(--g1);color:#fff;border:none;padding:5px;border-radius:8px;font-weight:700;font-size:.68rem;cursor:pointer">📝</button><button onclick="event.stopPropagation();editExam('+ex.id+',\''+e(ex.exam_name).replace(/'/g,"\\'")+'\',\''+ex.exam_date+'\','+ex.total_marks+')" style="background:#eff6ff;color:var(--g1);border:none;padding:5px 8px;border-radius:8px;font-weight:700;font-size:.68rem;cursor:pointer">✏️</button><button onclick="event.stopPropagation();delExam('+ex.id+')" style="background:var(--rs);color:var(--red);border:none;padding:5px 8px;border-radius:8px;font-weight:700;font-size:.68rem;cursor:pointer">🗑</button></div></div>';}).join('');}
-async function editExam(id,name,date,total){
-  var html='<div style="display:flex;flex-direction:column;gap:10px"><label style="font-size:.75rem;font-weight:700">পরীক্ষার নাম</label><input id="_edExName" value="'+name+'" style="padding:8px 12px;border:1.5px solid #e0e7ff;border-radius:10px;font-size:.85rem"><label style="font-size:.75rem;font-weight:700">তারিখ</label><input id="_edExDate" type="date" value="'+date+'" style="padding:8px 12px;border:1.5px solid #e0e7ff;border-radius:10px;font-size:.85rem"><label style="font-size:.75rem;font-weight:700">সর্বোচ্চ নম্বর</label><input id="_edExTotal" type="number" value="'+total+'" style="padding:8px 12px;border:1.5px solid #e0e7ff;border-radius:10px;font-size:.85rem"><button onclick="saveExamEdit('+id+')" style="background:var(--g1);color:#fff;border:none;padding:10px;border-radius:10px;font-weight:700;font-size:.85rem;cursor:pointer">💾 সেভ করুন</button><button onclick="this.closest(\'.modal-overlay\').remove()" style="background:#f1f5f9;color:#64748b;border:none;padding:8px;border-radius:10px;font-weight:600;font-size:.8rem;cursor:pointer">বাতিল</button></div>';
-  var ov=document.createElement('div');ov.className='modal-overlay';ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center';
-  var box=document.createElement('div');box.style.cssText='background:#fff;border-radius:16px;padding:20px;width:90%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3)';
-  box.innerHTML='<h3 style="margin-bottom:12px;font-size:1rem;font-weight:700;color:var(--g1)">✏️ পরীক্ষা এডিট</h3>'+html;
-  ov.appendChild(box);document.body.appendChild(ov);
-  ov.addEventListener('click',function(ev){if(ev.target===ov)ov.remove();});
-}
-async function saveExamEdit(id){
-  var name=g('_edExName').value.trim(),date=g('_edExDate').value,total=parseInt(g('_edExTotal').value,10)||100;
-  if(!name||!date){alert('নাম ও তারিখ দিন!');return;}
-  var r=await dbWrite('exams','update',[{exam_name:name,exam_date:date,total_marks:total}],[{column:'id',value:id}]);
-  if(r.error){alert('❌ '+r.error.message);return;}
-  document.querySelector('.modal-overlay').remove();
-  alert('✅ আপডেট হয়েছে!');loadExams();
-}
-async function delExam(id){
-  var pin=prompt('এডমিন পাসওয়ার্ড দিন:');if(!pin)return;
-  var stored=localStorage.getItem('ub_pin');
-  if(pin!==stored){alert('❌ ভুল পাসওয়ার্ড!');return;}
-  if(!confirm('নিশ্চিত? পরীক্ষা ও সকল রেজাল্ট মুছে যাবে!'))return;
-  await dbWrite('exam_results','delete',null,[{column:'exam_id',value:id}]);await dbWrite('exams','delete',null,[{column:'id',value:id}]);selExamId=null;hide('marksEntry');loadExams();
-}
+async function loadExams(){var cls=gv('exLCl'),bch=gv('exLBt');var c=g('examList');var q=SB.from('exams').select('*').order('exam_date',{ascending:false});if(cls!=='All')q=q.eq('class',cls);if(bch!=='All')q=q.eq('batch',bch);var r=await q;if(!r.data||!r.data.length){c.innerHTML='<p style="grid-column:1/-1;text-align:center;padding:26px;color:var(--muted)">নেই</p>';hide('marksEntry');return;}c.innerHTML=r.data.map(function(ex){return'<div class="exam-card fi" data-id="'+ex.id+'" data-name="'+e(ex.exam_name)+'" data-total="'+ex.total_marks+'" data-cls="'+e(ex.class)+'" data-bch="'+e(ex.batch||'All')+'" data-date="'+ex.exam_date+'" onclick="selectExamEl(this)"><p style="font-weight:700">'+e(ex.exam_name)+'</p><p style="font-size:.63rem;color:var(--muted)">'+fd(ex.exam_date)+' | '+e(ex.class)+' | '+ex.total_marks+'</p><div style="display:flex;gap:5px;margin-top:8px"><button onclick="event.stopPropagation()" style="flex:1;background:var(--g1);color:#fff;border:none;padding:5px;border-radius:8px;font-weight:700;font-size:.68rem;cursor:pointer">📝</button><button onclick="event.stopPropagation();delExam('+ex.id+')" style="background:var(--rs);color:var(--red);border:none;padding:5px 8px;border-radius:8px;font-weight:700;font-size:.68rem;cursor:pointer">🗑</button></div></div>';}).join('');}
+async function delExam(id){if(!confirm('মুছবেন?'))return;await dbWrite('exam_results','delete',null,[{column:'exam_id',value:id}]);await dbWrite('exams','delete',null,[{column:'id',value:id}]);selExamId=null;hide('marksEntry');loadExams();}
 function selectExamEl(el){
   selectExam(el.dataset.id,el.dataset.name,el.dataset.total,el.dataset.cls,el.dataset.bch,el.dataset.date);
 }
@@ -1670,30 +1671,8 @@ function addMTSubject(){var name=gv('mtSubName').trim(),max=parseInt(gv('mtSubMa
 function removeMTSub(i){mtSubjectsList.splice(i,1);renderMTSubs();}
 async function renderMTSubs(){g('mtSubjects').innerHTML=mtSubjectsList.map(function(s,i){return'<span class="sub-chip">'+e(s.name)+' ('+s.max+') <button onclick="removeMTSub('+i+')">✕</button></span>';}).join('');}
 async function createModelTest(){var name=gv('mtName').trim();if(!name){alert('নাম দিন!');return;}if(!mtSubjectsList.length){alert('বিষয় যোগ করুন!');return;}var r=await dbWrite('model_tests','insert',[{test_name:name,test_date:gv('mtDate'),class:gv('mtCl'),batch:gv('mtBt'),subjects:mtSubjectsList}]);if(r.error){alert('❌ '+r.error.message);return;}alert('✅ সেভ হয়েছে!');g('mtName').value='';mtSubjectsList=[];renderMTSubs();loadModelTests();loadMTDropdown();}
-async function loadModelTests(){var cls=gv('mtLCl'),bch=gv('mtLBt');var c=g('mtList');var q=SB.from('model_tests').select('*').order('test_date',{ascending:false});if(cls!=='All')q=q.eq('class',cls);if(bch!=='All')q=q.eq('batch',bch);var r=await q;if(!r.data||!r.data.length){c.innerHTML='<p style="grid-column:1/-1;text-align:center;padding:26px;color:var(--muted)">নেই</p>';hide('mtEntry');return;}c.innerHTML=r.data.map(function(mt){var subs=mt.subjects||[];var tm=subs.reduce(function(a,s){return a+s.max;},0);return'<div class="exam-card fi" onclick="selectMT('+mt.id+')"><p style="font-weight:700">'+e(mt.test_name)+'</p><p style="font-size:.63rem;color:var(--muted)">'+fd(mt.test_date)+' | '+e(mt.class)+' | '+subs.length+' বিষয় | মোট:'+tm+'</p><div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px">'+subs.map(function(s){return'<span style="background:#eff6ff;color:var(--g1);padding:2px 6px;border-radius:5px;font-size:.58rem;font-weight:700">'+e(s.name)+'</span>';}).join('')+'</div><div style="display:flex;gap:5px;margin-top:8px"><button onclick="event.stopPropagation()" style="flex:1;background:var(--g1);color:#fff;border:none;padding:5px;border-radius:8px;font-weight:700;font-size:.68rem;cursor:pointer">📝</button><button onclick="event.stopPropagation();editMT('+mt.id+',\''+e(mt.test_name).replace(/'/g,"\\'")+'\',\''+mt.test_date+'\')" style="background:#eff6ff;color:var(--g1);border:none;padding:5px 8px;border-radius:8px;font-weight:700;font-size:.68rem;cursor:pointer">✏️</button><button onclick="event.stopPropagation();delMT('+mt.id+')" style="background:var(--rs);color:var(--red);border:none;padding:5px 8px;border-radius:8px;font-weight:700;font-size:.68rem;cursor:pointer">🗑</button></div></div>';}).join('');}
-async function editMT(id,name,date){
-  var html='<div style="display:flex;flex-direction:column;gap:10px"><label style="font-size:.75rem;font-weight:700">পরীক্ষার নাম</label><input id="_edMTName" value="'+name+'" style="padding:8px 12px;border:1.5px solid #e0e7ff;border-radius:10px;font-size:.85rem"><label style="font-size:.75rem;font-weight:700">তারিখ</label><input id="_edMTDate" type="date" value="'+date+'" style="padding:8px 12px;border:1.5px solid #e0e7ff;border-radius:10px;font-size:.85rem"><button onclick="saveMTEdit('+id+')" style="background:var(--g1);color:#fff;border:none;padding:10px;border-radius:10px;font-weight:700;font-size:.85rem;cursor:pointer">💾 সেভ করুন</button><button onclick="this.closest(\'.modal-overlay\').remove()" style="background:#f1f5f9;color:#64748b;border:none;padding:8px;border-radius:10px;font-weight:600;font-size:.8rem;cursor:pointer">বাতিল</button></div>';
-  var ov=document.createElement('div');ov.className='modal-overlay';ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center';
-  var box=document.createElement('div');box.style.cssText='background:#fff;border-radius:16px;padding:20px;width:90%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3)';
-  box.innerHTML='<h3 style="margin-bottom:12px;font-size:1rem;font-weight:700;color:var(--g1)">✏️ মডেল টেস্ট এডিট</h3>'+html;
-  ov.appendChild(box);document.body.appendChild(ov);
-  ov.addEventListener('click',function(ev){if(ev.target===ov)ov.remove();});
-}
-async function saveMTEdit(id){
-  var name=g('_edMTName').value.trim(),date=g('_edMTDate').value;
-  if(!name||!date){alert('নাম ও তারিখ দিন!');return;}
-  var r=await dbWrite('model_tests','update',[{test_name:name,test_date:date}],[{column:'id',value:id}]);
-  if(r.error){alert('❌ '+r.error.message);return;}
-  document.querySelector('.modal-overlay').remove();
-  alert('✅ আপডেট হয়েছে!');loadModelTests();
-}
-async function delMT(id){
-  var pin=prompt('এডমিন পাসওয়ার্ড দিন:');if(!pin)return;
-  var stored=localStorage.getItem('ub_pin');
-  if(pin!==stored){alert('❌ ভুল পাসওয়ার্ড!');return;}
-  if(!confirm('নিশ্চিত? মডেল টেস্ট ও সকল রেজাল্ট মুছে যাবে!'))return;
-  await dbWrite('model_test_results','delete',null,[{column:'model_test_id',value:id}]);await dbWrite('model_tests','delete',null,[{column:'id',value:id}]);selMTId=null;hide('mtEntry');loadModelTests();loadMTDropdown();
-}
+async function loadModelTests(){var cls=gv('mtLCl'),bch=gv('mtLBt');var c=g('mtList');var q=SB.from('model_tests').select('*').order('test_date',{ascending:false});if(cls!=='All')q=q.eq('class',cls);if(bch!=='All')q=q.eq('batch',bch);var r=await q;if(!r.data||!r.data.length){c.innerHTML='<p style="grid-column:1/-1;text-align:center;padding:26px;color:var(--muted)">নেই</p>';hide('mtEntry');return;}c.innerHTML=r.data.map(function(mt){var subs=mt.subjects||[];var tm=subs.reduce(function(a,s){return a+s.max;},0);return'<div class="exam-card fi" onclick="selectMT('+mt.id+')"><p style="font-weight:700">'+e(mt.test_name)+'</p><p style="font-size:.63rem;color:var(--muted)">'+fd(mt.test_date)+' | '+e(mt.class)+' | '+subs.length+' বিষয় | মোট:'+tm+'</p><div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px">'+subs.map(function(s){return'<span style="background:#eff6ff;color:var(--g1);padding:2px 6px;border-radius:5px;font-size:.58rem;font-weight:700">'+e(s.name)+'</span>';}).join('')+'</div><div style="display:flex;gap:5px;margin-top:8px"><button onclick="event.stopPropagation()" style="flex:1;background:var(--g1);color:#fff;border:none;padding:5px;border-radius:8px;font-weight:700;font-size:.68rem;cursor:pointer">📝</button><button onclick="event.stopPropagation();delMT('+mt.id+')" style="background:var(--rs);color:var(--red);border:none;padding:5px 8px;border-radius:8px;font-weight:700;font-size:.68rem;cursor:pointer">🗑</button></div></div>';}).join('');}
+async function delMT(id){if(!confirm('মুছবেন?'))return;await dbWrite('model_test_results','delete',null,[{column:'model_test_id',value:id}]);await dbWrite('model_tests','delete',null,[{column:'id',value:id}]);selMTId=null;hide('mtEntry');loadModelTests();loadMTDropdown();}
 function filterMTRows(){
   var q=(g('mtSr').value||'').toLowerCase().trim();
   var rows=g('mtMarksBody').querySelectorAll('tr');
@@ -1767,15 +1746,13 @@ async function loadS(){var _v=_reqVer.loadS=(_reqVer.loadS||0)+1;
   if(_v!==_reqVer.loadS)return;
   var stuIds=(r1.data||[]).map(function(s){return s.id;});
   var r2=stuIds.length?await SB.from('attendance').select('student_id,status,homework_status').eq('attendance_date',today).in('student_id',stuIds):{data:[]};
-  if(_v!==_reqVer.loadS)return;
   var r3=stuIds.length?await SB.from('attendance').select('student_id').in('student_id',stuIds).eq('status','Absent').neq('attendance_date',today).limit(5000):{data:[]};
   var absTotalMap={};
   (r3.data||[]).forEach(function(a){absTotalMap[a.student_id]=(absTotalMap[a.student_id]||0)+1;});
   await loadFeeData();
-  if(_v!==_reqVer.loadS)return;
   var list=(r1.data||[]).filter(function(s){
     if(!sn)return true;
-    var isNum=/^\d+$/.test(sn);var nm=!isNum&&s.name.toLowerCase().indexOf(sn)!==-1;var rl=isNum&&String(s.roll_no).startsWith(sn);return nm||rl;
+    var isNum=/^\d+$/.test(sn);var nm=!isNum&&s.name.toLowerCase().indexOf(sn)!==-1;var rl=isNum&&parseInt(s.roll_no,10)===parseInt(sn,10);return nm||rl;
   });
   list.forEach(function(s){stuCache[s.id]=s;});
   if(!list.length){
@@ -2023,7 +2000,7 @@ function getTAttDate(){
   return getBDDate();
 }
 
-async function loadTS(){var _v=_reqVer.loadTS=(_reqVer.loadTS||0)+1;TAD={};THD={};var tcls=localStorage.getItem('ub_tcls')||'All';var cls=gv('tCl')||tcls,bch=gv('tBt')||'All',sn=(gv('tSr')||'').toLowerCase();var today=getTAttDate();var q=SB.from('students').select('id,name,roll_no,class,batch');if(cls!=='All')q=q.eq('class',cls);if(bch!=='All')q=q.eq('batch',bch);var r1=await q.order('roll_no');if(_v!==_reqVer.loadTS)return;var r2=await SB.from('attendance').select('student_id,status,homework_status').eq('attendance_date',today);if(_v!==_reqVer.loadTS)return;g('tSL').innerHTML=(r1.data||[]).filter(function(s){return s.name.toLowerCase().includes(sn);}).map(function(s){var rec=r2.data&&r2.data.find(function(x){return x.student_id===s.id;});var pA=TAD[s.id]==='Present'||(!TAD[s.id]&&rec&&rec.status==='Present');var aA=TAD[s.id]==='Absent'||(!TAD[s.id]&&rec&&rec.status==='Absent');var yA=THD[s.id]==='Yes'||(!THD[s.id]&&rec&&rec.homework_status==='Yes');var nA=THD[s.id]==='No'||(!THD[s.id]&&rec&&rec.homework_status==='No');return'<div class="sr fi"><div class="sr-top"><div style="flex:1"><p style="font-weight:700;font-size:.84rem">'+e(s.name)+'</p><p style="font-size:.63rem;color:var(--muted)">রোল:'+s.roll_no+'</p></div><div style="display:flex;gap:4px"><button id="tp-'+s.id+'" onclick="tMA(\''+s.id+'\',\'Present\')" class="ab pb'+(pA?' on':'')+'">P</button><button id="ta-'+s.id+'" onclick="tMA(\''+s.id+'\',\'Absent\')" class="ab xb'+(aA?' on':'')+'">A</button></div></div><div class="sr-bot"><span style="flex:1"></span><div style="display:flex;align-items:center;gap:4px"><span style="font-size:.55rem;font-weight:700;color:#94a3b8">HW</span><button id="ty-'+s.id+'" onclick="tMH(\''+s.id+'\',\'Yes\')" class="ab yb'+(yA?' on':'')+'">Y</button><button id="tn-'+s.id+'" onclick="tMH(\''+s.id+'\',\'No\')" class="ab nb'+(nA?' on':'')+'">N</button></div></div></div>';}).join('')||'<p style="text-align:center;padding:26px;color:var(--muted)">নেই</p>';}
+async function loadTS(){var _v=_reqVer.loadTS=(_reqVer.loadTS||0)+1;TAD={};THD={};var tcls=localStorage.getItem('ub_tcls')||'All';var cls=gv('tCl')||tcls,bch=gv('tBt')||'All',sn=(gv('tSr')||'').toLowerCase();var today=getTAttDate();var q=SB.from('students').select('id,name,roll_no,class,batch');if(cls!=='All')q=q.eq('class',cls);if(bch!=='All')q=q.eq('batch',bch);var r1=await q.order('roll_no');if(_v!==_reqVer.loadTS)return;var r2=await SB.from('attendance').select('student_id,status,homework_status').eq('attendance_date',today);g('tSL').innerHTML=(r1.data||[]).filter(function(s){if(!sn)return true;var isNum=/^\d+$/.test(sn);return isNum?parseInt(s.roll_no,10)===parseInt(sn,10):s.name.toLowerCase().includes(sn);}).map(function(s){var rec=r2.data&&r2.data.find(function(x){return x.student_id===s.id;});var pA=TAD[s.id]==='Present'||(!TAD[s.id]&&rec&&rec.status==='Present');var aA=TAD[s.id]==='Absent'||(!TAD[s.id]&&rec&&rec.status==='Absent');var yA=THD[s.id]==='Yes'||(!THD[s.id]&&rec&&rec.homework_status==='Yes');var nA=THD[s.id]==='No'||(!THD[s.id]&&rec&&rec.homework_status==='No');return'<div class="sr fi"><div class="sr-top"><div style="flex:1"><p style="font-weight:700;font-size:.84rem">'+e(s.name)+'</p><p style="font-size:.63rem;color:var(--muted)">রোল:'+s.roll_no+'</p></div><div style="display:flex;gap:4px"><button id="tp-'+s.id+'" onclick="tMA(\''+s.id+'\',\'Present\')" class="ab pb'+(pA?' on':'')+'">P</button><button id="ta-'+s.id+'" onclick="tMA(\''+s.id+'\',\'Absent\')" class="ab xb'+(aA?' on':'')+'">A</button></div></div><div class="sr-bot"><span style="flex:1"></span><div style="display:flex;align-items:center;gap:4px"><span style="font-size:.55rem;font-weight:700;color:#94a3b8">HW</span><button id="ty-'+s.id+'" onclick="tMH(\''+s.id+'\',\'Yes\')" class="ab yb'+(yA?' on':'')+'">Y</button><button id="tn-'+s.id+'" onclick="tMH(\''+s.id+'\',\'No\')" class="ab nb'+(nA?' on':'')+'">N</button></div></div></div>';}).join('')||'<p style="text-align:center;padding:26px;color:var(--muted)">নেই</p>';}
 function tMA(id,s){TAD[id]=s;g('tp-'+id).className='ab pb'+(s==='Present'?' on':'');g('ta-'+id).className='ab xb'+(s==='Absent'?' on':'');var today=getTAttDate();dbWrite('attendance','upsert',[{student_id:parseInt(id,10),attendance_date:today,status:s}],null,{onConflict:'student_id,attendance_date'}).then(function(r){if(r.error)showToast('❌ সেভ হয়নি!');});}
 function tMH(id,s){THD[id]=s;g('ty-'+id).className='ab yb'+(s==='Yes'?' on':'');g('tn-'+id).className='ab nb'+(s==='No'?' on':'');var today=getTAttDate();dbWrite('attendance','upsert',[{student_id:parseInt(id,10),attendance_date:today,homework_status:s,status:TAD[id]||'Absent'}],null,{onConflict:'student_id,attendance_date'});}
 async function subTAtt(){var today=getBDDate();var ids=[...new Set([...Object.keys(TAD),...Object.keys(THD)])];if(!ids.length){alert('মার্ক করুন!');return;}var recs=ids.map(function(id){return{student_id:parseInt(id,10),attendance_date:today,status:TAD[id]||'Absent',homework_status:THD[id]||null};});await dbWrite('attendance','upsert',recs,null,{onConflict:'student_id,attendance_date'});alert('✅');TAD={};THD={};loadTS();}
@@ -2041,7 +2018,7 @@ async function loadTP(){
   var r=await q.order('roll_no');
   var el2=g('tPL');
   if(r.error){el2.innerHTML='<p style="text-align:center;padding:22px;color:var(--red)">⚠️ '+r.error.message+'</p>';return;}
-  var list=(r.data||[]).filter(function(s){return s.name.toLowerCase().includes(sn);});
+  var list=(r.data||[]).filter(function(s){if(!sn)return true;var isNum=/^\d+$/.test(sn);return isNum?parseInt(s.roll_no,10)===parseInt(sn,10):s.name.toLowerCase().includes(sn);});
   list.forEach(function(s){stuCache[s.id]=s;});
   if(!list.length){el2.innerHTML='<p style="text-align:center;padding:22px;color:var(--muted)">কোনো শিক্ষার্থী নেই</p>';el2.onclick=null;return;}
   el2.innerHTML=list.map(function(s){
@@ -2253,7 +2230,7 @@ async function openAsgSub(btn){
 function renderAsgSubList(search){
   var list=asgAllStudents.filter(function(s){
     if(!search)return true;
-    return s.name.toLowerCase().includes(search.toLowerCase())||String(s.roll_no)===search.trim();
+    return s.name.toLowerCase().includes(search.toLowerCase())||parseInt(s.roll_no,10)===parseInt(search.trim(),10);
   });
   var subCnt=Object.values(asgSubData).filter(Boolean).length;
   g('asgSubCount').innerText='✅ জমা: '+subCnt+' জন';
@@ -3241,6 +3218,110 @@ function sendAutoCall(){
     btn.disabled=false;btn.innerText='📞 কল শুরু করুন';
     showToast('❌ Network error: '+err.message);
   });
+}
+
+// ═══════════════════════════════════════
+// CALL REPORT (AWAJ BROADCAST HISTORY)
+// ═══════════════════════════════════════
+var REPORT_FN_URL='https://deevdipciojjffkdnqax.supabase.co/functions/v1/awaj-report';
+
+function openCallReportModal(){
+  g('callReportModal').style.display='flex';
+  g('crListView').style.display='';
+  g('crDetailView').style.display='none';
+  g('crListContainer').innerHTML='';
+}
+function closeCallReportModal(){g('callReportModal').style.display='none';}
+function showCRListView(){g('crListView').style.display='';g('crDetailView').style.display='none';}
+
+async function loadBroadcastList(){
+  var btn=g('crLoadBtn');
+  btn.disabled=true;btn.innerText='⏳ লোড হচ্ছে...';
+  var adminPin=localStorage.getItem('ub_apin')||'';
+  try{
+    var res=await fetch(REPORT_FN_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-admin-password':adminPin},
+      body:JSON.stringify({action:'list'})
+    });
+    var data=await res.json();
+    btn.disabled=false;btn.innerText='🔄 ব্রডকাস্ট লিস্ট লোড করুন';
+    var list=Array.isArray(data)?data:(data.data||data.broadcasts||[]);
+    if(!list.length){g('crListContainer').innerHTML='<p style="text-align:center;color:#94a3b8;padding:12px">কোনো ব্রডকাস্ট পাওয়া যায়নি</p>';return;}
+    var html='';
+    list.forEach(function(b){
+      var id=b.id||b.broadcast_id||'';
+      var date=b.created_at||b.date||b.scheduled_at||'';
+      var status=b.status||'';
+      var total=b.total_contacts||b.recipients||b.total||'?';
+      var dateStr=date?new Date(date).toLocaleDateString('bn-BD',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+      var statusColor=status==='completed'?'#10b981':status==='broadcasting'?'#f59e0b':'#64748b';
+      html+='<div onclick="loadBroadcastResult(\''+id+'\')" style="background:#fff;border:1.5px solid #e0e7ff;border-radius:13px;padding:12px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor=\'#6366f1\'" onmouseout="this.style.borderColor=\'#e0e7ff\'">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center">'
+        +'<div><span style="font-weight:700;color:#1e293b;font-size:.85rem">📞 '+id.substring(0,8)+'...</span>'
+        +'<br><span style="font-size:.68rem;color:#64748b">'+dateStr+'</span></div>'
+        +'<div style="text-align:right"><span style="background:'+statusColor+';color:#fff;padding:2px 8px;border-radius:99px;font-size:.65rem;font-weight:700">'+status+'</span>'
+        +'<br><span style="font-size:.72rem;color:#475569;font-weight:600">'+total+' জন</span></div>'
+        +'</div></div>';
+    });
+    g('crListContainer').innerHTML=html;
+  }catch(err){
+    btn.disabled=false;btn.innerText='🔄 ব্রডকাস্ট লিস্ট লোড করুন';
+    showToast('❌ Error: '+err.message);
+  }
+}
+
+async function loadBroadcastResult(bid){
+  if(!bid){showToast('ব্রডকাস্ট ID নেই!');return;}
+  g('crListView').style.display='none';
+  g('crDetailView').style.display='';
+  g('crSummary').innerHTML='<div class="sc sc-b" style="padding:10px"><div class="sk" style="height:20px"></div></div>'.repeat(3);
+  g('crDetailList').innerHTML='<div class="sk" style="height:28px;width:100%"></div>';
+  var adminPin=localStorage.getItem('ub_apin')||'';
+  try{
+    var res=await fetch(REPORT_FN_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-admin-password':adminPin},
+      body:JSON.stringify({action:'result',broadcast_id:bid})
+    });
+    var data=await res.json();
+    var results=data.results||data.data||data.contacts||[];
+    var received=0,missed=0,total=0;
+    if(Array.isArray(results)){
+      total=results.length;
+      results.forEach(function(r){
+        var st=(r.status||r.call_status||'').toLowerCase();
+        if(st==='received'||st==='answered'||st==='completed'||st==='success') received++;
+        else missed++;
+      });
+    } else {
+      received=data.received||data.answered||0;
+      missed=data.missed||data.failed||0;
+      total=data.total||(received+missed);
+    }
+    g('crSummary').innerHTML=
+      '<div class="sc sc-g" style="padding:10px"><div style="font-size:1.3rem;font-weight:800;color:#065f46">'+received+'</div><div style="font-size:.65rem;color:#065f46">রিসিভ</div></div>'
+     +'<div class="sc sc-r" style="padding:10px"><div style="font-size:1.3rem;font-weight:800;color:#9f1239">'+missed+'</div><div style="font-size:.65rem;color:#9f1239">মিসড</div></div>'
+     +'<div class="sc sc-b" style="padding:10px"><div style="font-size:1.3rem;font-weight:800;color:#1e40af">'+total+'</div><div style="font-size:.65rem;color:#1e40af">মোট</div></div>';
+    if(Array.isArray(results)&&results.length){
+      var dHtml='';
+      results.forEach(function(r){
+        var ph=r.phone||r.number||r.mobile||'';
+        var st=(r.status||r.call_status||'').toLowerCase();
+        var isOk=st==='received'||st==='answered'||st==='completed'||st==='success';
+        dHtml+='<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 6px;border-bottom:1px solid #e8ecf8">'
+          +'<span style="font-family:monospace;color:#475569">'+ph+'</span>'
+          +'<span style="padding:2px 8px;border-radius:99px;font-size:.65rem;font-weight:700;'+(isOk?'background:#d1fae5;color:#065f46':'background:#ffe4e6;color:#9f1239')+'">'+(isOk?'✅ রিসিভ':'❌ মিসড')+'</span>'
+          +'</div>';
+      });
+      g('crDetailList').innerHTML=dHtml;
+    } else {
+      g('crDetailList').innerHTML='<pre style="font-size:.7rem;color:#64748b;white-space:pre-wrap;word-break:break-all">'+JSON.stringify(data,null,2)+'</pre>';
+    }
+  }catch(err){
+    g('crSummary').innerHTML='';
+    g('crDetailList').innerHTML='<p style="color:#f43f5e;text-align:center;padding:12px">❌ '+err.message+'</p>';
+  }
 }
 
 // ═══════════════════════════════════════
@@ -4372,7 +4453,7 @@ async function loadPayLog(){
     // নাম/রোল filter
     if(srch){
       var isNum=/^\d+$/.test(srch);
-      var rollMatch=isNum&&String(s.roll_no)===srch;
+      var rollMatch=isNum&&parseInt(s.roll_no,10)===parseInt(srch,10);
       var nameMatch=!isNum&&s.name.toLowerCase().indexOf(srch)!==-1;
       if(!rollMatch&&!nameMatch) return false;
     }
@@ -4606,34 +4687,13 @@ async function loadDailyTests(){
     card.className='exam-card';
     card.style.cssText='position:relative';
     card.innerHTML='<p style="font-weight:700;font-size:.85rem">'+e(t.test_name)+'</p><p style="font-size:.65rem;color:var(--muted);margin-top:3px">'+fd(t.test_date)+' | '+batchLabel+' | নম্বর: '+t.total_marks+'</p>'
-      +'<div style="position:absolute;top:8px;right:8px;display:flex;gap:4px">'
-      +'<button onclick="event.stopPropagation();editDT('+t.id+',\''+e(t.test_name).replace(/'/g,"\\'")+'\'  ,\''+t.test_date+'\','+t.total_marks+')" style="background:#eff6ff;color:var(--g1);border:none;padding:3px 8px;border-radius:8px;font-size:.68rem;font-weight:700;cursor:pointer">✏️</button>'
-      +'<button onclick="event.stopPropagation();delDT('+t.id+')" style="background:var(--rs);color:var(--red);border:none;padding:3px 8px;border-radius:8px;font-size:.68rem;font-weight:700;cursor:pointer">🗑</button>'
-      +'</div>';
+      +'<button onclick="event.stopPropagation();delDT('+t.id+')" style="position:absolute;top:8px;right:8px;background:var(--rs);color:var(--red);border:none;padding:3px 8px;border-radius:8px;font-size:.68rem;font-weight:700;cursor:pointer">🗑</button>';
     card.dataset.id=t.id;card.dataset.name=t.test_name;card.dataset.total=t.total_marks;card.dataset.cls=t.class||'All';card.dataset.bch=t.batch||'All';card.dataset.date=t.test_date;card.onclick=function(){selectDT(this.dataset.id,this.dataset.name,this.dataset.total,this.dataset.cls,this.dataset.bch,this.dataset.date);};
     el.appendChild(card);
   });
 }
 
-
-async function editDT(id,name,date,total){
-  var html='<div style="display:flex;flex-direction:column;gap:10px"><label style="font-size:.75rem;font-weight:700">পরীক্ষার নাম</label><input id="_edDTName" value="'+name+'" style="padding:8px 12px;border:1.5px solid #e0e7ff;border-radius:10px;font-size:.85rem"><label style="font-size:.75rem;font-weight:700">তারিখ</label><input id="_edDTDate" type="date" value="'+date+'" style="padding:8px 12px;border:1.5px solid #e0e7ff;border-radius:10px;font-size:.85rem"><label style="font-size:.75rem;font-weight:700">সর্বোচ্চ নম্বর</label><input id="_edDTTotal" type="number" value="'+total+'" style="padding:8px 12px;border:1.5px solid #e0e7ff;border-radius:10px;font-size:.85rem"><button onclick="saveDTEdit('+id+')" style="background:var(--g1);color:#fff;border:none;padding:10px;border-radius:10px;font-weight:700;font-size:.85rem;cursor:pointer">💾 সেভ করুন</button><button onclick="this.closest(\'.modal-overlay\').remove()" style="background:#f1f5f9;color:#64748b;border:none;padding:8px;border-radius:10px;font-weight:600;font-size:.8rem;cursor:pointer">বাতিল</button></div>';
-  var ov=document.createElement('div');ov.className='modal-overlay';ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
-  var box=document.createElement('div');box.style.cssText='background:#fff;border-radius:16px;padding:22px;width:100%;max-width:380px';
-  box.innerHTML='<h3 style="margin-bottom:12px;font-size:1rem;font-weight:700;color:var(--g1)">✏️ পরীক্ষা এডিট</h3>'+html;
-  ov.appendChild(box);ov.onclick=function(ev){if(ev.target===ov)ov.remove();};document.body.appendChild(ov);
-}
-async function saveDTEdit(id){
-  var name=g('_edDTName').value.trim(),date=g('_edDTDate').value,total=parseInt(g('_edDTTotal').value);
-  if(!name||!date||!total){alert('সব ফিল্ড পূরণ করুন');return;}
-  await dbWrite('daily_tests','update',{test_name:name,test_date:date,total_marks:total},[{column:'id',value:id}]);
-  document.querySelector('.modal-overlay').remove();
-  alert('✅ আপডেট হয়েছে');loadDailyTests();
-}
-
 async function delDT(id){
-  var pin=prompt('এডমিন পাসওয়ার্ড দিন:');
-  if(!pin||pin!==localStorage.getItem('ub_pin')){alert('❌ ভুল পাসওয়ার্ড!');return;}
   if(!confirm('এই পরীক্ষা মুছবেন?'))return;
   await dbWrite('daily_test_results','delete',null,[{column:'test_id',value:id}]);await dbWrite('daily_tests','delete',null,[{column:'id',value:id}]);
   selDTId=null;hide('dtEntry');loadDailyTests();
@@ -4667,7 +4727,7 @@ function renderDTMarks(search){
   el.innerHTML='';
   var list=(window._dtStudents||[]).filter(function(s){
     if(!search)return true;
-    return s.name.toLowerCase().includes(search.toLowerCase())||String(s.roll_no)===search.trim();
+    return s.name.toLowerCase().includes(search.toLowerCase())||parseInt(s.roll_no,10)===parseInt(search.trim(),10);
   });
   list.forEach(function(s){
     var res=(window._dtResults||[]).find(function(x){return x.student_id===s.id;});
