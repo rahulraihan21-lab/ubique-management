@@ -350,6 +350,23 @@ textarea.inp{height:auto}
   </div>
 </div>
 
+
+<!-- EXAM EDIT MODAL -->
+<div id="dtEditModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border-radius:20px;width:100%;max-width:420px;padding:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 style="font-size:.92rem;font-weight:700;color:#1e3a5f">✏️ পরীক্ষা এডিট</h2>
+      <button onclick="closeDTEdit()" style="background:#f1f5f9;border:none;width:28px;height:28px;border-radius:99px;cursor:pointer;font-weight:700">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <input id="dtEditName" class="inp" placeholder="পরীক্ষার নাম">
+      <input type="date" id="dtEditDate" class="inp">
+      <input type="number" id="dtEditTotal" class="inp" placeholder="সর্বোচ্চ নম্বর">
+      <button onclick="saveDTEdit()" class="btn btn-p">💾 সেভ করুন</button>
+    </div>
+  </div>
+</div>
+
   <!-- FEE -->
   <section id="sec-fee" class="hidden"><div class="card" style="padding:18px">
   <div class="th">
@@ -407,8 +424,16 @@ textarea.inp{height:auto}
 
     <!-- Broadcast Detail View -->
     <div id="crDetailView" style="display:none">
-      <button onclick="showCRListView()" class="btn btn-ghost btn-sm" style="margin-bottom:12px;width:auto">← ফিরে যান</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <button onclick="showCRListView()" class="btn btn-ghost btn-sm" style="width:auto">← ফিরে যান</button>
+        <button onclick="resendMissedCalls()" id="crResendBtn" class="btn btn-o btn-sm" style="width:auto;display:none">📞 মিসডদের রিসেন্ড</button>
+      </div>
       <div id="crSummary" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px"></div>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <button onclick="filterCRDetail('all')" class="btn btn-sm btn-t cr-filter-btn active" id="crFilterAll">সব</button>
+        <button onclick="filterCRDetail('received')" class="btn btn-sm btn-ghost cr-filter-btn" id="crFilterReceived">✅ রিসিভ</button>
+        <button onclick="filterCRDetail('missed')" class="btn btn-sm btn-ghost cr-filter-btn" id="crFilterMissed">❌ মিসড</button>
+      </div>
       <div id="crDetailList" style="background:#f8faff;border:1px solid #e0e7ff;border-radius:12px;padding:10px;max-height:50vh;overflow-y:auto;font-size:.8rem"></div>
     </div>
   </div>
@@ -669,9 +694,11 @@ textarea.inp{height:auto}
         </div>
         <input id="dtMarksSearch" type="text" class="inp" placeholder="🔍 নাম/রোল খুঁজুন..." style="margin-bottom:8px;width:100%" oninput="renderDTMarks(this.value)">
         <div id="dtMarksList" style="display:flex;flex-direction:column;gap:6px"></div
-        <div style="display:flex;gap:8px;margin-top:14px">
+        <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
           <button onclick="saveDTMarks()" class="btn btn-p" style="flex:1">💾 সেভ</button>
           <button onclick="printDTResult()" class="btn btn-g btn-sm">🖨️ প্রিন্ট</button>
+          <button onclick="openEditDT()" class="btn btn-ghost btn-sm">✏️ এডিট</button>
+          <button onclick="delDT(selDTId)" class="btn btn-red btn-sm">🗑️ মুছুন</button>
         </div>
       </div>
     </div>
@@ -2690,16 +2717,24 @@ async function startQRCamera(){
 }
 
 var _barcodeDetector=null;
+var _qrProcessing=false;
 function scanQRFrame(){
   if(!qrScanning)return;
+  if(_qrProcessing){setTimeout(scanQRFrame,500);return;}
   var vid=g('qrVideo');
-  if(vid.readyState!==vid.HAVE_ENOUGH_DATA){setTimeout(scanQRFrame,200);return;}
-  // BarcodeDetector API - Chrome/Android built-in
+  if(!vid||vid.readyState!==vid.HAVE_ENOUGH_DATA){setTimeout(scanQRFrame,200);return;}
   if(typeof BarcodeDetector!=='undefined'){
     if(!_barcodeDetector)_barcodeDetector=new BarcodeDetector({formats:['qr_code']});
     _barcodeDetector.detect(vid).then(function(codes){
-      if(codes&&codes.length>0){processQRCode(codes[0].rawValue);}
-      if(qrScanning)setTimeout(scanQRFrame,300);
+      if(codes&&codes.length>0&&!_qrProcessing){
+        _qrProcessing=true;
+        processQRCode(codes[0].rawValue).finally(function(){
+          _qrProcessing=false;
+          if(qrScanning)setTimeout(scanQRFrame,800);
+        });
+      }else{
+        if(qrScanning)setTimeout(scanQRFrame,300);
+      }
     }).catch(function(){if(qrScanning)setTimeout(scanQRFrame,300);});
   }else{
     g('qrResult').innerHTML='<span style="color:var(--red)">&#x274C; এই browser এ QR scan সাপোর্ট নেই। Chrome ব্যবহার করুন।</span>';
@@ -2709,40 +2744,48 @@ function scanQRFrame(){
 
 async function processQRCode(data){
   var sid=parseInt(data);
-  if(!sid||isNaN(sid))return;
-  if(qrRecentIds[sid])return;
+  if(!sid||isNaN(sid)){
+    g('qrResult').innerHTML='<span style="color:var(--red)">&#x274C; অবৈধ QR কোড!</span>';
+    return;
+  }
+  if(qrRecentIds[sid]){
+    g('qrResult').innerHTML='<span style="color:var(--amber)">⏳ ইতিমধ্যে হাজিরা হয়েছে: ID '+sid+'</span>';
+    return;
+  }
   qrRecentIds[sid]=true;
-  setTimeout(function(){delete qrRecentIds[sid];},5000);
-  var today=getBDDate();
-  // student full data + fee একসাথে
-  var rs=await SB.from('students').select('*').eq('id',sid).single();
-  if(!rs.data){g('qrResult').innerHTML='<span style="color:var(--red)">&#x274C; পাওয়া যায়নি</span>';return;}
-  var s=rs.data;
-  stuCache[sid]=s;
-  // হাজিরা সেভ
-  await dbWrite('attendance','upsert',[{student_id:sid,attendance_date:today,status:'Present'}],null,{onConflict:'student_id,attendance_date'});
-  // fee cache লোড
-  if(!feeCache||!Object.keys(feeCache).length){await loadFeeData();}
-  var dueM=getDueMonths(sid);
-  var MBN={January:'জানু',February:'ফেব্রু',March:'মার্চ',April:'এপ্রিল',May:'মে',June:'জুন',July:'জুলাই',August:'আগস্ট',September:'সেপ্টে',October:'অক্টো',November:'নভে',December:'ডিসে'};
-  var hasDue=dueM.length>0;
-  // log card
-  var feeChips=hasDue?dueM.map(function(m){return'<span style="background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;border-radius:4px;padding:1px 5px;font-size:.62rem;font-weight:700">'+(MBN[m]||m)+'</span>';}).join(''):'';
-  var feeRow=hasDue?'<div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:3px;align-items:center"><span style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:5px;padding:1px 6px;font-size:.65rem;font-weight:700">&#x26A0; '+dueM.length+' \u09ae\u09be\u09b8 \u09ac\u09be\u0995\u09bf</span>'+feeChips+'</div>':'';
-  var item=document.createElement('div');
-  item.style.cssText='background:'+(hasDue?'#fffbeb':'#f0fdf4')+';border:1px solid '+(hasDue?'#fde68a':'#bbf7d0')+';border-radius:10px;padding:8px 10px;font-size:.78rem;margin-bottom:4px';
-  item.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><div><b>'+s.name+'</b> <span style="color:#64748b;font-size:.68rem">\u09b0\u09cb\u09b2:'+s.roll_no+' | '+s.class+'</span></div><span style="color:#16a34a;font-size:1.1rem">&#x2705;</span></div>'+feeRow;
-  var log=g('qrLog');
-  log.insertBefore(item,log.firstChild);
-  // qrResult — বড় করে দেখাই, fee থাকলে সতর্কতা
-  var feeAlert=hasDue?'<div style="font-size:.78rem;color:#b45309;margin-top:4px;font-weight:600">&#x1F4B0; '+dueM.length+' \u09ae\u09be\u09b8\u09c7\u09b0 \u09ac\u09c7\u09a4\u09a8 \u09ac\u09be\u0995\u09bf \u2014 '+dueM.map(function(m){return MBN[m]||m;}).join(', ')+'</div>':'<div style="font-size:.75rem;color:#15803d;margin-top:3px">\u2714 \u09ac\u09c7\u09a4\u09a8 \u09aa\u09b0\u09bf\u09b6\u09cb\u09a7\u09bf\u09a4</div>';
-  g('qrResult').innerHTML='<div style="background:'+(hasDue?'#fef3c7':'#dcfce7')+';border-radius:12px;padding:10px 14px;margin-top:6px;border:1px solid '+(hasDue?'#fde68a':'#86efac')+'">'
-    +'<div style="font-size:.9rem;color:'+(hasDue?'#92400e':'#15803d')+';font-weight:700">&#x2705; '+s.name+'</div>'
-    +'<div style="font-size:.7rem;color:#64748b">\u09b0\u09cb\u09b2:'+s.roll_no+' | '+s.class+(s.batch?' | '+s.batch:'')+'</div>'
-    +feeAlert
-    +'</div>';
-  setTimeout(function(){g('qrResult').innerHTML='';},5000);
-  try{loadS();}catch(x){}
+  setTimeout(function(){delete qrRecentIds[sid];},15000);
+  g('qrResult').innerHTML='<span style="color:var(--g1)">⏳ হাজিরা সেভ হচ্ছে...</span>';
+  try{
+    var today=getBDDate();
+    var rs=await SB.from('students').select('*').eq('id',sid).single();
+    if(!rs.data){g('qrResult').innerHTML='<span style="color:var(--red)">&#x274C; শিক্ষার্থী পাওয়া যায়নি (ID: '+sid+')</span>';return;}
+    var s=rs.data;
+    stuCache[sid]=s;
+    var wr=await dbWrite('attendance','upsert',[{student_id:sid,attendance_date:today,status:'Present'}],null,{onConflict:'student_id,attendance_date'});
+    if(wr.error){g('qrResult').innerHTML='<span style="color:var(--red)">&#x274C; হাজিরা সেভ ব্যর্থ: '+wr.error.message+'</span>';return;}
+    try{navigator.vibrate&&navigator.vibrate(200);}catch(vx){}
+    if(!feeCache||!Object.keys(feeCache).length){await loadFeeData();}
+    var dueM=getDueMonths(sid);
+    var MBN={January:'জানু',February:'ফেব্রু',March:'মার্চ',April:'এপ্রিল',May:'মে',June:'জুন',July:'জুলাই',August:'আগস্ট',September:'সেপ্টে',October:'অক্টো',November:'নভে',December:'ডিসে'};
+    var hasDue=dueM.length>0;
+    var feeChips=hasDue?dueM.map(function(m){return'<span style="background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;border-radius:4px;padding:1px 5px;font-size:.62rem;font-weight:700">'+(MBN[m]||m)+'</span>';}).join(''):'';
+    var feeRow=hasDue?'<div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:3px;align-items:center"><span style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:5px;padding:1px 6px;font-size:.65rem;font-weight:700">&#x26A0; '+dueM.length+' মাস বাকি</span>'+feeChips+'</div>':'';
+    var item=document.createElement('div');
+    item.style.cssText='background:'+(hasDue?'#fffbeb':'#f0fdf4')+';border:1px solid '+(hasDue?'#fde68a':'#bbf7d0')+';border-radius:10px;padding:8px 10px;font-size:.78rem;margin-bottom:4px';
+    item.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><div><b>'+s.name+'</b> <span style="color:#64748b;font-size:.68rem">রোল:'+s.roll_no+' | '+s.class+'</span></div><span style="color:#16a34a;font-size:1.1rem">&#x2705;</span></div>'+feeRow;
+    var log=g('qrLog');
+    log.insertBefore(item,log.firstChild);
+    var feeAlert=hasDue?'<div style="font-size:.78rem;color:#b45309;margin-top:4px;font-weight:600">💰 '+dueM.length+' মাসের বেতন বাকি — '+dueM.map(function(m){return MBN[m]||m;}).join(', ')+'</div>':'<div style="font-size:.75rem;color:#15803d;margin-top:3px">✔ বেতন পরিশোধিত</div>';
+    g('qrResult').innerHTML='<div style="background:'+(hasDue?'#fef3c7':'#dcfce7')+';border-radius:12px;padding:10px 14px;margin-top:6px;border:1px solid '+(hasDue?'#fde68a':'#86efac')+'">'
+      +'<div style="font-size:.9rem;color:'+(hasDue?'#92400e':'#15803d')+';font-weight:700">✅ '+s.name+'</div>'
+      +'<div style="font-size:.7rem;color:#64748b">রোল:'+s.roll_no+' | '+s.class+(s.batch?' | '+s.batch:'')+'</div>'
+      +feeAlert
+      +'</div>';
+    setTimeout(function(){g('qrResult').innerHTML='';},5000);
+    try{loadS();}catch(x){}
+  }catch(err){
+    g('qrResult').innerHTML='<span style="color:var(--red)">&#x274C; ত্রুটি: '+(err.message||'Unknown error')+'</span>';
+  }
 }
 
 /* NOTICE CLASS/BATCH */
@@ -3093,6 +3136,7 @@ function printRoutine(){
 // AWAJ DIGITAL AUTO CALL
 // ═══════════════════════════════
 var EDGE_FN_URL='https://kzxwcvgtkuydoxglglfm.supabase.co/functions/v1/awaj-broadcast';
+var AWAJ_TOKEN='oat_Mjcw.enNCUFdyUUpBNW8xaGx6NFRfQnkwU0ZkMWV2Qk1CanNkRGxLVktHdTMxMTcwOTYxMzc';
 var AWAJ_VOICE='Monthly Fee Reminder';
 var AWAJ_SENDER='09610993093';
 
@@ -3246,11 +3290,12 @@ async function loadBroadcastList(){
     });
     var data=await res.json();
     btn.disabled=false;btn.innerText='🔄 ব্রডকাস্ট লিস্ট লোড করুন';
-    var list=Array.isArray(data)?data:(data.data||data.broadcasts||[]);
-    if(!list.length){g('crListContainer').innerHTML='<p style="text-align:center;color:#94a3b8;padding:12px">কোনো ব্রডকাস্ট পাওয়া যায়নি</p>';return;}
+    if(!res.ok||data.error){g('crListContainer').innerHTML='<p style="text-align:center;color:#ef4444;padding:12px">❌ '+(data.error||'API Error: '+res.status)+'</p>';return;}
+    var list=Array.isArray(data)?data:(data.data||data.broadcasts||data.results||[]);
+    if(!list.length){g('crListContainer').innerHTML='<p style="text-align:center;color:#94a3b8;padding:12px">কোনো ব্রডকাস্ট পাওয়া যায়নি</p><pre style="font-size:.6rem;color:#94a3b8;overflow:auto;max-height:100px">'+JSON.stringify(data,null,2)+'</pre>';return;}
     var html='';
     list.forEach(function(b){
-      var id=b.id||b.broadcast_id||'';
+      var id=String(b.id||b.broadcast_id||'');
       var date=b.created_at||b.date||b.scheduled_at||'';
       var status=b.status||'';
       var total=b.total_contacts||b.recipients||b.total||'?';
@@ -3271,14 +3316,32 @@ async function loadBroadcastList(){
   }
 }
 
+window._crResults=[];
+window._crStudentMap={};
+window._crCurrentFilter='all';
+
 async function loadBroadcastResult(bid){
   if(!bid){showToast('ব্রডকাস্ট ID নেই!');return;}
   g('crListView').style.display='none';
   g('crDetailView').style.display='';
+  g('crResendBtn').style.display='none';
   g('crSummary').innerHTML='<div class="sc sc-b" style="padding:10px"><div class="sk" style="height:20px"></div></div>'.repeat(3);
   g('crDetailList').innerHTML='<div class="sk" style="height:28px;width:100%"></div>';
   var adminPin=localStorage.getItem('ub_apin')||'';
   try{
+    // Load students for name matching
+    var studentsRes=await SB.from('students').select('name,phone,roll_no,class,batch').limit(1000);
+    var studentMap={};
+    if(studentsRes.data){
+      studentsRes.data.forEach(function(s){
+        var ph=(s.phone||'').toString().replace(/[^0-9]/g,'');
+        if(ph.length===11) studentMap[ph]=s;
+        if(ph.length===11&&ph.startsWith('0')) studentMap['88'+ph]=s;
+        if(ph.length===13&&ph.startsWith('880')) studentMap[ph.substring(2)]=s;
+      });
+    }
+    window._crStudentMap=studentMap;
+
     var res=await fetch(REPORT_FN_URL,{
       method:'POST',
       headers:{'Content-Type':'application/json','x-admin-password':adminPin},
@@ -3287,34 +3350,34 @@ async function loadBroadcastResult(bid){
     var data=await res.json();
     var results=data.results||data.data||data.contacts||[];
     var received=0,missed=0,total=0;
+    var enriched=[];
     if(Array.isArray(results)){
       total=results.length;
       results.forEach(function(r){
+        var ph=String(r.phone||r.number||r.mobile||'').replace(/[^0-9]/g,'');
         var st=(r.status||r.call_status||'').toLowerCase();
-        if(st==='received'||st==='answered'||st==='completed'||st==='success') received++;
-        else missed++;
+        var isOk=st==='received'||st==='answered'||st==='completed'||st==='success';
+        if(isOk) received++; else missed++;
+        var student=studentMap[ph]||studentMap['0'+ph]||studentMap[ph.replace(/^880/,'0')]||null;
+        enriched.push({phone:ph,status:isOk?'received':'missed',name:student?student.name:'',roll:student?student.roll_no:'',cls:student?student.class:'',batch:student?student.batch:'',raw_status:r.status||r.call_status||''});
       });
     } else {
       received=data.received||data.answered||0;
       missed=data.missed||data.failed||0;
       total=data.total||(received+missed);
     }
+    window._crResults=enriched;
+    window._crCurrentFilter='all';
+
     g('crSummary').innerHTML=
-      '<div class="sc sc-g" style="padding:10px"><div style="font-size:1.3rem;font-weight:800;color:#065f46">'+received+'</div><div style="font-size:.65rem;color:#065f46">রিসিভ</div></div>'
-     +'<div class="sc sc-r" style="padding:10px"><div style="font-size:1.3rem;font-weight:800;color:#9f1239">'+missed+'</div><div style="font-size:.65rem;color:#9f1239">মিসড</div></div>'
-     +'<div class="sc sc-b" style="padding:10px"><div style="font-size:1.3rem;font-weight:800;color:#1e40af">'+total+'</div><div style="font-size:.65rem;color:#1e40af">মোট</div></div>';
-    if(Array.isArray(results)&&results.length){
-      var dHtml='';
-      results.forEach(function(r){
-        var ph=r.phone||r.number||r.mobile||'';
-        var st=(r.status||r.call_status||'').toLowerCase();
-        var isOk=st==='received'||st==='answered'||st==='completed'||st==='success';
-        dHtml+='<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 6px;border-bottom:1px solid #e8ecf8">'
-          +'<span style="font-family:monospace;color:#475569">'+ph+'</span>'
-          +'<span style="padding:2px 8px;border-radius:99px;font-size:.65rem;font-weight:700;'+(isOk?'background:#d1fae5;color:#065f46':'background:#ffe4e6;color:#9f1239')+'">'+(isOk?'✅ রিসিভ':'❌ মিসড')+'</span>'
-          +'</div>';
-      });
-      g('crDetailList').innerHTML=dHtml;
+      '<div class="sc sc-g" style="padding:10px;cursor:pointer" onclick="filterCRDetail(\'received\')"><div style="font-size:1.3rem;font-weight:800;color:#065f46">'+received+'</div><div style="font-size:.65rem;color:#065f46">রিসিভ</div></div>'
+     +'<div class="sc sc-r" style="padding:10px;cursor:pointer" onclick="filterCRDetail(\'missed\')"><div style="font-size:1.3rem;font-weight:800;color:#9f1239">'+missed+'</div><div style="font-size:.65rem;color:#9f1239">মিসড</div></div>'
+     +'<div class="sc sc-b" style="padding:10px;cursor:pointer" onclick="filterCRDetail(\'all\')"><div style="font-size:1.3rem;font-weight:800;color:#1e40af">'+total+'</div><div style="font-size:.65rem;color:#1e40af">মোট</div></div>';
+
+    if(missed>0) g('crResendBtn').style.display='';
+
+    if(enriched.length){
+      renderCRDetail('all');
     } else {
       g('crDetailList').innerHTML='<pre style="font-size:.7rem;color:#64748b;white-space:pre-wrap;word-break:break-all">'+JSON.stringify(data,null,2)+'</pre>';
     }
@@ -3322,6 +3385,65 @@ async function loadBroadcastResult(bid){
     g('crSummary').innerHTML='';
     g('crDetailList').innerHTML='<p style="color:#f43f5e;text-align:center;padding:12px">❌ '+err.message+'</p>';
   }
+}
+
+function renderCRDetail(filter){
+  window._crCurrentFilter=filter;
+  var items=window._crResults||[];
+  if(filter==='received') items=items.filter(function(r){return r.status==='received';});
+  else if(filter==='missed') items=items.filter(function(r){return r.status==='missed';});
+
+  document.querySelectorAll('.cr-filter-btn').forEach(function(b){b.classList.remove('active');b.classList.add('btn-ghost');b.classList.remove('btn-t');});
+  var activeBtn=g('crFilter'+filter.charAt(0).toUpperCase()+filter.slice(1));
+  if(activeBtn){activeBtn.classList.add('active','btn-t');activeBtn.classList.remove('btn-ghost');}
+
+  if(!items.length){g('crDetailList').innerHTML='<p style="text-align:center;color:#94a3b8;padding:12px">কোনো ডেটা নেই</p>';return;}
+
+  var html='';
+  items.forEach(function(r,i){
+    var isOk=r.status==='received';
+    var displayPhone=r.phone;
+    if(displayPhone.length===13&&displayPhone.startsWith('880')) displayPhone='0'+displayPhone.substring(3);
+    var nameStr=r.name?('<span style="font-weight:700;color:#1e293b;font-size:.82rem">'+e(r.name)+'</span>'):'<span style="color:#94a3b8;font-style:italic;font-size:.78rem">অজানা</span>';
+    var infoStr='';
+    if(r.roll) infoStr+='রোল: '+r.roll;
+    if(r.cls) infoStr+=(infoStr?' | ':'')+r.cls;
+    if(r.batch) infoStr+=(infoStr?' | ':'')+r.batch;
+
+    html+='<div class="cr-item" data-status="'+r.status+'" style="display:flex;align-items:center;gap:10px;padding:9px 8px;border-bottom:1px solid #e8ecf8;'+(isOk?'background:#f0fdf4':'background:#fff5f5')+'">'
+      +'<div style="flex:1">'
+      +nameStr
+      +(infoStr?'<div style="font-size:.65rem;color:#64748b;margin-top:2px">'+infoStr+'</div>':'')
+      +'<div style="font-family:monospace;color:#475569;font-size:.72rem;margin-top:1px">📞 '+displayPhone+'</div>'
+      +'</div>'
+      +'<span style="padding:3px 10px;border-radius:99px;font-size:.65rem;font-weight:700;white-space:nowrap;'+(isOk?'background:#d1fae5;color:#065f46':'background:#ffe4e6;color:#9f1239')+'">'+(isOk?'✅ রিসিভ':'❌ মিসড')+'</span>'
+      +'</div>';
+  });
+  g('crDetailList').innerHTML=html;
+}
+
+function filterCRDetail(filter){
+  renderCRDetail(filter);
+}
+
+function resendMissedCalls(){
+  var missed=window._crResults.filter(function(r){return r.status==='missed';});
+  if(!missed.length){showToast('মিসড কল নেই!');return;}
+  var items=[];
+  missed.forEach(function(r){
+    var ph=r.phone;
+    if(ph.length===13&&ph.startsWith('880')) ph='0'+ph.substring(3);
+    if(ph.length===11&&ph.startsWith('0')){
+      items.push({phone:ph, name:r.name||(r.roll?'রোল:'+r.roll:'অজানা'), checked:true});
+    }
+  });
+  if(!items.length){showToast('বৈধ নম্বর পাওয়া যায়নি!');return;}
+  window._acItems=items;
+  g('acModalTitle').innerText='📞 মিসড কলগুলো রিসেন্ড';
+  var voiceInput=g('acVoiceInput');
+  voiceInput.value=AWAJ_VOICE;
+  acRenderList();
+  g('autoCallModal').style.display='flex';
 }
 
 // ═══════════════════════════════════════
@@ -4693,10 +4815,45 @@ async function loadDailyTests(){
   });
 }
 
+
+function openEditDT(){
+  if(!selDTId){showToast('আগে পরীক্ষা সিলেক্ট করুন!');return;}
+  g('dtEditName').value=g('dtSelName').innerText||'';
+  g('dtEditDate').value=selDTDate||'';
+  g('dtEditTotal').value=selDTTotal||'';
+  g('dtEditModal').style.display='flex';
+}
+function closeDTEdit(){
+  g('dtEditModal').style.display='none';
+}
+async function saveDTEdit(){
+  var name=g('dtEditName').value.trim();
+  var date=g('dtEditDate').value;
+  var total=parseInt(g('dtEditTotal').value)||100;
+  if(!name||!date){showToast('নাম ও তারিখ দিন!');return;}
+  var r=await dbWrite('daily_tests','update',
+    {test_name:name,test_date:date,total_marks:total},
+    [{column:'id',value:selDTId}]
+  );
+  if(r.error){showToast('❌ '+r.error.message);return;}
+  selDTTotal=total;selDTDate=date;
+  g('dtSelName').innerText=name;
+  g('dtSelInfo').innerText=fd(date)+' | '+selDTCls+' | সর্বোচ্চ: '+total;
+  closeDTEdit();
+  loadDailyTests();
+  showToast('✅ পরীক্ষা আপডেট হয়েছে!');
+}
+
 async function delDT(id){
   if(!confirm('এই পরীক্ষা মুছবেন?'))return;
-  await dbWrite('daily_test_results','delete',null,[{column:'test_id',value:id}]);await dbWrite('daily_tests','delete',null,[{column:'id',value:id}]);
+  var pw=prompt('নিশ্চিত করতে অ্যাডমিন পিন দিন:');
+  if(!pw)return;
+  var storedPin=localStorage.getItem('ub_apin')||localStorage.getItem('ub_pin')||'';
+  if(pw!==storedPin){showToast('❌ পিন ভুল!');return;}
+  await dbWrite('daily_test_results','delete',null,[{column:'test_id',value:id}]);
+  await dbWrite('daily_tests','delete',null,[{column:'id',value:id}]);
   selDTId=null;hide('dtEntry');loadDailyTests();
+  showToast('✅ পরীক্ষা মুছে গেছে');
 }
 
 async function selectDT(id,name,total,cls,bch,date){
