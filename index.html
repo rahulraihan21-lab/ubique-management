@@ -328,7 +328,7 @@ textarea.inp{height:auto}
     <!-- Voice Input -->
     <div style="margin-bottom:12px">
       <label style="font-size:.78rem;font-weight:700;color:#475569;display:block;margin-bottom:5px">🎙️ ভয়েস নাম / আইডি</label>
-      <input id="acVoiceInput" type="text" class="inp" placeholder="যেমন: Monthly Fee Reminder" />
+      <input id="acVoiceInput" type="text" class="inp" placeholder="ভয়েস নাম দিন" />
     </div>
 
     <!-- Select All / Deselect All -->
@@ -3138,6 +3138,7 @@ function printRoutine(){
 var EDGE_FN_URL='https://kzxwcvgtkuydoxglglfm.supabase.co/functions/v1/awaj-broadcast';
 var AWAJ_TOKEN='oat_Mjcw.enNCUFdyUUpBNW8xaGx6NFRfQnkwU0ZkMWV2Qk1CanNkRGxLVktHdTMxMTcwOTYxMzc';
 var AWAJ_VOICE='Monthly Fee Reminder';
+var AWAJ_ABSENT_VOICE='Absent';
 var AWAJ_SENDER='09610993093';
 
 function openAutoCallModal(){
@@ -3225,7 +3226,7 @@ async function openAbsentAutoCallModal(){
   if(!items.length){showToast('বৈধ ফোন নম্বর পাওয়া যায়নি!');return;}
   window._acItems=items;
   var voiceInput=g('acVoiceInput');
-  voiceInput.value=AWAJ_VOICE;
+  voiceInput.value=AWAJ_ABSENT_VOICE;
   acRenderList();
   g('autoCallModal').style.display='flex';
 }
