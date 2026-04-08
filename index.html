@@ -1024,7 +1024,7 @@ window.alert = function(msg) {
   if(msg === '✅') msg = 'সফলভাবে সেভ হয়েছে!';
   _alert(msg);
 };
-var PROXY_URL='https://deevdipciojjffkdnqax.supabase.co/functions/v1/db-proxy';
+var PROXY_URL='https://sfsrtozgfethgdfrmskk.supabase.co/functions/v1/db-proxy';
 // === SECURE PROXY SB CLIENT ===
 function PQ(t){this._t=t;this._s='*';this._f=[];this._o=[];this._l=null;this._si=false;}
 PQ.prototype.select=function(c){this._s=c||'*';return this;};
@@ -1411,9 +1411,7 @@ async function processStuQRLogin(data){
     return;
   }
   g('stuQRResult').innerText='⏳ যাচাই হচ্ছে...';
-  var _res=await fetch(PROXY_URL,{method:'POST',headers:{'Content-Type':'application/json','x-role':'student','x-student-token':localStorage.getItem('ub_stoken')||''},body:JSON.stringify({table:'students',operation:'select',select:'*',filters:[{column:'id',operator:'eq',value:sid}],single:true})});
-  var _json=await _res.json();
-  var r={data:_json.data,error:_res.ok?null:{message:_json.error}};
+  var r=await SB.from('students').select('*').eq('id',sid).single();
   if(!r.data){
     g('stuQRResult').innerHTML='<span style="color:#fca5a5">❌ শিক্ষার্থী পাওয়া যায়নি!</span>';
     stuQRScanning=true;
@@ -3334,8 +3332,8 @@ function printRoutine(){
 // ═══════════════════════════════
 // AWAJ DIGITAL AUTO CALL
 // ═══════════════════════════════
-var EDGE_FN_URL='https://kzxwcvgtkuydoxglglfm.supabase.co/functions/v1/awaj-broadcast';
-var AWAJ_TOKEN='oat_Mjcw.enNCUFdyUUpBNW8xaGx6NFRfQnkwU0ZkMWV2Qk1CanNkRGxLVktHdTMxMTcwOTYxMzc';
+var EDGE_FN_URL='https://sfsrtozgfethgdfrmskk.supabase.co/functions/v1/awaj-broadcast';
+var AWAJ_TOKEN='oat_Mjc4.SjZSYTZPN1Y1Um1YX3p5TDB0MHpxbUE4dVo1NlgyUEx5OUZydUZYbjMyMTM4MjQ0MzQ';
 var AWAJ_VOICE='Monthly Fee Reminder';
 var AWAJ_ABSENT_VOICE='Absent';
 var AWAJ_SENDER='09610993093';
@@ -3432,8 +3430,13 @@ async function openAbsentAutoCallModal(){
 
 function sendAutoCall(){
   var items=window._acItems||[];
-  var phones=items.filter(function(it){return it.checked;}).map(function(it){return it.phone;});
+  var _allPhones=items.filter(function(it){return it.checked;}).map(function(it){return it.phone;});
+  // duplicate remove
+  var _seen={};
+  var phones=_allPhones.filter(function(p){if(_seen[p])return false;_seen[p]=true;return true;});
+  var dupCount=_allPhones.length-phones.length;
   if(!phones.length){showToast('কোনো নম্বর সিলেক্ট করা হয়নি!');return;}
+  if(dupCount>0)showToast('⚠️ '+dupCount+'টি duplicate নম্বর বাদ দেওয়া হয়েছে');
   if(phones.length>999){showToast('সর্বোচ্চ ৯৯৯টি! কিছু আনসিলেক্ট করুন।');return;}
 
   var voiceVal=g('acVoiceInput').value.trim()||AWAJ_VOICE;
@@ -3467,7 +3470,7 @@ function sendAutoCall(){
 // ═══════════════════════════════════════
 // CALL REPORT (AWAJ BROADCAST HISTORY)
 // ═══════════════════════════════════════
-var REPORT_FN_URL='https://deevdipciojjffkdnqax.supabase.co/functions/v1/awaj-report';
+var REPORT_FN_URL='https://sfsrtozgfethgdfrmskk.supabase.co/functions/v1/awaj-report';
 
 function openCallReportModal(){
   g('callReportModal').style.display='flex';
@@ -3481,33 +3484,41 @@ function showCRListView(){g('crListView').style.display='';g('crDetailView').sty
 async function loadBroadcastList(){
   var btn=g('crLoadBtn');
   btn.disabled=true;btn.innerText='⏳ লোড হচ্ছে...';
-  var adminPin=localStorage.getItem('ub_apin')||'';
   try{
     var res=await fetch(REPORT_FN_URL,{
       method:'POST',
-      headers:{'Content-Type':'application/json','x-admin-password':adminPin},
+      headers:{'Content-Type':'application/json','apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmc3J0b3pnZmV0aGdkZnJtc2trIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNzU3NzYsImV4cCI6MjA4NjY1MTc3Nn0.hPdrAY9xwGmuyTHvCT5ihJEw797bYP20fOLNXvyK3uI'},
       body:JSON.stringify({action:'list'})
     });
     var data=await res.json();
     btn.disabled=false;btn.innerText='🔄 ব্রডকাস্ট লিস্ট লোড করুন';
-    if(!res.ok||data.error){g('crListContainer').innerHTML='<p style="text-align:center;color:#ef4444;padding:12px">❌ '+(data.error||'API Error: '+res.status)+'</p>';return;}
+    if(!res.ok){g('crListContainer').innerHTML='<p style="text-align:center;color:#ef4444;padding:12px">❌ '+(data.error||'API Error: '+res.status)+'</p>';return;}
     var list=Array.isArray(data)?data:(data.data||data.broadcasts||data.results||[]);
     if(!list.length){g('crListContainer').innerHTML='<p style="text-align:center;color:#94a3b8;padding:12px">কোনো ব্রডকাস্ট পাওয়া যায়নি</p><pre style="font-size:.6rem;color:#94a3b8;overflow:auto;max-height:100px">'+JSON.stringify(data,null,2)+'</pre>';return;}
     var html='';
+    // debug: show raw first item
+    if(list.length)console.log('Broadcast item sample:',JSON.stringify(list[0]));
     list.forEach(function(b){
       var id=String(b.id||b.broadcast_id||'');
-      var date=b.created_at||b.date||b.scheduled_at||'';
+      var date=b.created_at||b.date||b.scheduled_at||b.created||'';
+      var voice=b.voice||b.voice_name||'';
       var status=b.status||'';
-      var total=b.total_contacts||b.recipients||b.total||'?';
-      var dateStr=date?new Date(date).toLocaleDateString('bn-BD',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
-      var statusColor=status==='completed'?'#10b981':status==='broadcasting'?'#f59e0b':'#64748b';
-      html+='<div onclick="loadBroadcastResult(\''+id+'\')" style="background:#fff;border:1.5px solid #e0e7ff;border-radius:13px;padding:12px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor=\'#6366f1\'" onmouseout="this.style.borderColor=\'#e0e7ff\'">'
-        +'<div style="display:flex;justify-content:space-between;align-items:center">'
-        +'<div><span style="font-weight:700;color:#1e293b;font-size:.85rem">📞 '+id.substring(0,8)+'...</span>'
-        +'<br><span style="font-size:.68rem;color:#64748b">'+dateStr+'</span></div>'
-        +'<div style="text-align:right"><span style="background:'+statusColor+';color:#fff;padding:2px 8px;border-radius:99px;font-size:.65rem;font-weight:700">'+status+'</span>'
-        +'<br><span style="font-size:.72rem;color:#475569;font-weight:600">'+total+' জন</span></div>'
-        +'</div></div>';
+      var total=b.total_contacts||b.recipients||b.total_numbers||b.total||'?';
+      var received=b.received||b.answered||'';
+      var missed=b.missed||b.failed||'';
+      var dateStr=date?new Date(date).toLocaleString('bn-BD',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'ID: '+id;
+      var statusBg=status==='completed'?'#10b981':status==='broadcasting'?'#f59e0b':status==='pending'?'#6366f1':'#64748b';
+      var statsStr=(received!==''&&missed!=='')?('✅'+received+' ❌'+missed):('মোট: '+total);
+      html+='<div onclick="loadBroadcastResult(\''+id+'\')" style="background:#fff;border:1.5px solid #e0e7ff;border-radius:13px;padding:12px;cursor:pointer">'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start">'
+        +'<div style="flex:1">'
+        +'<p style="font-weight:700;color:#1e293b;font-size:.82rem">📞 '+(voice||'ব্রডকাস্ট #'+id)+'</p>'
+        +'<p style="font-size:.68rem;color:#64748b;margin-top:2px">'+dateStr+'</p>'
+        +'</div>'
+        +'<div style="text-align:right">'
+        +'<span style="background:'+statusBg+';color:#fff;padding:2px 8px;border-radius:99px;font-size:.65rem;font-weight:700">'+status+'</span>'
+        +'<p style="font-size:.7rem;color:#475569;font-weight:600;margin-top:3px">'+statsStr+'</p>'
+        +'</div></div></div>';
     });
     g('crListContainer').innerHTML=html;
   }catch(err){
@@ -3555,19 +3566,19 @@ async function loadBroadcastResult(bid){
 
     var res=await fetch(REPORT_FN_URL,{
       method:'POST',
-      headers:{'Content-Type':'application/json','x-admin-password':adminPin},
+      headers:{'Content-Type':'application/json','apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmc3J0b3pnZmV0aGdkZnJtc2trIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNzU3NzYsImV4cCI6MjA4NjY1MTc3Nn0.hPdrAY9xwGmuyTHvCT5ihJEw797bYP20fOLNXvyK3uI'},
       body:JSON.stringify({action:'result',broadcast_id:bid})
     });
     var data=await res.json();
-    var results=data.results||data.data||data.contacts||[];
+    var results=data.results||data.data||data.contacts||data.phone_numbers||[];
     var received=0,missed=0,total=0;
     var enriched=[];
     if(Array.isArray(results)){
       total=results.length;
       results.forEach(function(r){
-        var ph=String(r.phone||r.number||r.mobile||'').replace(/[^0-9]/g,'');
-        var st=(r.status||r.call_status||'').toLowerCase();
-        var isOk=st==='received'||st==='answered'||st==='completed'||st==='success';
+        var ph=String(r.phone||r.number||r.mobile||r.phone_number||'').replace(/[^0-9]/g,'');
+        var st=(r.status||r.call_status||r.call_result||'').toLowerCase();
+        var isOk=st==='received'||st==='answered'||st==='completed'||st==='success'||st==='yes';
         if(isOk) received++; else missed++;
         var student=studentMap[ph]
           ||studentMap['0'+ph]
