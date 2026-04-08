@@ -3034,7 +3034,12 @@ async function postNotice(){
 }
 
 /* INIT */
-async function loadLoginCls(){var r=await SB.from('academy_settings').select('*').eq('type','class').order('value');g('sClass').innerHTML=(r.data||[]).length?'<option value="">-- ক্লাস --</option>'+r.data.map(function(x){return'<option>'+e(x.value)+'</option>';}).join(''):'<option value="">নেই</option>';}
+async function loadLoginCls(){
+  var res=await fetch(PROXY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({table:'academy_settings',operation:'select',select:'*',filters:[{column:'type',operator:'eq',value:'class'}],order:[{column:'value',ascending:true}],_role:'public'})});
+  var json=await res.json();
+  var r=json.data||[];
+  g('sClass').innerHTML=r.length?'<option value="">-- ক্লাস --</option>'+r.map(function(x){return'<option>'+e(x.value)+'</option>';}).join(''):'<option value="">নেই</option>';
+}
 
 // ── BULK UPLOAD ──
 var bulkData=[];
