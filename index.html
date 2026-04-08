@@ -1095,25 +1095,29 @@ var _rtClient=null;
 var _rtChannel=null;
 
 function initRealtime(){
-  if(typeof supabase==='undefined')return;
+  if(typeof supabase==='undefined'){console.log('Realtime: supabase not defined');return;}
   try{
-    _rtClient=supabase.createClient(_RT_URL,_RT_KEY);
+    _rtClient=supabase.createClient(_RT_URL,_RT_KEY,{realtime:{params:{eventsPerSecond:10}}});
     subscribeAttendance();
+    console.log('Realtime: client created');
   }catch(e){console.log('Realtime init error:',e);}
 }
 
 function subscribeAttendance(){
   if(!_rtClient)return;
   if(_rtChannel)_rtClient.removeChannel(_rtChannel);
-  _rtChannel=_rtClient.channel('attendance-changes')
+  _rtChannel=_rtClient
+    .channel('attendance-changes')
     .on('postgres_changes',{event:'*',schema:'public',table:'attendance'},function(payload){
-      // অন্য device এ change হলে reload করি
+      console.log('Realtime: attendance changed',payload);
       var auth=localStorage.getItem('ub');
       if(auth==='a'||auth==='t'){
         try{loadS();}catch(e){}
       }
     })
-    .subscribe();
+    .subscribe(function(status){
+      console.log('Realtime status:',status);
+    });
 }
 var selExamId=null,selExamTotal=100,tSelExamId=null,tSelExamTotal=100;
 var feeCache={},mtSubjectsList=[],selMTId=null,selMTData=null;
