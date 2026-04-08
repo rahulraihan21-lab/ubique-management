@@ -1087,6 +1087,34 @@ async function dbWrite(table,operation,data,filters,opts){
 // === END DB PROXY HELPER ===
 
 var AD={},HD={},TAD={},THD={},selFeeId=null,repData=null,stuCache={};
+
+// ── SUPABASE REALTIME ──
+var _RT_URL='https://sfsrtozgfethgdfrmskk.supabase.co';
+var _RT_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmc3J0b3pnZmV0aGdkZnJtc2trIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNzU3NzYsImV4cCI6MjA4NjY1MTc3Nn0.hPdrAY9xwGmuyTHvCT5ihJEw797bYP20fOLNXvyK3uI';
+var _rtClient=null;
+var _rtChannel=null;
+
+function initRealtime(){
+  if(typeof supabase==='undefined')return;
+  try{
+    _rtClient=supabase.createClient(_RT_URL,_RT_KEY);
+    subscribeAttendance();
+  }catch(e){console.log('Realtime init error:',e);}
+}
+
+function subscribeAttendance(){
+  if(!_rtClient)return;
+  if(_rtChannel)_rtClient.removeChannel(_rtChannel);
+  _rtChannel=_rtClient.channel('attendance-changes')
+    .on('postgres_changes',{event:'*',schema:'public',table:'attendance'},function(payload){
+      // অন্য device এ change হলে reload করি
+      var auth=localStorage.getItem('ub');
+      if(auth==='a'||auth==='t'){
+        try{loadS();}catch(e){}
+      }
+    })
+    .subscribe();
+}
 var selExamId=null,selExamTotal=100,tSelExamId=null,tSelExamTotal=100;
 var feeCache={},mtSubjectsList=[],selMTId=null,selMTData=null;
 var ALL_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -4596,6 +4624,8 @@ async function openAttEditBulk(){
 function closeAttEditBulk(){g('aeModal').style.display='none';}
 
 window.onload=function(){
+  // Realtime init
+  setTimeout(initRealtime, 2000);
   // BD timezone অনুযায়ী প্রতি মিনিটে date check করি
   setInterval(function(){
     var el=g('attDate');
