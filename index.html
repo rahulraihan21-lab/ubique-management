@@ -1066,8 +1066,7 @@ PQ.prototype._exec=function(){
 PQ.prototype.then=function(res,rej){return this._exec().then(res,rej);};
 var SB={from:function(t){return new PQ(t);}};
 // === END PROXY SB CLIENT ===
-// === DB PROXY HELPER ===
-// === DB PROXY HELPER ===
+// === DB PROXY HELPER === v2
 
 async function dbWrite(table,operation,data,filters,opts){
   var role=localStorage.getItem('ub');
