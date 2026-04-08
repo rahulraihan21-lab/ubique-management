@@ -1024,7 +1024,7 @@ window.alert = function(msg) {
   if(msg === '✅') msg = 'সফলভাবে সেভ হয়েছে!';
   _alert(msg);
 };
-var PROXY_URL='https://sfsrtozgfethgdfrmskk.supabase.co/functions/v1/db-proxy';
+var PROXY_URL='https://deevdipciojjffkdnqax.supabase.co/functions/v1/db-proxy';
 // === SECURE PROXY SB CLIENT ===
 function PQ(t){this._t=t;this._s='*';this._f=[];this._o=[];this._l=null;this._si=false;}
 PQ.prototype.select=function(c){this._s=c||'*';return this;};
@@ -3333,7 +3333,7 @@ function printRoutine(){
 // AWAJ DIGITAL AUTO CALL
 // ═══════════════════════════════
 var EDGE_FN_URL='https://sfsrtozgfethgdfrmskk.supabase.co/functions/v1/awaj-broadcast';
-var AWAJ_TOKEN='oat_Mjc4.SjZSYTZPN1Y1Um1YX3p5TDB0MHpxbUE4dVo1NlgyUEx5OUZydUZYbjMyMTM4MjQ0MzQ';
+var AWAJ_TOKEN='oat_Mjc5.UU5tamJmQ2pTMnNoRWVyVzZaNXRYQ0Y4WGltX2dtWFN5Yzh2aThLczExNTQ0NDI2OTA';
 var AWAJ_VOICE='Monthly Fee Reminder';
 var AWAJ_ABSENT_VOICE='Absent';
 var AWAJ_SENDER='09610993093';
@@ -3445,13 +3445,17 @@ function sendAutoCall(){
 
   var adminPin=localStorage.getItem('ub_apin')||'';
   if(!adminPin){showToast('❌ এডমিন লগইন করুন আগে!');btn.disabled=false;btn.innerText='📞 কল শুরু করুন';return;}
+  var _cls=gv('abCl')||gv('aCl')||'All';
+  var _bch=gv('abBt')||gv('aBt')||'All';
   fetch(EDGE_FN_URL,{
     method:'POST',
     headers:{'Content-Type':'application/json','x-admin-password':adminPin},
     body:JSON.stringify({
       phone_numbers:phones,
       voice:voiceVal,
-      sender:AWAJ_SENDER
+      sender:AWAJ_SENDER,
+      class:_cls,
+      batch:_bch
     })
   }).then(function(res){return res.json();}).then(function(data){
     btn.disabled=false;btn.innerText='📞 কল শুরু করুন';
@@ -3487,7 +3491,7 @@ async function loadBroadcastList(){
   try{
     var res=await fetch(REPORT_FN_URL,{
       method:'POST',
-      headers:{'Content-Type':'application/json','apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmc3J0b3pnZmV0aGdkZnJtc2trIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNzU3NzYsImV4cCI6MjA4NjY1MTc3Nn0.hPdrAY9xwGmuyTHvCT5ihJEw797bYP20fOLNXvyK3uI'},
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({action:'list'})
     });
     var data=await res.json();
@@ -3501,23 +3505,25 @@ async function loadBroadcastList(){
     list.forEach(function(b){
       var id=String(b.id||b.broadcast_id||'');
       var date=b.created_at||b.date||b.scheduled_at||b.created||'';
-      var voice=b.voice||b.voice_name||'';
+      var voice=b.name||b.voice||b.voice_name||'';
       var status=b.status||'';
-      var total=b.total_contacts||b.recipients||b.total_numbers||b.total||'?';
+      var total=b.listenerCount||b.total_contacts||b.recipients||b.total_numbers||b.total||'?';
       var received=b.received||b.answered||'';
       var missed=b.missed||b.failed||'';
       var dateStr=date?new Date(date).toLocaleString('bn-BD',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'ID: '+id;
       var statusBg=status==='completed'?'#10b981':status==='broadcasting'?'#f59e0b':status==='pending'?'#6366f1':'#64748b';
-      var statsStr=(received!==''&&missed!=='')?('✅'+received+' ❌'+missed):('মোট: '+total);
-      html+='<div onclick="loadBroadcastResult(\''+id+'\')" style="background:#fff;border:1.5px solid #e0e7ff;border-radius:13px;padding:12px;cursor:pointer">'
-        +'<div style="display:flex;justify-content:space-between;align-items:flex-start">'
-        +'<div style="flex:1">'
-        +'<p style="font-weight:700;color:#1e293b;font-size:.82rem">📞 '+(voice||'ব্রডকাস্ট #'+id)+'</p>'
-        +'<p style="font-size:.68rem;color:#64748b;margin-top:2px">'+dateStr+'</p>'
+      var statsStr=total&&total!=='?'?('মোট: '+total):'';
+      // voice name ছোট করি
+      var voiceShort=(voice||'').length>25?(voice||'').substring(0,25)+'...':voice||'';
+      html+='<div onclick="loadBroadcastResult(\''+id+'\')" style="background:#fff;border:1.5px solid #e0e7ff;border-radius:13px;padding:10px 12px;cursor:pointer">'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+        +'<div style="flex:1;min-width:0">'
+        +'<p style="font-weight:700;color:#1e293b;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📞 '+voiceShort+'</p>'
+        +'<p style="font-size:.65rem;color:#64748b;margin-top:2px">'+dateStr+'</p>'
         +'</div>'
-        +'<div style="text-align:right">'
-        +'<span style="background:'+statusBg+';color:#fff;padding:2px 8px;border-radius:99px;font-size:.65rem;font-weight:700">'+status+'</span>'
-        +'<p style="font-size:.7rem;color:#475569;font-weight:600;margin-top:3px">'+statsStr+'</p>'
+        +'<div style="text-align:right;flex-shrink:0">'
+        +'<span style="background:'+statusBg+';color:#fff;padding:2px 8px;border-radius:99px;font-size:.62rem;font-weight:700">'+status+'</span>'
+        +(statsStr?'<p style="font-size:.68rem;color:#475569;font-weight:600;margin-top:2px">'+statsStr+'</p>':'')
         +'</div></div></div>';
     });
     g('crListContainer').innerHTML=html;
@@ -3566,19 +3572,26 @@ async function loadBroadcastResult(bid){
 
     var res=await fetch(REPORT_FN_URL,{
       method:'POST',
-      headers:{'Content-Type':'application/json','apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmc3J0b3pnZmV0aGdkZnJtc2trIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNzU3NzYsImV4cCI6MjA4NjY1MTc3Nn0.hPdrAY9xwGmuyTHvCT5ihJEw797bYP20fOLNXvyK3uI'},
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({action:'result',broadcast_id:bid})
     });
     var data=await res.json();
-    var results=data.results||data.data||data.contacts||data.phone_numbers||[];
+    var results=data.results||(data.broadcast&&data.broadcast.results)||data.data||data.contacts||data.phone_numbers||[];
+    // statusDistribution থেকে সঠিক count
+    var sd=data.statusDistribution||data.broadcast&&data.broadcast.statusDistribution||null;
     var received=0,missed=0,total=0;
+    if(sd){
+      received=sd.answered||0;
+      missed=(sd.rejected||0)+(sd.notAnswered||0)+(sd.busy||0)+(sd.failed||0)+(sd.unknown||0);
+      total=received+missed+(sd.pending||0);
+    }
     var enriched=[];
     if(Array.isArray(results)){
       total=results.length;
       results.forEach(function(r){
-        var ph=String(r.phone||r.number||r.mobile||r.phone_number||'').replace(/[^0-9]/g,'');
+        var ph=String(r.phoneNumber||r.phone||r.number||r.mobile||r.phone_number||'').replace(/[^0-9]/g,'');
         var st=(r.status||r.call_status||r.call_result||'').toLowerCase();
-        var isOk=st==='received'||st==='answered'||st==='completed'||st==='success'||st==='yes';
+        var isOk=st==='received'||st==='answered'||st==='completed'||st==='success'||st==='yes'||st==='answer';
         if(isOk) received++; else missed++;
         var student=studentMap[ph]
           ||studentMap['0'+ph]
