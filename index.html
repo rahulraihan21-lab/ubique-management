@@ -1443,7 +1443,9 @@ async function processStuQRLogin(data){
     return;
   }
   g('stuQRResult').innerText='⏳ যাচাই হচ্ছে...';
-  var r=await SB.from('students').select('*').eq('id',sid).single();
+  var _qrRes=await fetch(PROXY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({table:'students',operation:'select',select:'*',filters:[{column:'id',operator:'eq',value:sid}],single:true,_role:'qr_login'})});
+  var _qrJson=await _qrRes.json();
+  var r={data:_qrJson.data||null,error:_qrRes.ok?null:{message:_qrJson.error}};
   if(!r.data){
     g('stuQRResult').innerHTML='<span style="color:#fca5a5">❌ শিক্ষার্থী পাওয়া যায়নি!</span>';
     stuQRScanning=true;
