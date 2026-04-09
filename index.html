@@ -3615,14 +3615,7 @@ async function loadBroadcastResult(bid){
     });
     var data=await res.json();
     var results=data.results||(data.broadcast&&data.broadcast.results)||data.data||data.contacts||data.phone_numbers||[];
-    // statusDistribution থেকে সঠিক count
-    var sd=data.statusDistribution||data.broadcast&&data.broadcast.statusDistribution||null;
     var received=0,missed=0,total=0;
-    if(sd){
-      received=sd.answered||0;
-      missed=(sd.rejected||0)+(sd.notAnswered||0)+(sd.busy||0)+(sd.failed||0)+(sd.unknown||0);
-      total=received+missed+(sd.pending||0);
-    }
     var enriched=[];
     if(Array.isArray(results)){
       total=results.length;
