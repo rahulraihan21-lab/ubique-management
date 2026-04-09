@@ -1463,7 +1463,7 @@ async function sLogin(){
   var cls=gv('sClass'),roll=gv('sRoll'),ph=gv('sPhone').trim();
   if(!cls||!roll||!ph){alert('ক্লাস, রোল ও ফোন নম্বর দিন!');return;}
   // class+roll = unique student, phone = identity verification
-  var _res=await fetch(PROXY_URL,{method:'POST',headers:{'Content-Type':'application/json','x-role':'student'},body:JSON.stringify({table:'students',operation:'select',select:'*',filters:[{column:'class',operator:'eq',value:cls},{column:'roll_no',operator:'eq',value:parseInt(roll,10)},{column:'phone',operator:'eq',value:ph}]})});
+  var _res=await fetch(PROXY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({table:'students',operation:'select',select:'*',filters:[{column:'class',operator:'eq',value:cls},{column:'roll_no',operator:'eq',value:parseInt(roll,10)},{column:'phone',operator:'eq',value:ph}],_role:'student_login'})});
   var _json=await _res.json();
   var r={data:_json.data,error:_res.ok?null:{message:_json.error}};
   if(!r.data){
