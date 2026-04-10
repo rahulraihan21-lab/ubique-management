@@ -1334,28 +1334,64 @@ function getDueMonths(sid){
   return expected.filter(function(m){return paid.indexOf(m)===-1;});
 }
 function getDueTag(sid){var d=getDueMonths(sid);return d.length===0?'<span class="fee-ok-tag">✅</span>':'<span class="fee-due-tag">💰'+d.length+'মাস</span>';}
-async function loadFeeData(stuIds){
+
+// ═══════════════════════════════════════
+// FRESH FEE DUE CALCULATOR — DB থেকে সরাসরি
+// ═══════════════════════════════════════
+async function calcFreshDueMap(stuIds){
+  // সরাসরি DB থেকে আনি — cache এর উপর নির্ভর করি না
   var yr=getBDNow().getFullYear().toString();
-  feeCache={};
-  // stuIds না থাকলে বা ছোট হলে সরাসরি query
-  if(!stuIds||!stuIds.length){
-    var r=await SB.from('fees_collection').select('student_id,payment_month').eq('payment_year',yr).limit(5000);
-    if(r.data)r.data.forEach(function(f){
-      if(!feeCache[f.student_id])feeCache[f.student_id]=[];
-      if(feeCache[f.student_id].indexOf(f.payment_month)===-1)feeCache[f.student_id].push(f.payment_month);
-    });
-    return;
-  }
-  // বড় list কে ৫০০ করে batch এ query করি
+  var freshMap={};
+  if(!stuIds||!stuIds.length)return freshMap;
   var batchSize=500;
   for(var i=0;i<stuIds.length;i+=batchSize){
     var batch=stuIds.slice(i,i+batchSize);
     var r=await SB.from('fees_collection').select('student_id,payment_month').eq('payment_year',yr).in('student_id',batch).limit(3000);
     if(r.data)r.data.forEach(function(f){
-      if(!feeCache[f.student_id])feeCache[f.student_id]=[];
-      if(feeCache[f.student_id].indexOf(f.payment_month)===-1)feeCache[f.student_id].push(f.payment_month);
+      if(!freshMap[f.student_id])freshMap[f.student_id]=[];
+      if(freshMap[f.student_id].indexOf(f.payment_month)===-1)freshMap[f.student_id].push(f.payment_month);
     });
   }
+  return freshMap;
+}
+
+function calcDueMonthsFromMap(sid,paidMap,stuCache2){
+  var paid=paidMap[sid]||[];
+  var student=stuCache2?stuCache2[sid]:stuCache[sid];
+  var admMonth=student&&student.admission_month?student.admission_month:'January';
+  var admIdx=ALL_MONTHS.indexOf(admMonth);
+  if(admIdx<0)admIdx=0;
+  var curIdx=getBDNow().getMonth();
+  var expected=ALL_MONTHS.slice(admIdx,curIdx+1);
+  return expected.filter(function(m){return paid.indexOf(m)===-1;});
+}
+
+/* সব fee records paginate করে আনে — 1000 row limit bypass */
+async function fetchAllFeeRows(yr){
+  var all=[];
+  var pageSize=1000;
+  var from=0;
+  while(true){
+    var r=await SB.from('fees_collection')
+      .select('student_id,payment_month')
+      .eq('payment_year',yr)
+      .range(from,from+pageSize-1);
+    if(r.data&&r.data.length)all=all.concat(r.data);
+    if(!r.data||r.data.length<pageSize)break;
+    from+=pageSize;
+  }
+  return all;
+}
+
+async function loadFeeData(stuIds){
+  var yr=getBDNow().getFullYear().toString();
+  feeCache={};
+  var rows=await fetchAllFeeRows(yr);
+  rows.forEach(function(f){
+    var k=f.student_id;
+    if(!feeCache[k])feeCache[k]=[];
+    if(feeCache[k].indexOf(f.payment_month)===-1)feeCache[k].push(f.payment_month);
+  });
 }
 
 /* MORE MENU */
@@ -1524,6 +1560,8 @@ function forceLogoutClean(){
 }
 
 async function showAdmin(){
+  // Login এর পরে সব fee data load করি
+  loadFeeData().catch(function(){});
   try{
     setTimeout(function(){try{savePlayerToken();}catch(e){}},3000);
     hide('lo');
@@ -1666,16 +1704,15 @@ var srch=(g('fSearch')?g('fSearch').value.trim().toLowerCase():'');
 var c=g('fL');c.innerHTML='<div class="sk" style="height:50px;width:100%"></div>';var q=SB.from('students').select('*');if(cls!=='All')q=q.eq('class',cls);if(bch!=='All')q=q.eq('batch',bch);
 var r1=await q.order('roll_no').limit(1000);if(_v!==_reqVer.loadFee)return;
 var stuIds2=(r1.data||[]).map(function(s){return s.id;});
-var r2={data:[]};
-if(stuIds2.length){
-  var _fBatch=500,_fAll=[];
-  for(var _fi=0;_fi<stuIds2.length;_fi+=_fBatch){
-    var _fb=stuIds2.slice(_fi,_fi+_fBatch);
-    var _fr=await SB.from('fees_collection').select('*').eq('payment_year',yr).in('student_id',_fb).limit(3000);
-    if(_fr.data)_fAll=_fAll.concat(_fr.data);
-  }
-  r2={data:_fAll};
-}
+// r2 — সব student এর fee আনি (filter ছাড়া)
+var _r2raw=await fetchAllFeeRows(yr);
+var r2={data:_r2raw||[]};
+// r2 থেকে feeCache update করি
+if(r2.data)r2.data.forEach(function(f){
+  var k=f.student_id;
+  if(!feeCache[k])feeCache[k]=[];
+  if(feeCache[k].indexOf(f.payment_month)===-1)feeCache[k].push(f.payment_month);
+});
 var r3=stuIds2.length?await SB.from('attendance').select('student_id,status').in('student_id',stuIds2).eq('status','Absent').limit(5000):{data:[]};
 var absentMap={};
 (r3.data||[]).forEach(function(a){absentMap[a.student_id]=(absentMap[a.student_id]||0)+1;});
@@ -1685,10 +1722,22 @@ var noteMap={};
 (r4.data||[]).forEach(function(n){if(!noteMap[n.student_id])noteMap[n.student_id]=n;});
 if(srch&&r1.data){r1.data=r1.data.filter(function(s){var isNum=/^\d+$/.test(srch);var nm=!isNum&&s.name.toLowerCase().indexOf(srch)!==-1;var rl=isNum&&parseInt(s.roll_no,10)===parseInt(srch,10);return nm||rl;});}
 if(r1.data)r1.data.forEach(function(s){stuCache[s.id]=s;});
-if(!r1.data||!r1.data.length){c.innerHTML='<p style="text-align:center;padding:26px;color:var(--muted)">নেই</p>';return;}if(r2.data)r2.data.forEach(function(f){if(!feeCache[f.student_id])feeCache[f.student_id]=[];if(feeCache[f.student_id].indexOf(f.payment_month)===-1)feeCache[f.student_id].push(f.payment_month);});var pc=r2.data?r2.data.filter(function(p){return p.payment_month===mon&&r1.data.some(function(s){return s.id===p.student_id;});}).length:0;
-// Selected মাসে কে বকেয়া সেটা count করি (admission month check সহ)
-var selMonIdx=ALL_MONTHS.indexOf(mon);var dueStuCount=r1.data.filter(function(s){var admIdx=ALL_MONTHS.indexOf(s.admission_month||ALL_MONTHS[0]);if(selMonIdx<admIdx)return false;var paid=feeCache[s.id]||[];return paid.indexOf(mon)===-1;}).length;
-c.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:13px"><span class="paid-b">✅ পরিশোধ: '+pc+'</span><span class="due-b">⏳ বকেয়া আছে: '+dueStuCount+' জন</span></div><div style="display:flex;flex-direction:column;gap:7px">'+r1.data.map(function(s){var pay=r2.data&&r2.data.find(function(p){return p.student_id===s.id&&p.payment_month===mon;});var admIdx2=ALL_MONTHS.indexOf(s.admission_month||ALL_MONTHS[0]);var notYetAdmitted=selMonIdx<admIdx2;var dueM=getDueMonths(s.id);var borderColor=notYetAdmitted?'#e2e8f0':pay?'var(--green)':'var(--red)';return'<div style="background:#fff;padding:12px;border-radius:12px;border-left:4px solid '+borderColor+';display:flex;flex-direction:column;gap:5px"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px"><div style="flex:1;min-width:0"><p style="font-weight:700;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+e(s.name)+'</p><p style="font-size:.63rem;color:var(--muted)">রোল:'+s.roll_no+' | '+e(s.class)+' | '+e(s.batch||'')+'</p>'+'<p style="font-size:.63rem;color:var(--muted)">📞 '+e(s.phone||'—')+'</p></div>'+'<div style="display:flex;gap:3px;align-items:center;flex-shrink:0">'+(notYetAdmitted?'<span style="background:#f1f5f9;color:#94a3b8;padding:3px 8px;border-radius:8px;font-size:.68rem;font-weight:700">N/A</span>':pay?'<span class="paid-b">PAID ✓</span>':'<button onclick="openFF(\''+s.id+'\',\''+e(s.name)+'\')" style="background:var(--g1);color:#fff;border:none;padding:6px 10px;border-radius:10px;font-family:var(--font);font-weight:700;font-size:.7rem;cursor:pointer;white-space:nowrap">💰 ফি নিন</button>')+'<button onclick="printSingleQR('+s.id+',\'' +e(s.name)+ '\','+s.roll_no+',\'' +e(s.class)+ '\',\'' +(s.batch||'')+ '\')" style="background:#f0fdf4;color:#16a34a;border:none;padding:7px 9px;border-radius:10px;font-weight:700;font-size:.72rem;cursor:pointer" title="QR প্রিন্ট">&#x1F4F7;</button>'+'<button class="fee-edit-btn" data-sid="'+s.id+'" style="background:#eff6ff;color:var(--g1);border:none;padding:7px 9px;border-radius:10px;font-weight:700;font-size:.72rem;cursor:pointer">✏️</button>'+'<button onclick="openCallNote('+s.id+',\''+e(s.name)+'\')" style="background:#f0fdf4;color:#16a34a;border:none;padding:7px 9px;border-radius:10px;font-weight:700;font-size:.72rem;cursor:pointer">📝</button>'+'</div>'+'</div>'+(dueM.length?'<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap"><span class="fee-due-tag">⚠️ '+dueM.length+' মাস</span><div class="due-months-bar">'+dueM.map(function(m){return'<span class="due-month-chip">'+MONTH_BN[m]+'</span>';}).join('')+'</div></div>':'<span class="fee-ok-tag">✅ সব ঠিক</span>')+
+if(!r1.data||!r1.data.length){c.innerHTML='<p style="text-align:center;padding:26px;color:var(--muted)">নেই</p>';return;}
+// r2 থেকে paidMap বানাই — এটাই সবচেয়ে reliable
+var _paidMap={};
+(r2.data||[]).forEach(function(f){
+  if(!_paidMap[f.student_id])_paidMap[f.student_id]=[];
+  if(_paidMap[f.student_id].indexOf(f.payment_month)===-1)_paidMap[f.student_id].push(f.payment_month);
+});
+var pc=(r2.data||[]).filter(function(p){return p.payment_month===mon&&r1.data.some(function(s){return s.id===p.student_id;});}).length;
+var selMonIdx=ALL_MONTHS.indexOf(mon);
+var dueStuCount=r1.data.filter(function(s){
+  var admIdx=ALL_MONTHS.indexOf(s.admission_month||ALL_MONTHS[0]);
+  if(selMonIdx<admIdx)return false;
+  var paid=_paidMap[s.id]||[];
+  return paid.indexOf(mon)===-1;
+}).length;
+c.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:13px"><span class="paid-b">✅ পরিশোধ: '+pc+'</span><span class="due-b">⏳ বকেয়া আছে: '+dueStuCount+' জন</span></div><div style="display:flex;flex-direction:column;gap:7px">'+r1.data.map(function(s){var pay=r2.data&&r2.data.find(function(p){return p.student_id===s.id&&p.payment_month===mon;});var admIdx2=ALL_MONTHS.indexOf(s.admission_month||ALL_MONTHS[0]);var notYetAdmitted=selMonIdx<admIdx2;var _sp=_paidMap[s.id]||[];var _ai=ALL_MONTHS.indexOf(s.admission_month||ALL_MONTHS[0]);if(_ai<0)_ai=0;var dueM=ALL_MONTHS.slice(_ai,getBDNow().getMonth()+1).filter(function(m){return _sp.indexOf(m)===-1;});var borderColor=notYetAdmitted?'#e2e8f0':pay?'var(--green)':'var(--red)';return'<div style="background:#fff;padding:12px;border-radius:12px;border-left:4px solid '+borderColor+';display:flex;flex-direction:column;gap:5px"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px"><div style="flex:1;min-width:0"><p style="font-weight:700;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+e(s.name)+'</p><p style="font-size:.63rem;color:var(--muted)">রোল:'+s.roll_no+' | '+e(s.class)+' | '+e(s.batch||'')+'</p>'+'<p style="font-size:.63rem;color:var(--muted)">📞 '+e(s.phone||'—')+'</p></div>'+'<div style="display:flex;gap:3px;align-items:center;flex-shrink:0">'+(notYetAdmitted?'<span style="background:#f1f5f9;color:#94a3b8;padding:3px 8px;border-radius:8px;font-size:.68rem;font-weight:700">N/A</span>':pay?'<span class="paid-b">PAID ✓</span>':'<button onclick="openFF(\''+s.id+'\',\''+e(s.name)+'\')" style="background:var(--g1);color:#fff;border:none;padding:6px 10px;border-radius:10px;font-family:var(--font);font-weight:700;font-size:.7rem;cursor:pointer;white-space:nowrap">💰 ফি নিন</button>')+'<button onclick="printSingleQR('+s.id+',\'' +e(s.name)+ '\','+s.roll_no+',\'' +e(s.class)+ '\',\'' +(s.batch||'')+ '\')" style="background:#f0fdf4;color:#16a34a;border:none;padding:7px 9px;border-radius:10px;font-weight:700;font-size:.72rem;cursor:pointer" title="QR প্রিন্ট">&#x1F4F7;</button>'+'<button class="fee-edit-btn" data-sid="'+s.id+'" style="background:#eff6ff;color:var(--g1);border:none;padding:7px 9px;border-radius:10px;font-weight:700;font-size:.72rem;cursor:pointer">✏️</button>'+'<button onclick="openCallNote('+s.id+',\''+e(s.name)+'\')" style="background:#f0fdf4;color:#16a34a;border:none;padding:7px 9px;border-radius:10px;font-weight:700;font-size:.72rem;cursor:pointer">📝</button>'+'</div>'+'</div>'+(dueM.length?'<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap"><span class="fee-due-tag">⚠️ '+dueM.length+' মাস</span><div class="due-months-bar">'+dueM.map(function(m){return'<span class="due-month-chip">'+MONTH_BN[m]+'</span>';}).join('')+'</div></div>':'<span class="fee-ok-tag">✅ সব ঠিক</span>')+
 (absentMap[s.id]>0?'<div style="display:flex;align-items:center;gap:6px;margin-top:2px"><span style="font-size:.65rem;font-weight:700;color:'+(absentMap[s.id]>0?'#dc2626':'#16a34a')+'">'+( absentMap[s.id]>0?'⚠️ অনুপস্থিত':'✅ নিয়মিত')+'</span><span style="font-size:.63rem;color:#64748b">অনুপস্থিত: '+absentMap[s.id]+' দিন</span></div>':'')+
 (noteMap[s.id]?'<div style="margin-top:5px;padding:7px 9px;background:#f8faff;border-radius:8px;border-left:3px solid #6366f1"><p style="font-size:.6rem;color:#94a3b8;margin-bottom:2px">📝 '+new Date(noteMap[s.id].created_at).toLocaleDateString('bn-BD')+'</p><p style="font-size:.72rem;color:#1e1b4b;line-height:1.4">'+e(noteMap[s.id].note)+'</p></div>':'')+
 '</div>';}).join('')+'</div>';
@@ -2025,7 +2074,10 @@ async function loadS(){var _v=_reqVer.loadS=(_reqVer.loadS||0)+1;
     if(a.status==='Absent')absTotalMap[a.student_id]=(absTotalMap[a.student_id]||0)+1;
     if(a.attendance_date!==today&&!lastAttMap[a.student_id])lastAttMap[a.student_id]=a;
   });
+  // Fresh fee data — feeCache update করি
   await loadFeeData(stuIds);
+  // feeCache verify — যদি কোনো student এর data না থাকে ০ মাস paid ধরব
+  stuIds.forEach(function(id){if(!feeCache[id])feeCache[id]=[];});
   var list=(r1.data||[]).filter(function(s){
     if(!sn)return true;
     var isNum=/^\d+$/.test(sn);var nm=!isNum&&s.name.toLowerCase().indexOf(sn)!==-1;var rl=isNum&&parseInt(s.roll_no,10)===parseInt(sn,10);return nm||rl;
