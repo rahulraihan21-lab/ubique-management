@@ -37,6 +37,7 @@ textarea.inp{resize:none}
 .fee-due-tag{background:linear-gradient(135deg,#fff1f2,#ffe4e6);color:#be123c;padding:2px 7px;border-radius:6px;font-size:.58rem;font-weight:700;display:inline-flex;align-items:center;gap:2px;border:1px solid #fecdd3}
 .fee-ok-tag{background:linear-gradient(135deg,#f0fdf4,#dcfce7);color:#065f46;padding:2px 7px;border-radius:6px;font-size:.58rem;font-weight:700;display:inline-flex;align-items:center;gap:2px;border:1px solid #bbf7d0}
 .sc{border-radius:18px;padding:14px 8px;text-align:center;min-width:0;overflow:hidden}
+.dt-edit-bt-chip.on{background:var(--g1)!important;color:#fff!important;border-color:var(--g1)!important}
 /* সব inp একই height */
 .inp{height:44px;box-sizing:border-box}
 textarea.inp{height:auto}
@@ -352,16 +353,33 @@ textarea.inp{height:auto}
 
 
 <!-- EXAM EDIT MODAL -->
-<div id="dtEditModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:16px">
-  <div style="background:#fff;border-radius:20px;width:100%;max-width:420px;padding:20px">
+<div id="dtEditModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);align-items:flex-end;justify-content:center">
+  <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:520px;padding:20px 20px 32px;max-height:90vh;overflow-y:auto">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <h2 style="font-size:.92rem;font-weight:700;color:#1e3a5f">✏️ পরীক্ষা এডিট</h2>
       <button onclick="closeDTEdit()" style="background:#f1f5f9;border:none;width:28px;height:28px;border-radius:99px;cursor:pointer;font-weight:700">✕</button>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px">
-      <input id="dtEditName" class="inp" placeholder="পরীক্ষার নাম">
-      <input type="date" id="dtEditDate" class="inp">
-      <input type="number" id="dtEditTotal" class="inp" placeholder="সর্বোচ্চ নম্বর">
+      <div>
+        <label style="font-size:.75rem;font-weight:700;color:#475569;display:block;margin-bottom:4px">পরীক্ষার নাম</label>
+        <input id="dtEditName" class="inp" placeholder="পরীক্ষার নাম (যেমন: অধ্যায় ১)">
+      </div>
+      <div>
+        <label style="font-size:.75rem;font-weight:700;color:#475569;display:block;margin-bottom:4px">তারিখ</label>
+        <input type="date" id="dtEditDate" class="inp">
+      </div>
+      <div>
+        <label style="font-size:.75rem;font-weight:700;color:#475569;display:block;margin-bottom:4px">সর্বোচ্চ নম্বর</label>
+        <input type="number" id="dtEditTotal" class="inp" placeholder="সর্বোচ্চ নম্বর">
+      </div>
+      <div>
+        <label style="font-size:.75rem;font-weight:700;color:#475569;display:block;margin-bottom:4px">ক্লাস</label>
+        <select id="dtEditCl" class="inp dynC" onchange="filterDTEditBatches()"></select>
+      </div>
+      <div>
+        <label style="font-size:.75rem;font-weight:700;color:#475569;display:block;margin-bottom:4px">ব্যাচ (একাধিক সিলেক্ট করা যাবে)</label>
+        <div id="dtEditBtMulti" style="display:flex;flex-wrap:wrap;gap:6px;padding:10px;border:1.5px solid var(--border);border-radius:13px;background:#f8faff;min-height:44px"></div>
+      </div>
       <button onclick="saveDTEdit()" class="btn btn-p">💾 সেভ করুন</button>
     </div>
   </div>
@@ -403,8 +421,12 @@ textarea.inp{height:auto}
     </div>
     <div id="abL" style="display:flex;flex-direction:column;gap:8px"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">
-      <button onclick="openAbsentAutoCallModal()" class="btn btn-o">📞 অনুপস্থিতদের অটো কল</button>
+      <button onclick="openAbsentAutoCallModal()" class="btn btn-o">📞 অনুপস্থিতদের কল</button>
       <button onclick="openCallReportModal()" class="btn btn-p">📊 কল রিপোর্ট</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <button onclick="openAllStudentsCallModal()" class="btn btn-t">📞 সবাইকে কল</button>
+      <button onclick="openDueCallModal()" class="btn btn-ghost">💰 বকেয়াদের কল</button>
     </div>
   </div></section>
 
@@ -1663,7 +1685,7 @@ var noteMap={};
 (r4.data||[]).forEach(function(n){if(!noteMap[n.student_id])noteMap[n.student_id]=n;});
 if(srch&&r1.data){r1.data=r1.data.filter(function(s){var isNum=/^\d+$/.test(srch);var nm=!isNum&&s.name.toLowerCase().indexOf(srch)!==-1;var rl=isNum&&parseInt(s.roll_no,10)===parseInt(srch,10);return nm||rl;});}
 if(r1.data)r1.data.forEach(function(s){stuCache[s.id]=s;});
-if(!r1.data||!r1.data.length){c.innerHTML='<p style="text-align:center;padding:26px;color:var(--muted)">নেই</p>';return;}feeCache={};if(r2.data)r2.data.forEach(function(f){if(!feeCache[f.student_id])feeCache[f.student_id]=[];if(feeCache[f.student_id].indexOf(f.payment_month)===-1)feeCache[f.student_id].push(f.payment_month);});var pc=r2.data?r2.data.filter(function(p){return p.payment_month===mon&&r1.data.some(function(s){return s.id===p.student_id;});}).length:0;
+if(!r1.data||!r1.data.length){c.innerHTML='<p style="text-align:center;padding:26px;color:var(--muted)">নেই</p>';return;}if(r2.data)r2.data.forEach(function(f){if(!feeCache[f.student_id])feeCache[f.student_id]=[];if(feeCache[f.student_id].indexOf(f.payment_month)===-1)feeCache[f.student_id].push(f.payment_month);});var pc=r2.data?r2.data.filter(function(p){return p.payment_month===mon&&r1.data.some(function(s){return s.id===p.student_id;});}).length:0;
 // Selected মাসে কে বকেয়া সেটা count করি (admission month check সহ)
 var selMonIdx=ALL_MONTHS.indexOf(mon);var dueStuCount=r1.data.filter(function(s){var admIdx=ALL_MONTHS.indexOf(s.admission_month||ALL_MONTHS[0]);if(selMonIdx<admIdx)return false;var paid=feeCache[s.id]||[];return paid.indexOf(mon)===-1;}).length;
 c.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:13px"><span class="paid-b">✅ পরিশোধ: '+pc+'</span><span class="due-b">⏳ বকেয়া আছে: '+dueStuCount+' জন</span></div><div style="display:flex;flex-direction:column;gap:7px">'+r1.data.map(function(s){var pay=r2.data&&r2.data.find(function(p){return p.student_id===s.id&&p.payment_month===mon;});var admIdx2=ALL_MONTHS.indexOf(s.admission_month||ALL_MONTHS[0]);var notYetAdmitted=selMonIdx<admIdx2;var dueM=getDueMonths(s.id);var borderColor=notYetAdmitted?'#e2e8f0':pay?'var(--green)':'var(--red)';return'<div style="background:#fff;padding:12px;border-radius:12px;border-left:4px solid '+borderColor+';display:flex;flex-direction:column;gap:5px"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px"><div style="flex:1;min-width:0"><p style="font-weight:700;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+e(s.name)+'</p><p style="font-size:.63rem;color:var(--muted)">রোল:'+s.roll_no+' | '+e(s.class)+' | '+e(s.batch||'')+'</p>'+'<p style="font-size:.63rem;color:var(--muted)">📞 '+e(s.phone||'—')+'</p></div>'+'<div style="display:flex;gap:3px;align-items:center;flex-shrink:0">'+(notYetAdmitted?'<span style="background:#f1f5f9;color:#94a3b8;padding:3px 8px;border-radius:8px;font-size:.68rem;font-weight:700">N/A</span>':pay?'<span class="paid-b">PAID ✓</span>':'<button onclick="openFF(\''+s.id+'\',\''+e(s.name)+'\')" style="background:var(--g1);color:#fff;border:none;padding:6px 10px;border-radius:10px;font-family:var(--font);font-weight:700;font-size:.7rem;cursor:pointer;white-space:nowrap">💰 ফি নিন</button>')+'<button onclick="printSingleQR('+s.id+',\'' +e(s.name)+ '\','+s.roll_no+',\'' +e(s.class)+ '\',\'' +(s.batch||'')+ '\')" style="background:#f0fdf4;color:#16a34a;border:none;padding:7px 9px;border-radius:10px;font-weight:700;font-size:.72rem;cursor:pointer" title="QR প্রিন্ট">&#x1F4F7;</button>'+'<button class="fee-edit-btn" data-sid="'+s.id+'" style="background:#eff6ff;color:var(--g1);border:none;padding:7px 9px;border-radius:10px;font-weight:700;font-size:.72rem;cursor:pointer">✏️</button>'+'<button onclick="openCallNote('+s.id+',\''+e(s.name)+'\')" style="background:#f0fdf4;color:#16a34a;border:none;padding:7px 9px;border-radius:10px;font-weight:700;font-size:.72rem;cursor:pointer">📝</button>'+'</div>'+'</div>'+(dueM.length?'<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap"><span class="fee-due-tag">⚠️ '+dueM.length+' মাস</span><div class="due-months-bar">'+dueM.map(function(m){return'<span class="due-month-chip">'+MONTH_BN[m]+'</span>';}).join('')+'</div></div>':'<span class="fee-ok-tag">✅ সব ঠিক</span>')+
@@ -1993,13 +2015,16 @@ async function loadS(){var _v=_reqVer.loadS=(_reqVer.loadS||0)+1;
   if(_v!==_reqVer.loadS)return;
   var stuIds=(r1.data||[]).map(function(s){return s.id;});
   var r2=stuIds.length?await SB.from('attendance').select('student_id,status,homework_status').eq('attendance_date',today).in('student_id',stuIds):{data:[]};
-  var r3=stuIds.length?await SB.from('attendance').select('student_id').in('student_id',stuIds).eq('status','Absent').limit(5000):{data:[]};
+  // শেষ ৬০ দিনের attendance — absent count ও গত ক্লাস দুটোই এখান থেকে
+  var d60=new Date(getBDNow());d60.setDate(d60.getDate()-60);
+  var d60str=d60.getFullYear()+'-'+String(d60.getMonth()+1).padStart(2,'0')+'-'+String(d60.getDate()).padStart(2,'0');
+  var r3=stuIds.length?await SB.from('attendance').select('student_id,status,attendance_date').in('student_id',stuIds).gte('attendance_date',d60str).order('attendance_date',{ascending:false}).limit(3000):{data:[]};
   var absTotalMap={};
-  (r3.data||[]).forEach(function(a){absTotalMap[a.student_id]=(absTotalMap[a.student_id]||0)+1;});
-  // গত ক্লাসের attendance — today এর আগের সর্বশেষ record
-  var r4=stuIds.length?await SB.from('attendance').select('student_id,status,attendance_date').in('student_id',stuIds).neq('attendance_date',today).order('attendance_date',{ascending:false}).limit(stuIds.length*2):{data:[]};
   var lastAttMap={};
-  (r4.data||[]).forEach(function(a){if(!lastAttMap[a.student_id])lastAttMap[a.student_id]=a;});
+  (r3.data||[]).forEach(function(a){
+    if(a.status==='Absent')absTotalMap[a.student_id]=(absTotalMap[a.student_id]||0)+1;
+    if(a.attendance_date!==today&&!lastAttMap[a.student_id])lastAttMap[a.student_id]=a;
+  });
   await loadFeeData(stuIds);
   var list=(r1.data||[]).filter(function(s){
     if(!sn)return true;
@@ -3440,6 +3465,69 @@ function closeAutoCallModal(){
   g('autoCallModal').style.display='none';
 }
 
+
+// ── সবাইকে কল ──
+async function openAllStudentsCallModal(){
+  g('acModalTitle').innerText='📞 সবাইকে কল';
+  var cls=gv('abCl'),bch=gv('abBt');
+  var q=SB.from('students').select('id,name,phone,class,roll_no,batch');
+  if(cls!=='All')q=q.eq('class',cls);
+  if(bch!=='All')q=q.eq('batch',bch);
+  var r=await q.order('roll_no').limit(1000);
+  if(!r.data||!r.data.length){showToast('কোনো শিক্ষার্থী নেই!');return;}
+  var items=[];
+  r.data.forEach(function(s){
+    var ph=(s.phone||'').toString().replace(/[^0-9]/g,'');
+    if(ph.length===11&&ph.startsWith('0')){
+      items.push({phone:ph,name:s.name+' ('+s.class+', রোল:'+s.roll_no+')',checked:true});
+    }
+  });
+  if(!items.length){showToast('বৈধ ফোন নম্বর পাওয়া যায়নি!');return;}
+  window._acItems=items;
+  g('acVoiceInput').value=AWAJ_VOICE;
+  acRenderList();
+  g('autoCallModal').style.display='flex';
+}
+
+// ── বকেয়াদের কল (ফি ট্যাব থেকে আলাদা) ──
+async function openDueCallModal(){
+  g('acModalTitle').innerText='💰 বকেয়াদের কল';
+  var cls=gv('abCl'),bch=gv('abBt');
+  var yr=getBDNow().getFullYear().toString();
+  var q=SB.from('students').select('*');
+  if(cls!=='All')q=q.eq('class',cls);
+  if(bch!=='All')q=q.eq('batch',bch);
+  var r1=await q.order('roll_no').limit(1000);
+  if(!r1.data||!r1.data.length){showToast('কোনো শিক্ষার্থী নেই!');return;}
+  var ids=r1.data.map(function(s){return s.id;});
+  var fR=await SB.from('fees_collection').select('student_id,payment_month').eq('payment_year',yr).in('student_id',ids).limit(5000);
+  var paidMap={};
+  (fR.data||[]).forEach(function(f){
+    if(!paidMap[f.student_id])paidMap[f.student_id]=[];
+    paidMap[f.student_id].push(f.payment_month);
+  });
+  var curIdx=getBDNow().getMonth();
+  var items=[];
+  r1.data.forEach(function(s){
+    var admIdx=ALL_MONTHS.indexOf(s.admission_month||'January');
+    if(admIdx<0)admIdx=0;
+    var expected=ALL_MONTHS.slice(admIdx,curIdx+1);
+    var paid=paidMap[s.id]||[];
+    var due=expected.filter(function(m){return paid.indexOf(m)===-1;});
+    if(due.length>0){
+      var ph=(s.phone||'').toString().replace(/[^0-9]/g,'');
+      if(ph.length===11&&ph.startsWith('0')){
+        items.push({phone:ph,name:s.name+' ('+s.class+', রোল:'+s.roll_no+', বকেয়া:'+due.length+'মাস)',checked:true});
+      }
+    }
+  });
+  if(!items.length){showToast('কেউ বকেয়া নেই!');return;}
+  window._acItems=items;
+  g('acVoiceInput').value=AWAJ_VOICE;
+  acRenderList();
+  g('autoCallModal').style.display='flex';
+}
+
 async function openAbsentAutoCallModal(){
   g('acModalTitle').innerText='📞 অনুপস্থিতদের অটো কল';
   var today=getBDDate();
@@ -4627,8 +4715,8 @@ async function openAttEditBulk(){
 function closeAttEditBulk(){g('aeModal').style.display='none';}
 
 window.onload=function(){
-  // Realtime init
-  setTimeout(initRealtime, 2000);
+  // Realtime init (disabled - causing issues)
+  // setTimeout(initRealtime, 2000);
   // BD timezone অনুযায়ী প্রতি মিনিটে date check করি
   setInterval(function(){
     var el=g('attDate');
@@ -4640,7 +4728,7 @@ window.onload=function(){
       }
     }
   },60000);
-  loadClassDaysFromDB();
+  if(typeof loadClassDaysFromDB==='function')loadClassDaysFromDB();
   if(isOnline && getQueue().length) setTimeout(syncOfflineQueue, 2000);
   updateOfflineBar();
   // Close more panel when clicking outside
@@ -5093,9 +5181,15 @@ async function loadDailyTests(){
     var card=document.createElement('div');
     card.className='exam-card';
     card.style.cssText='position:relative';
-    card.innerHTML='<p style="font-weight:700;font-size:.85rem">'+e(t.test_name)+'</p><p style="font-size:.65rem;color:var(--muted);margin-top:3px">'+fd(t.test_date)+' | '+batchLabel+' | নম্বর: '+t.total_marks+'</p>'
-      +'<button onclick="event.stopPropagation();delDT('+t.id+')" style="position:absolute;top:8px;right:8px;background:var(--rs);color:var(--red);border:none;padding:3px 8px;border-radius:8px;font-size:.68rem;font-weight:700;cursor:pointer">🗑</button>';
-    card.dataset.id=t.id;card.dataset.name=t.test_name;card.dataset.total=t.total_marks;card.dataset.cls=t.class||'All';card.dataset.bch=t.batch||'All';card.dataset.date=t.test_date;card.onclick=function(){selectDT(this.dataset.id,this.dataset.name,this.dataset.total,this.dataset.cls,this.dataset.bch,this.dataset.date);};
+    card.innerHTML='<p style="font-weight:700;font-size:.85rem;padding-right:60px">'+e(t.test_name)+'</p><p style="font-size:.65rem;color:var(--muted);margin-top:3px">'+fd(t.test_date)+' | '+batchLabel+' | নম্বর: '+t.total_marks+'</p>'
+      +'<div style="position:absolute;top:8px;right:8px;display:flex;gap:4px">'
+      +'<button class="dt-edit-btn" style="background:#eff6ff;color:var(--g1);border:none;padding:3px 8px;border-radius:8px;font-size:.68rem;font-weight:700;cursor:pointer">✏️</button>'
+      +'<button class="dt-del-btn" style="background:var(--rs);color:var(--red);border:none;padding:3px 8px;border-radius:8px;font-size:.68rem;font-weight:700;cursor:pointer">🗑</button>'
+      +'</div>';
+    card.dataset.id=t.id;card.dataset.name=t.test_name;card.dataset.total=t.total_marks;card.dataset.cls=t.class||'All';card.dataset.bch=t.batch||'All';card.dataset.date=t.test_date;
+    card.querySelector('.dt-edit-btn').addEventListener('click',function(ev){ev.stopPropagation();selectDT(card.dataset.id,card.dataset.name,card.dataset.total,card.dataset.cls,card.dataset.bch,card.dataset.date);openEditDT();});
+    card.querySelector('.dt-del-btn').addEventListener('click',function(ev){ev.stopPropagation();delDT(card.dataset.id);});
+    card.onclick=function(){selectDT(this.dataset.id,this.dataset.name,this.dataset.total,this.dataset.cls,this.dataset.bch,this.dataset.date);};
     el.appendChild(card);
   });
 }
@@ -5106,24 +5200,56 @@ function openEditDT(){
   g('dtEditName').value=g('dtSelName').innerText||'';
   g('dtEditDate').value=selDTDate||'';
   g('dtEditTotal').value=selDTTotal||'';
+  // Class set করি
+  var cl=g('dtEditCl');
+  if(cl){
+    cl.value=selDTCls||'All';
+    filterDTEditBatches();
+    // Batch chips select করি
+    setTimeout(function(){
+      var bArr=(selDTBch||'').split(',').map(function(b){return b.trim();}).filter(Boolean);
+      document.querySelectorAll('.dt-edit-bt-chip').forEach(function(chip){
+        chip.classList.toggle('on', bArr.indexOf(chip.dataset.val)!==-1);
+      });
+    },100);
+  }
   g('dtEditModal').style.display='flex';
 }
 function closeDTEdit(){
   g('dtEditModal').style.display='none';
 }
+function filterDTEditBatches(){
+  var cls=g('dtEditCl')?g('dtEditCl').value:'All';
+  var batches=window._allBatches||[];
+  var filtered=cls==='All'?batches:batches.filter(function(b){return !b.class||b.class===cls||b.value;});
+  var c=g('dtEditBtMulti');
+  if(!c)return;
+  if(!filtered.length){c.innerHTML='<p style="font-size:.72rem;color:var(--muted)">ব্যাচ নেই</p>';return;}
+  c.innerHTML=filtered.map(function(b){
+    return'<span class="dt-edit-bt-chip" data-val="'+e(b.value)+'" onclick="this.classList.toggle(\'on\')" style="padding:5px 12px;border-radius:99px;font-size:.75rem;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:#f8faff;transition:.15s">'+e(b.value)+'</span>';
+  }).join('');
+}
 async function saveDTEdit(){
   var name=g('dtEditName').value.trim();
   var date=g('dtEditDate').value;
   var total=parseInt(g('dtEditTotal').value)||100;
+  var cls=g('dtEditCl')?g('dtEditCl').value:'All';
   if(!name||!date){showToast('নাম ও তারিখ দিন!');return;}
+  // Selected batches
+  var selectedBatches=[];
+  document.querySelectorAll('.dt-edit-bt-chip.on').forEach(function(chip){
+    selectedBatches.push(chip.dataset.val);
+  });
+  var bch=selectedBatches.length?selectedBatches.join(','):'All';
   var r=await dbWrite('daily_tests','update',
-    {test_name:name,test_date:date,total_marks:total},
+    {test_name:name,test_date:date,total_marks:total,class:cls,batch:bch},
     [{column:'id',value:selDTId}]
   );
   if(r.error){showToast('❌ '+r.error.message);return;}
-  selDTTotal=total;selDTDate=date;
+  selDTTotal=total;selDTDate=date;selDTCls=cls;selDTBch=bch;
   g('dtSelName').innerText=name;
-  g('dtSelInfo').innerText=fd(date)+' | '+selDTCls+' | সর্বোচ্চ: '+total;
+  var batchLabel=bch.split(',').join(', ');
+  g('dtSelInfo').innerText=fd(date)+' | '+cls+' | '+batchLabel+' | সর্বোচ্চ: '+total;
   closeDTEdit();
   loadDailyTests();
   showToast('✅ পরীক্ষা আপডেট হয়েছে!');
