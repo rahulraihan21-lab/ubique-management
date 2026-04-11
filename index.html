@@ -1366,21 +1366,13 @@ function calcDueMonthsFromMap(sid,paidMap,stuCache2){
   return expected.filter(function(m){return paid.indexOf(m)===-1;});
 }
 
-/* সব fee records paginate করে আনে — 1000 row limit bypass */
+/* সব fee records আনে — Supabase max rows বাড়ানো আছে */
 async function fetchAllFeeRows(yr){
-  var all=[];
-  var pageSize=1000;
-  var from=0;
-  while(true){
-    var r=await SB.from('fees_collection')
-      .select('student_id,payment_month')
-      .eq('payment_year',yr)
-      .range(from,from+pageSize-1);
-    if(r.data&&r.data.length)all=all.concat(r.data);
-    if(!r.data||r.data.length<pageSize)break;
-    from+=pageSize;
-  }
-  return all;
+  var r=await SB.from('fees_collection')
+    .select('student_id,payment_month')
+    .eq('payment_year',yr)
+    .limit(9999);
+  return r.data||[];
 }
 
 async function loadFeeData(stuIds){
