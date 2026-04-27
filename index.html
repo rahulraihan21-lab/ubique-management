@@ -2072,6 +2072,7 @@ function toggleMTEditBatch(b,cb){
   if(cb.checked){if(idx===-1)_mtEditBatches.push(b);if(lbl){lbl.style.background='#eff6ff';lbl.style.borderColor='var(--g1)';lbl.style.color='var(--g1)';}}
   else{if(idx!==-1)_mtEditBatches.splice(idx,1);if(lbl){lbl.style.background='#fff';lbl.style.borderColor='#e2e8f0';lbl.style.color='';}}
 }
+function addMTSubject(){var name=gv('mtSubName').trim(),max=parseInt(gv('mtSubMax'),10)||100;if(!name){alert('বিষয়ের নাম দিন!');return;}mtSubjectsList.push({name:name,max:max});renderMTSubs();g('mtSubName').value='';g('mtSubMax').value='100';g('mtSubName').focus();}
 function removeMTSub(i){mtSubjectsList.splice(i,1);renderMTSubs();}
 async function renderMTSubs(){g('mtSubjects').innerHTML=mtSubjectsList.map(function(s,i){return'<span class="sub-chip">'+e(s.name)+' ('+s.max+') <button onclick="removeMTSub('+i+')">✕</button></span>';}).join('');}
 
@@ -2149,10 +2150,10 @@ function filterMTRows(){
     if(!tds.length){tr.style.display='';return;}
     var name=(tds[0].innerText||'').toLowerCase();
     var roll=(tds[1].innerText||'').toLowerCase();
-    var batch=(tds[2]?tds[2].innerText||'':'');
+    var batchVal=tr.getAttribute('data-batch')||'';
     var isNum=/^\d+$/.test(q);
     var matchQ=!q||(!isNum&&name.includes(q))||(isNum&&roll===q);
-    var matchB=!bf||batch.includes(bf);
+    var matchB=!bf||batchVal===bf;
     tr.style.display=(matchQ&&matchB)?'':'none';
   });
 }
@@ -2428,11 +2429,22 @@ async function _renderMeritTable(filteredTests,checkedIds,cls,selectedBatches,el
   var testIds=activeTests.map(function(t){return t.id;});
   var r2=await SB.from('model_test_results').select('*').in('model_test_id',testIds).limit(9999);
 
-  // Students
+  // Students — batch selected না থাকলে পরীক্ষার ব্যাচ থেকে নিই
   var allStudents=[];
-  if(selectedBatches&&selectedBatches.length){
-    for(var bi=0;bi<selectedBatches.length;bi++){
-      var sq=SB.from('students').select('id,name,roll_no,batch').eq('class',cls).eq('batch',selectedBatches[bi]);
+  var batchesToLoad=selectedBatches&&selectedBatches.length?selectedBatches:null;
+  if(!batchesToLoad){
+    // পরীক্ষাগুলো থেকে unique batch বের করি
+    var examBatches=[];
+    activeTests.forEach(function(t){
+      parseMTBatches(t.batch).forEach(function(b){
+        if(examBatches.indexOf(b)===-1)examBatches.push(b);
+      });
+    });
+    batchesToLoad=examBatches.length?examBatches:null;
+  }
+  if(batchesToLoad&&batchesToLoad.length){
+    for(var bi=0;bi<batchesToLoad.length;bi++){
+      var sq=SB.from('students').select('id,name,roll_no,batch').eq('class',cls).eq('batch',batchesToLoad[bi]);
       var sr=await sq.order('roll_no');
       (sr.data||[]).forEach(function(s){if(!allStudents.find(function(x){return x.id===s.id;}))allStudents.push(s);});
     }
