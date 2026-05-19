@@ -222,6 +222,12 @@ textarea.inp{height:auto}
           <p style="font-size:.72rem;color:var(--muted)">লোড হচ্ছে...</p>
         </div>
       </div>
+      <div>
+        <p style="font-size:.72rem;font-weight:700;color:#475569;margin-bottom:5px">🏆 Model Test Event (ঐচ্ছিক)</p>
+        <select id="mtEditEventLink" class="inp" style="width:100%">
+          <option value="">-- যুক্ত না করলে খালি রাখুন --</option>
+        </select>
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
         <button onclick="saveMTEdit()" class="btn btn-p">💾 সেভ করুন</button>
         <button onclick="closeMTEdit()" class="btn btn-ghost">বাতিল</button>
@@ -515,7 +521,133 @@ textarea.inp{height:auto}
   <!-- MODEL TEST / পরীক্ষা -->
   <section id="sec-modeltest" class="hidden"><div style="display:flex;flex-direction:column;gap:16px">
 
-  <!-- CREATE FORM -->
+  <!-- MODEL TEST EVENT -->
+  <div class="card" style="padding:18px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <h2 class="stitle" style="margin:0">🏆 Model Test Event</h2>
+      <button onclick="toggleMTEvent()" id="mtEventToggle" style="background:#f1f5f9;border:none;padding:4px 11px;border-radius:8px;font-size:.7rem;font-weight:700;color:var(--muted);cursor:pointer">▼ দেখান</button>
+    </div>
+    <div id="mtEventBody" style="display:none">
+
+      <!-- Event List -->
+      <div style="margin-bottom:14px">
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+          <select id="mtEvCl" class="inp dynC" style="flex:1" onchange="loadMTEvents()"></select>
+          <button onclick="openCreateMTEvent()" class="btn btn-p btn-sm">➕ নতুন Event</button>
+        </div>
+        <div id="mtEventList" style="display:flex;flex-direction:column;gap:7px">
+          <p style="text-align:center;color:var(--muted);padding:16px;font-size:.8rem">ক্লাস সিলেক্ট করুন</p>
+        </div>
+      </div>
+
+      <!-- Selected Event Detail -->
+      <div id="mtEventDetail" style="display:none">
+        <div style="background:linear-gradient(135deg,#eff6ff,#f0fdf4);border-radius:13px;padding:13px;margin-bottom:13px;border:1.5px solid #bfdbfe">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+            <div>
+              <h3 id="mtEvName" style="font-size:.95rem;font-weight:700;color:var(--g1)"></h3>
+              <p id="mtEvInfo" style="font-size:.68rem;color:var(--muted);margin-top:2px"></p>
+            </div>
+            <div style="display:flex;gap:5px;flex-shrink:0">
+              <button onclick="editMTEvent()" style="background:#eff6ff;color:var(--g1);border:none;padding:4px 9px;border-radius:7px;font-size:.65rem;font-weight:700;cursor:pointer">✏️ এডিট</button>
+              <button onclick="selMTEventId=null;g('mtEventDetail').style.display='none'" style="background:#f1f5f9;color:#64748b;border:none;padding:4px 9px;border-radius:7px;font-size:.65rem;font-weight:700;cursor:pointer">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div style="display:flex;gap:6px;margin-bottom:13px">
+          <button onclick="switchMTEvTab('fee')" id="mtEvTab-fee" class="btn btn-p btn-sm" style="flex:1">💰 ফি ও Participant</button>
+          <button onclick="switchMTEvTab('exams')" id="mtEvTab-exams" class="btn btn-ghost btn-sm" style="flex:1">📝 পরীক্ষাসমূহ</button>
+          <button onclick="switchMTEvTab('result')" id="mtEvTab-result" class="btn btn-ghost btn-sm" style="flex:1">🏆 Combined Result</button>
+        </div>
+
+        <!-- FEE TAB -->
+        <div id="mtEvPane-fee">
+          <div style="display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+            <span style="font-size:.75rem;font-weight:700;color:var(--ink2)">Participants</span>
+            <button onclick="selectAllMTParticipants(true)" style="background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;padding:3px 9px;border-radius:7px;font-size:.65rem;font-weight:700;cursor:pointer">✅ সব সিলেক্ট</button>
+            <button onclick="selectAllMTParticipants(false)" style="background:#fff1f2;color:#be123c;border:1px solid #fecdd3;padding:3px 9px;border-radius:7px;font-size:.65rem;font-weight:700;cursor:pointer">❌ সব বাদ</button>
+            <button onclick="addManualMTParticipant()" style="background:#eff6ff;color:var(--g1);border:1px solid #c7d2fe;padding:3px 9px;border-radius:7px;font-size:.65rem;font-weight:700;cursor:pointer">➕ Manually যোগ</button>
+          </div>
+          <!-- Search -->
+          <input type="text" id="mtEvSearch" oninput="filterMTParticipants()" placeholder="🔍 নাম বা রোল..." class="inp" style="margin-bottom:10px">
+          <!-- Stats -->
+          <div id="mtEvStats" style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap"></div>
+          <!-- Participant list -->
+          <div id="mtEvParticipants" style="display:flex;flex-direction:column;gap:6px"></div>
+        </div>
+
+        <!-- EXAMS TAB -->
+        <div id="mtEvPane-exams" style="display:none">
+          <p style="font-size:.72rem;color:var(--muted);margin-bottom:10px">এই Event-এর সাথে যুক্ত পরীক্ষাগুলো:</p>
+          <div id="mtEvExamList" style="display:flex;flex-direction:column;gap:6px"></div>
+          <div style="margin-top:12px;padding:10px;background:#f8faff;border-radius:10px;border:1px solid #e0e7ff">
+            <p style="font-size:.72rem;font-weight:700;color:var(--ink2);margin-bottom:7px">পরীক্ষা তৈরির সময় এই Event সিলেক্ট করুন</p>
+            <p style="font-size:.67rem;color:var(--muted)">নিচে "নতুন পরীক্ষা তৈরি" section-এ Event dropdown থেকে এই Event সিলেক্ট করে পরীক্ষা তৈরি করুন।</p>
+          </div>
+        </div>
+
+        <!-- RESULT TAB -->
+        <div id="mtEvPane-result" style="display:none">
+          <div style="display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap">
+            <select id="mtEvResBatch" class="inp" style="flex:1" onchange="loadMTEventResult()">
+              <option value="">সব ব্যাচ</option>
+            </select>
+            <button onclick="loadMTEventResult()" class="btn btn-p btn-sm">🔄 লোড</button>
+            <button onclick="printMTEventResult()" id="mtEvPrintBtn" class="btn btn-g btn-sm hidden">🖨️ প্রিন্ট</button>
+          </div>
+          <div id="mtEvResult"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CREATE EVENT MODAL -->
+  <div id="mtEvModal" style="display:none;position:fixed;inset:0;z-index:9997;background:rgba(0,0,0,.45);align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeMTEvModal()">
+    <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:500px;padding:20px 18px 32px;max-height:85vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <h2 id="mtEvModalTitle" style="font-size:.95rem;font-weight:700;color:var(--ink2)">🏆 নতুন Model Test Event</h2>
+        <button onclick="closeMTEvModal()" style="background:#f1f5f9;border:none;width:28px;height:28px;border-radius:99px;cursor:pointer;font-weight:700">✕</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div><p style="font-size:.72rem;font-weight:700;color:#475569;margin-bottom:5px">Event-এর নাম</p>
+          <input id="mtEvMName" class="inp" placeholder="যেমন: SSC Model Test 2026" style="width:100%"></div>
+        <div><p style="font-size:.72rem;font-weight:700;color:#475569;margin-bottom:5px">ক্লাস</p>
+          <select id="mtEvMCl" class="inp dynC" style="width:100%" onchange="loadMTEvModalBatches()"></select></div>
+        <div><p style="font-size:.72rem;font-weight:700;color:#475569;margin-bottom:6px">ব্যাচ</p>
+          <div id="mtEvMBatchArea" style="display:flex;flex-wrap:wrap;gap:7px;padding:10px;border:1.5px solid #e0e7ff;border-radius:11px;background:#f8faff;min-height:40px">
+            <p style="font-size:.72rem;color:var(--muted)">ক্লাস সিলেক্ট করলে ব্যাচ দেখাবে</p>
+          </div>
+        </div>
+        <div><p style="font-size:.72rem;font-weight:700;color:#475569;margin-bottom:5px">Default ফি (টাকা) — flexible, পরে বদলানো যাবে</p>
+          <input id="mtEvMFee" type="number" class="inp" placeholder="০" value="0" style="width:100%"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+          <button onclick="saveMTEvent()" class="btn btn-p">💾 সেভ করুন</button>
+          <button onclick="closeMTEvModal()" class="btn btn-ghost">বাতিল</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEE MODAL for individual participant -->
+  <div id="mtEvFeeModal" style="display:none;position:fixed;inset:0;z-index:9996;background:rgba(0,0,0,.45);align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeMTEvFeeModal()">
+    <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:420px;padding:20px 18px 32px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <h2 id="mtEvFeeModalTitle" style="font-size:.9rem;font-weight:700;color:var(--ink2)">💰 ফি নিন</h2>
+        <button onclick="closeMTEvFeeModal()" style="background:#f1f5f9;border:none;width:28px;height:28px;border-radius:99px;cursor:pointer;font-weight:700">✕</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div><p style="font-size:.72rem;font-weight:700;color:#475569;margin-bottom:5px">পরিমাণ (টাকা)</p>
+          <input id="mtEvFeeAmt" type="number" class="inp" style="width:100%"></div>
+        <div><p style="font-size:.72rem;font-weight:700;color:#475569;margin-bottom:5px">তারিখ</p>
+          <input id="mtEvFeeDate" type="date" class="inp" style="width:100%"></div>
+        <div><p style="font-size:.72rem;font-weight:700;color:#475569;margin-bottom:5px">নোট (ঐচ্ছিক)</p>
+          <input id="mtEvFeeNote" class="inp" placeholder="যেকোনো নোট..." style="width:100%"></div>
+        <button onclick="saveMTEvFee()" class="btn btn-p">💰 সেভ করুন</button>
+      </div>
+    </div>
+  </div>
   <div class="card" style="padding:18px"><h2 class="stitle">📝 নতুন পরীক্ষা তৈরি</h2>
   <div style="display:flex;flex-direction:column;gap:10px;max-width:580px">
     <input type="text" id="mtName" placeholder="পরীক্ষার নাম" class="inp">
@@ -559,6 +691,13 @@ textarea.inp{height:auto}
         <button onclick="addMTSubject()" style="background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;border:none;padding:0 14px;border-radius:11px;font-size:1.1rem;cursor:pointer;font-weight:700">+</button>
       </div>
       <div id="mtSubjects" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
+    <!-- Event Link -->
+    <div>
+      <p style="font-size:.72rem;font-weight:700;color:var(--ink2);margin-bottom:6px">🏆 Model Test Event (ঐচ্ছিক)</p>
+      <select id="mtEventLink" class="inp" style="width:100%">
+        <option value="">-- যুক্ত না করলে খালি রাখুন --</option>
+      </select>
     </div>
     <button onclick="createModelTest()" class="btn btn-p">📝 পরীক্ষা তৈরি করুন</button>
   </div></div>
@@ -1762,7 +1901,7 @@ g('m-more').classList.remove('on');
     try{setNotifTarget('all');}catch(e){}
     try{renderNotifHistory();}catch(e){}
     try{var ntcl=g('ntCl');if(ntcl){var sc=g('sCl');if(sc)ntcl.innerHTML=sc.innerHTML;}}catch(e){}
-  }if(t==='exam')loadExams();if(t==='modeltest'){loadModelTests();var _now=getBDNow();if(g('mtMo')&&!g('mtMo').value)g('mtMo').value=_now.getFullYear()+'-'+String(_now.getMonth()+1).padStart(2,'0');setMTType('Daily');setMTGroup('Personal');}if(t==='routine'){syncRtDrops();loadClassDaysSettings();loadRoutineNew();}if(t==='lectureplan')syncLPDrops();
+  }if(t==='exam')loadExams();if(t==='modeltest'){loadModelTests();var _now=getBDNow();if(g('mtMo')&&!g('mtMo').value)g('mtMo').value=_now.getFullYear()+'-'+String(_now.getMonth()+1).padStart(2,'0');setMTType('Daily');setMTGroup('Personal');syncDrops();if(g('mtEvCl'))filterBatch(null,'mtEvCl',null);}if(t==='routine'){syncRtDrops();loadClassDaysSettings();loadRoutineNew();}if(t==='lectureplan')syncLPDrops();
 }
 async function tTab(id){['ta','tp','te','tr'].forEach(function(x){hide(x);var b=g('tb-'+x);if(b)b.classList.remove('on');});show(id);var b=g('tb-'+id);if(b)b.classList.add('on');if(id==='tp')loadTP();if(id==='te')loadTExams();if(id==='tr')loadTR();}
 
@@ -1985,7 +2124,392 @@ async function printExamResult(){
   w.onload=function(){w.focus();w.print();};
 }
 
-/* MODEL TEST — new functions */
+/* ═══════════════════════════════════
+   MODEL TEST EVENT SYSTEM
+═══════════════════════════════════ */
+var selMTEventId=null,selMTEventData=null,_mtEvBatches=[],_mtEvFeeStudentId=null,_mtEvFeeParticipantId=null;
+
+function toggleMTEvent(){
+  var body=g('mtEventBody'),btn=g('mtEventToggle');
+  if(!body||!btn)return;
+  if(body.style.display==='none'){body.style.display='';btn.innerText='▲ লুকান';loadMTEvents();}
+  else{body.style.display='none';btn.innerText='▼ দেখান';}
+}
+
+function switchMTEvTab(tab){
+  ['fee','exams','result'].forEach(function(t){
+    var pane=g('mtEvPane-'+t),btn=g('mtEvTab-'+t);
+    if(pane)pane.style.display=t===tab?'':'none';
+    if(btn){btn.className=t===tab?'btn btn-p btn-sm':'btn btn-ghost btn-sm';btn.style.flex='1';}
+  });
+  if(tab==='fee')loadMTEvParticipants();
+  if(tab==='exams')loadMTEvExams();
+  if(tab==='result')loadMTEventResult();
+}
+
+/* ── Event List ── */
+async function loadMTEvents(){
+  var cls=gv('mtEvCl');
+  var c=g('mtEventList');
+  if(!cls||cls==='All'){c.innerHTML='<p style="text-align:center;color:var(--muted);padding:16px;font-size:.8rem">ক্লাস সিলেক্ট করুন</p>';return;}
+  c.innerHTML='<div class="sk" style="height:40px"></div>';
+  var r=await SB.from('model_test_events').select('*').eq('class',cls).order('created_at',{ascending:false});
+  if(!r.data||!r.data.length){c.innerHTML='<p style="text-align:center;color:var(--muted);padding:16px;font-size:.8rem">কোনো Event নেই</p>';return;}
+  c.innerHTML=r.data.map(function(ev){
+    var batches=parseMTBatches(ev.batch);
+    return'<div style="background:#f8faff;border:1.5px solid #e0e7ff;border-radius:11px;padding:11px 13px;cursor:pointer;transition:all .13s" onclick="selectMTEvent('+ev.id+')" onmouseover="this.style.borderColor=\'var(--g1)\'" onmouseout="this.style.borderColor=\'#e0e7ff\'">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center">'
+      +'<p style="font-weight:700;font-size:.82rem">'+e(ev.event_name)+'</p>'
+      +'<span style="background:#eff6ff;color:var(--g1);padding:2px 8px;border-radius:5px;font-size:.6rem;font-weight:700">'+e(ev.class)+'</span>'
+      +'</div>'
+      +'<p style="font-size:.62rem;color:var(--muted);margin-top:3px">'+batches.join(', ')+(ev.fee_amount>0?' | ফি: '+ev.fee_amount+' টাকা':'')+'</p>'
+      +'</div>';
+  }).join('');
+}
+
+async function selectMTEvent(id){
+  selMTEventId=id;
+  var r=await SB.from('model_test_events').select('*').eq('id',id).single();
+  if(!r.data)return;
+  selMTEventData=r.data;
+  var batches=parseMTBatches(r.data.batch);
+  g('mtEvName').innerText=r.data.event_name;
+  g('mtEvInfo').innerText=e(r.data.class)+' | '+batches.join(', ')+(r.data.fee_amount>0?' | Default ফি: '+r.data.fee_amount+' টাকা':'');
+  g('mtEventDetail').style.display='';
+  // Reset batch dropdown in result tab
+  var bsel=g('mtEvResBatch');
+  if(bsel){bsel.innerHTML='<option value="">সব ব্যাচ</option>'+batches.map(function(b){return'<option value="'+e(b)+'">'+e(b)+'</option>';}).join('');}
+  switchMTEvTab('fee');
+}
+
+/* ── Create/Edit Event Modal ── */
+function openCreateMTEvent(){
+  selMTEvEditId=null;
+  g('mtEvModalTitle').innerText='🏆 নতুন Model Test Event';
+  g('mtEvMName').value='';
+  g('mtEvMFee').value='0';
+  _mtEvBatches=[];
+  g('mtEvMBatchArea').innerHTML='<p style="font-size:.72rem;color:var(--muted)">ক্লাস সিলেক্ট করলে ব্যাচ দেখাবে</p>';
+  g('mtEvModal').style.display='flex';
+}
+var selMTEvEditId=null;
+async function editMTEvent(){
+  if(!selMTEventData)return;
+  selMTEvEditId=selMTEventId;
+  g('mtEvModalTitle').innerText='✏️ Event এডিট';
+  g('mtEvMName').value=selMTEventData.event_name||'';
+  g('mtEvMFee').value=selMTEventData.fee_amount||0;
+  _mtEvBatches=parseMTBatches(selMTEventData.batch);
+  await loadMTEvModalBatches();
+  g('mtEvModal').style.display='flex';
+}
+function closeMTEvModal(){g('mtEvModal').style.display='none';}
+
+async function loadMTEvModalBatches(){
+  var cls=gv('mtEvMCl');
+  var area=g('mtEvMBatchArea');
+  if(!cls||cls==='All'){area.innerHTML='<p style="font-size:.72rem;color:var(--muted)">ক্লাস সিলেক্ট করলে ব্যাচ দেখাবে</p>';_mtEvBatches=[];return;}
+  var r=await SB.from('students').select('batch').eq('class',cls).not('batch','is',null);
+  var batches=[...new Set((r.data||[]).map(function(s){return s.batch;}).filter(Boolean))].sort();
+  area.innerHTML=batches.map(function(b){
+    var checked=_mtEvBatches.indexOf(b)!==-1;
+    return'<label style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;border:1.5px solid '+(checked?'var(--g1)':'#e2e8f0')+';cursor:pointer;font-size:.72rem;font-weight:600;background:'+(checked?'#eff6ff':'#fff')+';">'
+      +'<input type="checkbox" value="'+e(b)+'" '+(checked?'checked':'')+' onchange="toggleMTEvBatch(\''+e(b)+'\',this)" style="accent-color:var(--g1);width:14px;height:14px">'
+      +e(b)+'</label>';
+  }).join('')||'<p style="font-size:.72rem;color:var(--muted)">কোনো ব্যাচ নেই</p>';
+}
+function toggleMTEvBatch(b,cb){
+  var idx=_mtEvBatches.indexOf(b);
+  var lbl=cb.closest('label');
+  if(cb.checked){if(idx===-1)_mtEvBatches.push(b);if(lbl){lbl.style.background='#eff6ff';lbl.style.borderColor='var(--g1)';}}
+  else{if(idx!==-1)_mtEvBatches.splice(idx,1);if(lbl){lbl.style.background='#fff';lbl.style.borderColor='#e2e8f0';}}
+}
+
+async function saveMTEvent(){
+  var name=g('mtEvMName').value.trim();
+  var cls=gv('mtEvMCl');
+  var fee=parseFloat(g('mtEvMFee').value)||0;
+  if(!name){alert('Event-এর নাম দিন!');return;}
+  if(!cls||cls==='All'){alert('ক্লাস সিলেক্ট করুন!');return;}
+  if(!_mtEvBatches.length){alert('ব্যাচ সিলেক্ট করুন!');return;}
+  var data={event_name:name,class:cls,batch:_mtEvBatches,fee_amount:fee};
+  var r;
+  if(selMTEvEditId){
+    r=await dbWrite('model_test_events','update',data,[{column:'id',value:selMTEvEditId}]);
+  }else{
+    r=await dbWrite('model_test_events','insert',[data]);
+  }
+  if(r&&r.error){alert('❌ '+r.error.message);return;}
+  closeMTEvModal();
+  showToast('✅ সেভ হয়েছে!');
+  loadMTEvents();
+  if(selMTEvEditId&&selMTEventId===selMTEvEditId)selectMTEvent(selMTEvEditId);
+}
+
+/* ── Participants & Fee ── */
+async function loadMTEvParticipants(){
+  if(!selMTEventId)return;
+  var c=g('mtEvParticipants');
+  var stats=g('mtEvStats');
+  c.innerHTML='<div class="sk" style="height:40px"></div>';
+
+  // এই event-এর সব পরীক্ষার results থেকে participant বের করি
+  var examsR=await SB.from('model_tests').select('id').eq('event_id',selMTEventId);
+  var examIds=(examsR.data||[]).map(function(e){return e.id;});
+
+  var allParticipantIds=[];
+  if(examIds.length){
+    var resR=await SB.from('model_test_results').select('student_id').in('model_test_id',examIds).neq('grade','Absent').limit(9999);
+    allParticipantIds=[...new Set((resR.data||[]).map(function(r){return r.student_id;}))];
+  }
+
+  // Manually added participants
+  var manualR=await SB.from('mt_event_participants').select('*').eq('event_id',selMTEventId).limit(9999);
+  var manualMap={};
+  (manualR.data||[]).forEach(function(p){manualMap[p.student_id]=p;});
+
+  // Manual-এ আছে কিন্তু exam-এ নেই এমনও participant
+  (manualR.data||[]).forEach(function(p){
+    if(allParticipantIds.indexOf(p.student_id)===-1)allParticipantIds.push(p.student_id);
+  });
+
+  if(!allParticipantIds.length){
+    c.innerHTML='<p style="text-align:center;color:var(--muted);padding:20px;font-size:.8rem">এখনো কোনো participant নেই। পরীক্ষায় নম্বর দিলে automatically যোগ হবে।</p>';
+    if(stats)stats.innerHTML='';
+    return;
+  }
+
+  // Student info লোড
+  var stuR=await SB.from('students').select('id,name,roll_no,batch,class').in('id',allParticipantIds).order('roll_no');
+  var stuMap={};(stuR.data||[]).forEach(function(s){stuMap[s.id]=s;});
+
+  var paid=0,due=0;
+  allParticipantIds.forEach(function(sid){var p=manualMap[sid];if(p&&p.fee_paid)paid++;else due++;});
+
+  if(stats){stats.innerHTML=
+    '<span style="background:#f0fdf4;color:#15803d;padding:5px 12px;border-radius:8px;font-size:.7rem;font-weight:700">✅ পরিশোধ: '+paid+'</span>'
+    +'<span style="background:#fff1f2;color:#be123c;padding:5px 12px;border-radius:8px;font-size:.7rem;font-weight:700">⚠️ বকেয়া: '+due+'</span>'
+    +'<span style="background:#eff6ff;color:var(--g1);padding:5px 12px;border-radius:8px;font-size:.7rem;font-weight:700">👥 মোট: '+allParticipantIds.length+'</span>';
+  }
+
+  window._mtEvAllParticipants=allParticipantIds.map(function(sid){
+    var stu=stuMap[sid]||{id:sid,name:'Unknown',roll_no:'?',batch:'?'};
+    var p=manualMap[sid];
+    return{sid:sid,name:stu.name,roll:stu.roll_no,batch:stu.batch||'',paid:p&&p.fee_paid?true:false,feeAmt:p?p.fee_amount:0,feeDate:p?p.fee_date:'',pid:p?p.id:null};
+  });
+  renderMTEvParticipants(window._mtEvAllParticipants);
+}
+
+function renderMTEvParticipants(list){
+  var c=g('mtEvParticipants');
+  if(!list||!list.length){c.innerHTML='<p style="text-align:center;color:var(--muted);padding:20px;font-size:.8rem">কেউ নেই</p>';return;}
+  c.innerHTML=list.map(function(p){
+    return'<div style="background:#fff;border:1.5px solid '+(p.paid?'#bbf7d0':'#fecdd3')+';border-radius:10px;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px" data-sid="'+p.sid+'" data-name="'+e(p.name)+'" data-roll="'+p.roll+'">'
+      +'<div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">'
+      +'<input type="checkbox" class="mtev-cb" data-sid="'+p.sid+'" style="accent-color:var(--g1);width:14px;height:14px;flex-shrink:0">'
+      +'<div style="min-width:0">'
+      +'<p style="font-weight:700;font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+e(p.name)+'</p>'
+      +'<p style="font-size:.6rem;color:var(--muted)">রোল: '+p.roll+' | '+e(p.batch)+(p.paid&&p.feeAmt?' | '+p.feeAmt+' টাকা':p.paid?' | পরিশোধ':'')+'</p>'
+      +'</div></div>'
+      +'<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">'
+      +(p.paid
+        ?'<span style="background:#f0fdf4;color:#15803d;padding:3px 8px;border-radius:6px;font-size:.62rem;font-weight:700">✅ পরিশোধ</span>'
+          +'<button onclick="undoMTEvFee('+p.pid+','+p.sid+')" style="background:#fff1f2;color:#be123c;border:none;padding:3px 7px;border-radius:6px;font-size:.6rem;font-weight:700;cursor:pointer">↩</button>'
+        :'<span style="background:#fff1f2;color:#be123c;padding:3px 8px;border-radius:6px;font-size:.62rem;font-weight:700">⚠️ বকেয়া</span>'
+          +'<button onclick="openMTEvFeeModal('+p.sid+')" style="background:var(--g1);color:#fff;border:none;padding:4px 9px;border-radius:7px;font-size:.65rem;font-weight:700;cursor:pointer">💰 ফি নিন</button>'
+      )
+      +'</div></div>';
+  }).join('');
+}
+
+function filterMTParticipants(){
+  var q=(gv('mtEvSearch')||'').toLowerCase().trim();
+  if(!window._mtEvAllParticipants)return;
+  var filtered=!q?window._mtEvAllParticipants:window._mtEvAllParticipants.filter(function(p){
+    return p.name.toLowerCase().includes(q)||String(p.roll)===q;
+  });
+  renderMTEvParticipants(filtered);
+}
+
+function selectAllMTParticipants(val){
+  g('mtEvParticipants').querySelectorAll('.mtev-cb').forEach(function(cb){cb.checked=val;});
+}
+
+async function addManualMTParticipant(){
+  if(!selMTEventId||!selMTEventData)return;
+  var roll=prompt('রোল নম্বর দিন:');
+  if(!roll)return;
+  var r=await SB.from('students').select('*').eq('class',selMTEventData.class).eq('roll_no',parseInt(roll,10)).single();
+  if(!r.data){alert('এই ক্লাসে এই রোলে কোনো student নেই!');return;}
+  // already participant?
+  var existing=window._mtEvAllParticipants&&window._mtEvAllParticipants.find(function(p){return p.sid===r.data.id;});
+  if(existing){alert(r.data.name+' আগে থেকেই participant!');return;}
+  var wr=await dbWrite('mt_event_participants','insert',[{event_id:selMTEventId,student_id:r.data.id,fee_paid:false,fee_amount:selMTEventData.fee_amount||0}]);
+  if(wr&&wr.error){alert('❌ '+wr.error.message);return;}
+  showToast('✅ '+r.data.name+' যোগ হয়েছে!');
+  loadMTEvParticipants();
+}
+
+/* ── Fee Modal ── */
+function openMTEvFeeModal(sid){
+  _mtEvFeeStudentId=sid;
+  var stu=window._mtEvAllParticipants&&window._mtEvAllParticipants.find(function(p){return p.sid===sid;});
+  g('mtEvFeeModalTitle').innerText='💰 ফি নিন — '+(stu?e(stu.name):'');
+  g('mtEvFeeAmt').value=selMTEventData?selMTEventData.fee_amount||'':'';
+  g('mtEvFeeDate').value=getBDDate();
+  g('mtEvFeeNote').value='';
+  g('mtEvFeeModal').style.display='flex';
+}
+function closeMTEvFeeModal(){g('mtEvFeeModal').style.display='none';}
+
+async function saveMTEvFee(){
+  if(!selMTEventId||!_mtEvFeeStudentId)return;
+  var amt=parseFloat(g('mtEvFeeAmt').value)||0;
+  var date=g('mtEvFeeDate').value;
+  var note=g('mtEvFeeNote').value.trim();
+  // check if participant row exists
+  var existR=await SB.from('mt_event_participants').select('id').eq('event_id',selMTEventId).eq('student_id',_mtEvFeeStudentId).single();
+  var r;
+  if(existR.data){
+    r=await dbWrite('mt_event_participants','update',{fee_paid:true,fee_amount:amt,fee_date:date,note:note},[{column:'id',value:existR.data.id}]);
+  }else{
+    r=await dbWrite('mt_event_participants','insert',[{event_id:selMTEventId,student_id:_mtEvFeeStudentId,fee_paid:true,fee_amount:amt,fee_date:date,note:note}]);
+  }
+  if(r&&r.error){alert('❌ '+r.error.message);return;}
+  closeMTEvFeeModal();
+  showToast('✅ ফি সেভ হয়েছে!');
+  loadMTEvParticipants();
+}
+
+async function undoMTEvFee(pid,sid){
+  if(!confirm('ফি payment বাতিল করবেন?'))return;
+  if(pid){
+    await dbWrite('mt_event_participants','update',{fee_paid:false,fee_amount:0,fee_date:null,note:''},[{column:'id',value:pid}]);
+  }
+  showToast('✅ বাতিল হয়েছে!');
+  loadMTEvParticipants();
+}
+
+/* ── Exams Tab ── */
+async function loadMTEvExams(){
+  if(!selMTEventId)return;
+  var c=g('mtEvExamList');
+  c.innerHTML='<div class="sk" style="height:40px"></div>';
+  var r=await SB.from('model_tests').select('*').eq('event_id',selMTEventId).order('test_date');
+  if(!r.data||!r.data.length){c.innerHTML='<p style="text-align:center;color:var(--muted);padding:16px;font-size:.8rem">এখনো কোনো পরীক্ষা যোগ হয়নি</p>';return;}
+  c.innerHTML=r.data.map(function(mt){
+    var subs=mt.subjects||[];var tm=subs.reduce(function(a,s){return a+s.max;},0);
+    var badgeStyle=getMTTypeBadgeStyle(mt.test_type||'Daily');
+    return'<div style="background:#f8faff;border:1.5px solid #e0e7ff;border-radius:10px;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px">'
+      +'<div><p style="font-weight:700;font-size:.78rem">'+e(mt.test_name)+'</p>'
+      +'<p style="font-size:.6rem;color:var(--muted)">'+fd(mt.test_date)+' | মোট: '+tm+'</p></div>'
+      +'<span style="'+badgeStyle+';padding:2px 7px;border-radius:5px;font-size:.58rem;font-weight:700;flex-shrink:0">'+e(mt.test_type||'Daily')+'</span>'
+      +'</div>';
+  }).join('');
+}
+
+/* ── Combined Result ── */
+async function loadMTEventResult(){
+  if(!selMTEventId)return;
+  var batchFilter=gv('mtEvResBatch')||'';
+  var c=g('mtEvResult');
+  c.innerHTML='<div class="sk" style="height:60px"></div>';
+  hide('mtEvPrintBtn');
+
+  // এই event-এর সব পরীক্ষা
+  var examsR=await SB.from('model_tests').select('*').eq('event_id',selMTEventId).order('test_date');
+  var exams=examsR.data||[];
+  if(!exams.length){c.innerHTML='<p style="text-align:center;color:var(--muted);padding:20px">কোনো পরীক্ষা নেই</p>';return;}
+
+  var examIds=exams.map(function(e){return e.id;});
+  var testTotals={};exams.forEach(function(t){var subs=t.subjects||[];testTotals[t.id]=subs.reduce(function(a,s){return a+s.max;},0);});
+  var grandMax=exams.reduce(function(a,t){return a+testTotals[t.id];},0);
+
+  // Results
+  var resR=await SB.from('model_test_results').select('*').in('model_test_id',examIds).limit(9999);
+
+  // Participants
+  var partR=await SB.from('mt_event_participants').select('*').eq('event_id',selMTEventId).limit(9999);
+  var partMap={};(partR.data||[]).forEach(function(p){partMap[p.student_id]=p;});
+
+  // Unique participants (exam-এ present + manually added)
+  var partIds=[...new Set((resR.data||[]).filter(function(r){return r.grade!=='Absent';}).map(function(r){return r.student_id;}))];
+  Object.keys(partMap).forEach(function(sid){if(partIds.indexOf(parseInt(sid,10))===-1)partIds.push(parseInt(sid,10));});
+
+  if(!partIds.length){c.innerHTML='<p style="text-align:center;color:var(--muted);padding:20px">কোনো participant নেই</p>';return;}
+
+  // Students
+  var stuQ=SB.from('students').select('id,name,roll_no,batch').in('id',partIds);
+  if(batchFilter)stuQ=stuQ.eq('batch',batchFilter);
+  var stuR=await stuQ.order('roll_no');
+  var students=stuR.data||[];
+
+  if(!students.length){c.innerHTML='<p style="text-align:center;color:var(--muted);padding:20px">এই ব্যাচে কোনো participant নেই</p>';return;}
+
+  // Build result map
+  var stuMap={};
+  students.forEach(function(s){stuMap[s.id]={name:s.name,roll:s.roll_no,batch:s.batch||'',total:0,tests:{},paid:partMap[s.id]&&partMap[s.id].fee_paid};});
+  (resR.data||[]).forEach(function(res){
+    if(stuMap[res.student_id]){
+      if(res.grade!=='Absent'){stuMap[res.student_id].total+=res.total_marks||0;}
+      stuMap[res.student_id].tests[res.model_test_id]={total:res.total_marks,grade:res.grade};
+    }
+  });
+
+  var rows=Object.values(stuMap).sort(function(a,b){return b.total-a.total;});
+  rows.forEach(function(r,i){r.merit=i+1;r.pct=grandMax>0?Math.round((r.total/grandMax)*100):0;});
+
+  var html='<p style="font-size:.72rem;color:var(--muted);margin-bottom:10px">'+exams.length+'টি পরীক্ষা | সর্বোচ্চ: '+grandMax+' | মোট participant: '+rows.length+' জন</p>';
+  html+='<div style="overflow-x:auto;border-radius:12px;border:1px solid #e0e7ff"><table class="rt"><thead><tr>';
+  html+='<th>মেরিট</th><th style="text-align:left">নাম</th><th>রোল</th><th>ব্যাচ</th><th>ফি</th>';
+  exams.forEach(function(t){
+    var d=new Date(t.test_date);var dl=d.getDate()+'/'+(d.getMonth()+1);
+    html+='<th title="'+e(t.test_name)+'">'+dl+'<br><span style="font-size:.55rem;font-weight:400">/'+testTotals[t.id]+'</span></th>';
+  });
+  html+='<th>মোট<br>/'+grandMax+'</th><th>%</th><th>গ্রেড</th></tr></thead><tbody>';
+  rows.forEach(function(r){
+    var mc=r.merit===1?'#fef9c3':r.merit===2?'#e0f2fe':r.merit===3?'#fce7f3':'';
+    var mi=r.merit===1?'🥇':r.merit===2?'🥈':r.merit===3?'🥉':r.merit;
+    var gr=calcGrade(r.pct);
+    html+='<tr style="background:'+mc+'">';
+    html+='<td style="font-weight:700">'+mi+'</td>';
+    html+='<td style="text-align:left;font-weight:600;font-size:.75rem">'+e(r.name)+'</td>';
+    html+='<td>'+r.roll+'</td>';
+    html+='<td><span style="background:#eff6ff;color:var(--g1);padding:1px 5px;border-radius:4px;font-size:.57rem;font-weight:700">'+e(r.batch)+'</span></td>';
+    html+='<td>'+(r.paid?'<span style="color:#15803d;font-size:.65rem;font-weight:700">✅</span>':'<span style="color:#be123c;font-size:.65rem;font-weight:700">⚠️</span>')+'</td>';
+    exams.forEach(function(t){
+      var tr=r.tests[t.id];
+      if(!tr){html+='<td style="color:#94a3b8;font-size:.6rem">—</td>';}
+      else if(tr.grade==='Absent'){html+='<td style="color:#f43f5e;font-size:.6rem;font-style:italic">Abs</td>';}
+      else{html+='<td style="font-weight:600">'+tr.total+'</td>';}
+    });
+    html+='<td style="font-weight:800;color:var(--g1)">'+r.total+'</td>';
+    html+='<td style="font-weight:700">'+r.pct+'%</td>';
+    html+='<td><span style="color:'+gr.color+'">'+gr.grade+'</span></td></tr>';
+  });
+  html+='</tbody></table></div>';
+  c.innerHTML=html;
+  window._mtEvResultData={rows:rows,exams:exams,testTotals:testTotals,grandMax:grandMax};
+  show('mtEvPrintBtn');
+}
+
+function printMTEventResult(){
+  if(!window._mtEvResultData||!selMTEventData)return;
+  var d=window._mtEvResultData;
+  var html='<div class="print-sheet"><h1>UBIQUE</h1><div class="subtitle">'+e(selMTEventData.event_name)+' — Combined Result | '+e(selMTEventData.class)+'</div>';
+  html+='<table><thead><tr><th>মেরিট</th><th style="text-align:left">নাম</th><th>রোল</th><th>ব্যাচ</th><th>ফি</th>';
+  d.exams.forEach(function(t){var dt=new Date(t.test_date);html+='<th>'+dt.getDate()+'/'+(dt.getMonth()+1)+'<br>('+d.testTotals[t.id]+')</th>';});
+  html+='<th>মোট/'+d.grandMax+'</th><th>%</th><th>গ্রেড</th></tr></thead><tbody>';
+  d.rows.forEach(function(r){
+    var gr=calcGrade(r.pct);var mc=r.merit<=3?' class="merit-'+r.merit+'"':'';
+    html+='<tr'+mc+'><td>'+r.merit+'</td><td style="text-align:left">'+e(r.name)+'</td><td>'+r.roll+'</td><td>'+e(r.batch)+'</td>';
+    html+='<td>'+(r.paid?'✅':'⚠️')+'</td>';
+    d.exams.forEach(function(t){var tr=r.tests[t.id];html+='<td>'+(tr&&tr.grade!=='Absent'?tr.total:tr?'Abs':'—')+'</td>';});
+    html+='<td style="font-weight:700">'+r.total+'</td><td>'+r.pct+'%</td><td>'+gr.grade+'</td></tr>';
+  });
+  html+='</tbody></table></div>';
+  doPrint(html);
+}
 var _mtType='Daily',_mtGroup='Personal',_mtBatches=[];
 function setMTType(t){_mtType=t;document.querySelectorAll('.mtt-btn').forEach(function(b){b.className='btn btn-ghost btn-sm mtt-btn';b.style.flex='1';});var btn=g('mtt-'+t);if(btn){btn.className='btn btn-p btn-sm mtt-btn';btn.style.flex='1';}}
 function setMTGroup(gr){_mtGroup=gr;document.querySelectorAll('.mtg-btn').forEach(function(b){b.className='btn btn-ghost btn-sm mtg-btn';b.style.flex='1';});var btn=g('mtg-'+gr);if(btn){btn.className='btn btn-p btn-sm mtg-btn';btn.style.flex='1';}}
@@ -2029,6 +2553,7 @@ async function filterMTBatches(){
       +'<input type="checkbox" value="'+e(b)+'" onchange="toggleMTBatch(\''+e(b)+'\',this)" style="accent-color:var(--g1);width:14px;height:14px">'
       +e(b)+'</label>';
   }).join(''):'<p style="font-size:.72rem;color:var(--muted)">এই ক্লাসে কোনো ব্যাচ নেই</p>';
+  loadMTEventDropdown();
 }
 function toggleMTBatch(b,cb){
   var idx=_mtBatches.indexOf(b);
@@ -2076,28 +2601,35 @@ function addMTSubject(){var name=gv('mtSubName').trim(),max=parseInt(gv('mtSubMa
 function removeMTSub(i){mtSubjectsList.splice(i,1);renderMTSubs();}
 async function renderMTSubs(){g('mtSubjects').innerHTML=mtSubjectsList.map(function(s,i){return'<span class="sub-chip">'+e(s.name)+' ('+s.max+') <button onclick="removeMTSub('+i+')">✕</button></span>';}).join('');}
 
+async function loadMTEventDropdown(){
+  var cls=gv('mtCl');
+  var sel=g('mtEventLink');
+  if(!sel)return;
+  sel.innerHTML='<option value="">-- যুক্ত না করলে খালি রাখুন --</option>';
+  if(!cls||cls==='All')return;
+  var r=await SB.from('model_test_events').select('id,event_name').eq('class',cls).order('created_at',{ascending:false});
+  (r.data||[]).forEach(function(ev){
+    var opt=document.createElement('option');
+    opt.value=ev.id;opt.innerText=ev.event_name;
+    sel.appendChild(opt);
+  });
+}
+
 async function createModelTest(){
   var name=gv('mtName').trim();
   if(!name){alert('নাম দিন!');return;}
   if(!mtSubjectsList.length){alert('বিষয় যোগ করুন!');return;}
   if(!_mtBatches.length){alert('কমপক্ষে একটি ব্যাচ সিলেক্ট করুন!');return;}
-  var r=await dbWrite('model_tests','insert',[{
-    test_name:name,
-    test_date:gv('mtDate'),
-    class:gv('mtCl'),
-    batch:_mtBatches,
-    subjects:mtSubjectsList,
-    test_type:_mtType,
-    test_group:_mtGroup
-  }]);
+  var eventId=gv('mtEventLink')||null;
+  var data={test_name:name,test_date:gv('mtDate'),class:gv('mtCl'),batch:_mtBatches,subjects:mtSubjectsList,test_type:_mtType,test_group:_mtGroup};
+  if(eventId)data.event_id=parseInt(eventId,10);
+  var r=await dbWrite('model_tests','insert',[data]);
   if(r.error){alert('❌ '+r.error.message);return;}
   alert('✅ সেভ হয়েছে!');
-  g('mtName').value='';
-  mtSubjectsList=[];_mtBatches=[];
+  g('mtName').value='';mtSubjectsList=[];_mtBatches=[];
   renderMTSubs();
-  // reset checkboxes
   var area=g('mtBatchCheckboxes');
-  if(area){area.querySelectorAll('input[type=checkbox]').forEach(function(cb){cb.checked=false;var lbl=cb.closest('label');if(lbl){lbl.style.background='#fff';lbl.style.borderColor='#e2e8f0';lbl.style.color='';};});}
+  if(area){area.querySelectorAll('input[type=checkbox]').forEach(function(cb){cb.checked=false;var lbl=cb.closest('label');if(lbl){lbl.style.background='#fff';lbl.style.borderColor='#e2e8f0';lbl.style.color='';}});}
   loadModelTests();
 }
 
@@ -2315,6 +2847,18 @@ async function openEditMT(){
   var gb=g('mteg-'+_mtEditGroup);if(gb){gb.className='btn btn-p btn-sm mteg-btn';gb.style.flex='1';}
   // Render batch checkboxes
   await renderMTEditBatchCheckboxes(selBatches);
+  // Load event dropdown
+  var evSel=g('mtEditEventLink');
+  if(evSel){
+    evSel.innerHTML='<option value="">-- যুক্ত না করলে খালি রাখুন --</option>';
+    var evR=await SB.from('model_test_events').select('id,event_name').eq('class',mt.class).order('created_at',{ascending:false});
+    (evR.data||[]).forEach(function(ev){
+      var opt=document.createElement('option');
+      opt.value=ev.id;opt.innerText=ev.event_name;
+      if(mt.event_id&&mt.event_id===ev.id)opt.selected=true;
+      evSel.appendChild(opt);
+    });
+  }
   g('mtEditModal').style.display='flex';
 }
 
@@ -2326,10 +2870,9 @@ async function saveMTEdit(){
   var date=g('mtEditDate').value;
   if(!name){alert('নাম দিন!');return;}
   if(!_mtEditBatches.length){alert('ব্যাচ যোগ করুন!');return;}
-  var r=await dbWrite('model_tests','update',
-    {test_name:name,test_date:date,test_type:_mtEditType,test_group:_mtEditGroup,batch:_mtEditBatches},
-    [{column:'id',value:selMTId}]
-  );
+  var eventId=gv('mtEditEventLink')||null;
+  var updateData={test_name:name,test_date:date,test_type:_mtEditType,test_group:_mtEditGroup,batch:_mtEditBatches,event_id:eventId?parseInt(eventId,10):null};
+  var r=await dbWrite('model_tests','update',updateData,[{column:'id',value:selMTId}]);
   if(r.error){alert('❌ '+r.error.message);return;}
   showToast('✅ সেভ হয়েছে!');
   closeMTEdit();
