@@ -568,7 +568,7 @@ textarea.inp{height:auto}
             <span style="font-size:.75rem;font-weight:700;color:var(--ink2)">Participants</span>
             <button onclick="selectAllMTParticipants(true)" style="background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;padding:3px 9px;border-radius:7px;font-size:.65rem;font-weight:700;cursor:pointer">✅ সব সিলেক্ট</button>
             <button onclick="selectAllMTParticipants(false)" style="background:#fff1f2;color:#be123c;border:1px solid #fecdd3;padding:3px 9px;border-radius:7px;font-size:.65rem;font-weight:700;cursor:pointer">❌ সব বাদ</button>
-            <button onclick="addManualMTParticipant()" style="background:#eff6ff;color:var(--g1);border:1px solid #c7d2fe;padding:3px 9px;border-radius:7px;font-size:.65rem;font-weight:700;cursor:pointer">➕ Manually যোগ</button>
+            <button onclick="openMTParticipantPicker()" style="background:#eff6ff;color:var(--g1);border:1px solid #c7d2fe;padding:3px 9px;border-radius:7px;font-size:.65rem;font-weight:700;cursor:pointer">👥 Student সিলেক্ট করুন</button>
           </div>
           <!-- Search -->
           <input type="text" id="mtEvSearch" oninput="filterMTParticipants()" placeholder="🔍 নাম বা রোল..." class="inp" style="margin-bottom:10px">
@@ -627,6 +627,23 @@ textarea.inp{height:auto}
           <button onclick="closeMTEvModal()" class="btn btn-ghost">বাতিল</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- PARTICIPANT PICKER MODAL -->
+  <div id="mtEvPickerModal" style="display:none;position:fixed;inset:0;z-index:9995;background:rgba(0,0,0,.45);align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeMTEvPicker()">
+    <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:500px;padding:18px 18px 32px;max-height:85vh;display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h2 style="font-size:.9rem;font-weight:700;color:var(--ink2)">👥 Participant সিলেক্ট করুন</h2>
+        <button onclick="closeMTEvPicker()" style="background:#f1f5f9;border:none;width:28px;height:28px;border-radius:99px;cursor:pointer;font-weight:700">✕</button>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <input type="text" id="mtEvPickerSearch" oninput="filterMTEvPicker()" placeholder="🔍 নাম বা রোল..." class="inp" style="flex:1">
+        <button onclick="setAllMTEvPicker(true)" style="background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;padding:0 10px;border-radius:9px;font-size:.68rem;font-weight:700;cursor:pointer">সব</button>
+        <button onclick="setAllMTEvPicker(false)" style="background:#fff1f2;color:#be123c;border:1px solid #fecdd3;padding:0 10px;border-radius:9px;font-size:.68rem;font-weight:700;cursor:pointer">বাদ</button>
+      </div>
+      <div id="mtEvPickerList" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:5px;margin-bottom:12px"></div>
+      <button onclick="saveMTEvParticipants()" class="btn btn-p">💾 সেভ করুন</button>
     </div>
   </div>
 
@@ -1680,8 +1697,10 @@ function calcDueMonthsFromMap(sid,paidMap,stuCache2){
 async function loadFeeData(stuIds){
   var yr=getBDNow().getFullYear().toString();
   feeCache={};
-  var r=await SB.from('fees_collection').select('student_id,payment_month').eq('payment_year',yr).limit(5000);
+  var r=await SB.from('fees_collection').select('student_id,payment_month,fee_type').eq('payment_year',yr).limit(5000);
   if(r.data)r.data.forEach(function(f){
+    // model_test fee বাদ — শুধু monthly fee count
+    if(f.fee_type==='model_test')return;
     var k=f.student_id;
     if(!feeCache[k])feeCache[k]=[];
     if(feeCache[k].indexOf(f.payment_month)===-1)feeCache[k].push(f.payment_month);
@@ -2335,18 +2354,82 @@ function selectAllMTParticipants(val){
   g('mtEvParticipants').querySelectorAll('.mtev-cb').forEach(function(cb){cb.checked=val;});
 }
 
-async function addManualMTParticipant(){
+var _mtEvPickerStudents=[];
+async function openMTParticipantPicker(){
   if(!selMTEventId||!selMTEventData)return;
-  var roll=prompt('রোল নম্বর দিন:');
-  if(!roll)return;
-  var r=await SB.from('students').select('*').eq('class',selMTEventData.class).eq('roll_no',parseInt(roll,10)).single();
-  if(!r.data){alert('এই ক্লাসে এই রোলে কোনো student নেই!');return;}
-  // already participant?
-  var existing=window._mtEvAllParticipants&&window._mtEvAllParticipants.find(function(p){return p.sid===r.data.id;});
-  if(existing){alert(r.data.name+' আগে থেকেই participant!');return;}
-  var wr=await dbWrite('mt_event_participants','insert',[{event_id:selMTEventId,student_id:r.data.id,fee_paid:false,fee_amount:selMTEventData.fee_amount||0}]);
-  if(wr&&wr.error){alert('❌ '+wr.error.message);return;}
-  showToast('✅ '+r.data.name+' যোগ হয়েছে!');
+  var modal=g('mtEvPickerModal');
+  var list=g('mtEvPickerList');
+  list.innerHTML='<div class="sk" style="height:50px"></div>';
+  modal.style.display='flex';
+  g('mtEvPickerSearch').value='';
+
+  // সব students লোড
+  var batches=parseMTBatches(selMTEventData.batch);
+  var allStudents=[];
+  for(var bi=0;bi<batches.length;bi++){
+    var r=await SB.from('students').select('id,name,roll_no,batch').eq('class',selMTEventData.class).eq('batch',batches[bi]).order('roll_no');
+    (r.data||[]).forEach(function(s){if(!allStudents.find(function(x){return x.id===s.id;}))allStudents.push(s);});
+  }
+  // existing participants
+  var existingIds=(window._mtEvAllParticipants||[]).map(function(p){return p.sid;});
+  _mtEvPickerStudents=allStudents.map(function(s){return{id:s.id,name:s.name,roll:s.roll_no,batch:s.batch||'',checked:existingIds.indexOf(s.id)!==-1};});
+  renderMTEvPicker(_mtEvPickerStudents);
+}
+
+function renderMTEvPicker(list){
+  var c=g('mtEvPickerList');
+  if(!list.length){c.innerHTML='<p style="text-align:center;color:var(--muted);padding:20px">কোনো student নেই</p>';return;}
+  c.innerHTML=list.map(function(s,i){
+    var idx=_mtEvPickerStudents.findIndex(function(x){return x.id===s.id;});
+    return'<label style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:9px;border:1.5px solid '+(s.checked?'var(--g1)':'#e2e8f0')+';background:'+(s.checked?'#eff6ff':'#fff')+';cursor:pointer;transition:all .12s">'
+      +'<input type="checkbox" '+(s.checked?'checked':'')+' onchange="toggleMTEvPicker('+idx+',this)" style="accent-color:var(--g1);width:15px;height:15px;flex-shrink:0">'
+      +'<div style="flex:1;min-width:0">'
+      +'<p style="font-weight:700;font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+e(s.name)+'</p>'
+      +'<p style="font-size:.6rem;color:var(--muted)">রোল: '+s.roll+' | '+e(s.batch)+'</p>'
+      +'</div></label>';
+  }).join('');
+}
+
+function toggleMTEvPicker(idx,cb){
+  if(idx<0||idx>=_mtEvPickerStudents.length)return;
+  _mtEvPickerStudents[idx].checked=cb.checked;
+  var lbl=cb.closest('label');
+  if(lbl){lbl.style.borderColor=cb.checked?'var(--g1)':'#e2e8f0';lbl.style.background=cb.checked?'#eff6ff':'#fff';}
+}
+
+function filterMTEvPicker(){
+  var q=(g('mtEvPickerSearch').value||'').toLowerCase().trim();
+  var filtered=!q?_mtEvPickerStudents:_mtEvPickerStudents.filter(function(s){
+    return s.name.toLowerCase().includes(q)||String(s.roll)===q;
+  });
+  renderMTEvPicker(filtered);
+}
+
+function setAllMTEvPicker(val){
+  _mtEvPickerStudents.forEach(function(s){s.checked=val;});
+  filterMTEvPicker();
+}
+
+function closeMTEvPicker(){g('mtEvPickerModal').style.display='none';}
+
+async function saveMTEvParticipants(){
+  if(!selMTEventId)return;
+  var selected=_mtEvPickerStudents.filter(function(s){return s.checked;});
+  var existing=(window._mtEvAllParticipants||[]).map(function(p){return p.sid;});
+  // নতুন যোগ হবে
+  var toAdd=selected.filter(function(s){return existing.indexOf(s.id)===-1;});
+  if(toAdd.length){
+    var rows=toAdd.map(function(s){return{event_id:selMTEventId,student_id:s.id,fee_paid:false,fee_amount:selMTEventData?selMTEventData.fee_amount||0:0};});
+    await dbWrite('mt_event_participants','insert',rows);
+  }
+  // বাদ দেওয়া হবে (আছে কিন্তু uncheck হয়েছে)
+  var unselectedIds=_mtEvPickerStudents.filter(function(s){return!s.checked;}).map(function(s){return s.id;});
+  var toRemove=(window._mtEvAllParticipants||[]).filter(function(p){return p.pid&&unselectedIds.indexOf(p.sid)!==-1;});
+  for(var i=0;i<toRemove.length;i++){
+    if(!toRemove[i].paid)await dbWrite('mt_event_participants','delete',null,[{column:'id',value:toRemove[i].pid}]);
+  }
+  closeMTEvPicker();
+  showToast('✅ Participants সেভ হয়েছে!');
   loadMTEvParticipants();
 }
 
@@ -3856,9 +3939,11 @@ async function loadDueReport(){
   if(!r1.data||!r1.data.length){el.innerHTML='<p style="text-align:center;padding:20px;color:var(--muted)">কোনো শিক্ষার্থী নেই</p>';return;}
   var ids=r1.data.map(function(s){return s.id;});
   var yr=getBDNow().getFullYear().toString();
-  var fR=await SB.from('fees_collection').select('student_id,payment_month').eq('payment_year',yr).in('student_id',ids);
+  var fR=await SB.from('fees_collection').select('student_id,payment_month,fee_type').eq('payment_year',yr).in('student_id',ids);
   var tmpCache={};
   (fR.data||[]).forEach(function(f){
+    // শুধু monthly fee count করব — model_test fee বাদ
+    if(f.fee_type==='model_test')return;
     if(!tmpCache[f.student_id])tmpCache[f.student_id]=[];
     tmpCache[f.student_id].push(f.payment_month);
   });
