@@ -6724,8 +6724,7 @@ async function printDTResult(){
   w.onload=function(){w.focus();w.print();};
 }
 
-async 
-function printDTSummary(){
+async function printDTSummary(){
   var mo=g('dtMo').value,cls=g('dtSCl').value,bat=g('dtSBt').value;
   var from=mo+'-01';
   var d=new Date(mo+'-01');d.setMonth(d.getMonth()+1);d.setDate(0);
