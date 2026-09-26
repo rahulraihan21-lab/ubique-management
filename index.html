@@ -864,7 +864,10 @@ textarea.inp{height:auto}
       </div>
 
       <textarea id="ntMsg" class="inp" placeholder="বার্তা লিখুন..." rows="3" style="width:100%;box-sizing:border-box;resize:vertical;margin-bottom:10px"></textarea>
-      <button onclick="sendNotification()" class="btn btn-p" style="width:100%;padding:12px">🚀 পাঠান</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button onclick="sendNotification()" class="btn btn-ghost" style="padding:12px">🔔 Push পাঠান</button>
+        <button onclick="sendSmsNotice()" id="ntSmsBtn" class="btn btn-p" style="padding:12px">📱 অভিভাবককে SMS</button>
+      </div>
       <div id="ntStatus" style="margin-top:8px;font-size:.78rem;text-align:center"></div>
     </div>
 
@@ -7465,6 +7468,76 @@ async function sendNotification(){
     try{renderNotifHistory();}catch(e){}
   }catch(err){
     if(st)st.innerHTML='<span style="color:#ef4444">\u274C '+err.message+'</span>';
+  }
+}
+
+// ═══════════════════════════════════════
+// SMS — অভিভাবকের ফোনে (send-sms edge function)
+// ═══════════════════════════════════════
+var SMS_FN_URL='https://sfsrtozgfethgdfrmskk.supabase.co/functions/v1/send-sms';
+
+// notifTarget অনুযায়ী শিক্ষার্থী (all / due / class)
+async function getSmsTargetStudents(){
+  var q=SB.from('students').select('id,name,phone,class,batch,admission_month');
+  if(notifTarget==='class'||notifTarget==='batch'){
+    var cls=gv('ntCl')||'All', bt=gv('ntBt')||'All';
+    if(cls!=='All') q=q.eq('class',cls);
+    if(bt!=='All') q=q.eq('batch',bt);
+  }
+  var r=await q;
+  if(r.error) throw new Error(r.error.message||'শিক্ষার্থী লোড বিফল');
+  var list=r.data||[];
+  list.forEach(function(s){stuCache[s.id]=stuCache[s.id]||s;});
+  if(notifTarget==='due'){
+    await loadFeeData();
+    list=list.filter(function(s){return getDueMonths(s.id).length>0;});
+  }
+  return list;
+}
+
+function callSmsFn(messages,dryRun){
+  return fetch(SMS_FN_URL,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-admin-password':localStorage.getItem('ub_apin')||''},
+    body:JSON.stringify({messages:messages,dry_run:dryRun})
+  }).then(function(res){return res.json().then(function(d){if(!res.ok)throw new Error(d.error||('HTTP '+res.status));return d;});});
+}
+
+async function sendSmsNotice(){
+  var title=gv('ntTitle').trim(), msg=gv('ntMsg').trim();
+  if(!msg){alert('বার্তা লিখুন!');return;}
+  if(!localStorage.getItem('ub_apin')){showToast('❌ এডমিন লগইন করুন আগে!');return;}
+  var st=g('ntStatus'), btn=g('ntSmsBtn');
+  var setSt=function(c,t){if(st)st.innerHTML='<span style="color:'+c+'">'+t+'</span>';};
+  var dyn=notifTarget==='due'&&g('ntDynChk')&&g('ntDynChk').checked;
+  btn.disabled=true;
+  try{
+    setSt('#6366f1','⏳ প্রাপক খোঁজা হচ্ছে...');
+    var stus=await getSmsTargetStudents();
+    if(!stus.length){setSt('#ef4444','❌ কোনো প্রাপক নেই');return;}
+    var base=(title?title+'\n':'')+msg;
+    var messages=stus.map(function(s){
+      var text=base;
+      if(dyn){var m=getDueMonths(s.id);text=base+'\n'+s.name+' — বকেয়া '+m.length+' মাস ('+m.join(', ')+')';}
+      return {phone:s.phone||'',text:text+'\n- UBIQUE'};
+    });
+    // আগে dry-run: কতজন, কত SMS — তারপর নিশ্চিত হলে পাঠানো
+    var pre=await callSmsFn(messages,true);
+    var sk=pre.skipped||[];
+    var bad=sk.filter(function(x){return x.reason!=='duplicate';}).length, dup=sk.length-bad;
+    var summary=pre.recipients+' জন অভিভাবক, মোট '+pre.segments+'টি SMS'
+      +(bad?'\n'+bad+'টি নম্বর ভুল/খালি — বাদ':'')+(dup?'\n'+dup+'টি একই নম্বর — একবারই যাবে':'');
+    if(!pre.provider){setSt('#f59e0b','⚠️ SMS কোম্পানি এখনো যুক্ত হয়নি। যুক্ত থাকলে যেত: '+e(summary).replace(/\n/g,'<br>'));return;}
+    if(!confirm('📱 SMS পাঠাবেন?\n\n'+summary)){setSt('var(--muted)','বাতিল করা হয়েছে');return;}
+    setSt('#6366f1','⏳ পাঠানো হচ্ছে...');
+    var res=await callSmsFn(messages,false);
+    var fail=(res.skipped||[]).filter(function(x){return x.reason==='provider_error';}).length;
+    if(res.sent) setSt('#22c55e','✅ '+res.sent+' জনকে SMS পাঠানো হয়েছে'+(fail?' — '+fail+'টি ব্যর্থ':''));
+    else setSt('#ef4444','❌ SMS যায়নি। প্রোভাইডার: '+JSON.stringify((res.results||[])[0]||{}));
+  }catch(err){
+    setSt('#ef4444','❌ '+err.message);
+  }finally{
+    btn.disabled=false;
   }
 }
 
